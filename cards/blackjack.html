@@ -1,1 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Blackjack - Ludus</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body class="theme-dark">
 
+<div class="game-container">
+
+    <h1 class="glow-title">Blackjack</h1>
+
+    <div class="table-area">
+
+        <div class="dealer-section">
+            <h2>Dealer</h2>
+            <div id="dealer-hand" class="hand"></div>
+            <div id="dealer-score" class="score"></div>
+        </div>
+
+        <div class="player-section">
+            <h2>You</h2>
+            <div id="player-hand" class="hand"></div>
+            <div id="player-score" class="score"></div>
+        </div>
+
+    </div>
+
+    <div class="controls">
+        <button id="hitBtn">Hit</button>
+        <button id="standBtn">Stand</button>
+        <button id="restartBtn">Restart</button>
+    </div>
+
+    <div id="resultOverlay" class="overlay hidden">
+        <div class="overlay-content" id="resultText"></div>
+    </div>
+
+    <a href="../index.html" class="back-button">Back</a>
+
+</div>
+
+<script type="module" src="blackjack.js"></script>
+</body>
+</html>
