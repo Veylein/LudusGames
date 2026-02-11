@@ -2,19 +2,55 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Ludus - Game Hub</title>
+    <title>Ludus</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="themes.css">
 </head>
-<body>
+<body class="theme-dark">
 
-    <div class="container">
-        <h1>Ludus Game Hub</h1>
-        <p>Select an activity</p>
+<div class="background-flicker"></div>
 
-        <div class="button-group">
-            <a href="cards/gofish.html" class="game-button">🎴 Go Fish</a>
-        </div>
+<div class="hub">
+
+    <h1 class="glow-title">LUDUS</h1>
+    <p class="subtitle">Where games live.</p>
+
+    <div class="section-grid">
+
+        <a href="cards/gofish.html" class="section-card">
+            🎴 Cards
+        </a>
+
+        <a href="board/index.html" class="section-card">
+            ♟️ Board Games
+        </a>
+
+        <a href="connections/index.html" class="section-card">
+            🌐 Connections
+        </a>
+
     </div>
 
+</div>
+
+<div class="control-panel">
+
+    <select id="themeSelect">
+        <option value="dark">Dark</option>
+        <option value="light">Light</option>
+        <option value="holographic">Holographic</option>
+        <option value="rainbow">Rainbow</option>
+    </select>
+
+    <label class="switch">
+        <input type="checkbox" id="emojiToggle">
+        <span class="slider"></span>
+    </label>
+    <span class="toggle-label">Emoji Rain</span>
+
+</div>
+
+<script src="ui.js"></script>
+<script src="effects.js"></script>
 </body>
 </html>
