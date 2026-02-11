@@ -166,3 +166,73 @@ input:checked + .slider:before {
 .center {
     font-size: 2rem;
 }
+.game-container {
+    text-align: center;
+    margin-top: 60px;
+}
+
+.table-area {
+    display: flex;
+    justify-content: center;
+    gap: 120px;
+    margin: 40px 0;
+}
+
+.hand {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    min-height: 150px;
+}
+
+.score {
+    margin-top: 10px;
+    font-size: 1.2rem;
+    opacity: 0.8;
+}
+
+.controls {
+    margin-top: 20px;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 1rem;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(135deg, #00f0ff, #ff00ff);
+    color: white;
+    transition: 0.2s ease;
+}
+
+button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 20px cyan;
+}
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.overlay-content {
+    font-size: 2rem;
+    padding: 40px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 40px cyan;
+}
+
+.hidden {
+    display: none;
+}
