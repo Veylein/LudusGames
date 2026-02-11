@@ -1,1 +1,32 @@
+body.theme-dark {
+    background: radial-gradient(circle at center, #0f0f1a, #000);
+    color: white;
+}
 
+body.theme-light {
+    background: #f4f4f4;
+    color: black;
+}
+
+body.theme-holographic {
+    background: linear-gradient(135deg, #00f0ff, #ff00ff, #00ff88);
+    background-size: 400% 400%;
+    animation: holoMove 8s infinite alternate;
+    color: white;
+}
+
+@keyframes holoMove {
+    0% { background-position: left; }
+    100% { background-position: right; }
+}
+
+body.theme-rainbow {
+    background: linear-gradient(270deg, red, orange, yellow, green, blue, purple);
+    background-size: 600% 600%;
+    animation: rainbowFlow 10s infinite;
+}
+
+@keyframes rainbowFlow {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+}
