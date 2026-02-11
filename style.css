@@ -120,3 +120,49 @@ body {
 input:checked + .slider:before {
     transform: translateX(20px);
 }
+.card {
+    width: 90px;
+    height: 130px;
+    background: white;
+    border-radius: 14px;
+    position: relative;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card.red {
+    color: #d32f2f;
+}
+
+.card.back {
+    background: linear-gradient(135deg, #1e1e2f, #0f0f1a);
+    box-shadow: 0 0 20px cyan;
+}
+
+.card:hover {
+    transform: translateY(-12px) scale(1.07);
+    box-shadow: 0 12px 30px rgba(0,255,255,0.4);
+}
+
+.corner {
+    position: absolute;
+    font-size: 0.9rem;
+}
+
+.top {
+    top: 6px;
+    left: 8px;
+}
+
+.bottom {
+    bottom: 6px;
+    right: 8px;
+    transform: rotate(180deg);
+}
+
+.center {
+    font-size: 2rem;
+}
