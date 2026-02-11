@@ -46,6 +46,7 @@ function shuffle(array) {
 
 function updateUI() {
     playerHandDiv.innerHTML = "";
+    botHandDiv.innerHTML = "";
 
     playerHand.forEach(card => {
         const div = document.createElement("div");
@@ -53,9 +54,14 @@ function updateUI() {
         div.textContent = card;
         playerHandDiv.appendChild(div);
 
-        setTimeout(() => {
-            div.classList.add("show");
-        }, 10);
+        setTimeout(() => div.classList.add("show"), 10);
+    });
+
+    botHand.forEach(() => {
+        const div = document.createElement("div");
+        div.className = "card";
+        botHandDiv.appendChild(div);
+        setTimeout(() => div.classList.add("show"), 10);
     });
 
     scoreboard.textContent = `You: ${playerScore} | Bot: ${botScore}`;
