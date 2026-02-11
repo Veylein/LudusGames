@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Go Fish - Ludus</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+    <h1>🎴 Go Fish</h1>
+
+    <div>
+        <h2>Your Hand</h2>
+        <div id="player-hand"></div>
+    </div>
+
+    <div>
+        <h2>Ask for a Card</h2>
+        <select id="ask-rank"></select>
+        <button onclick="askForCard()">Ask</button>
+    </div>
+
+    <div class="log" id="log"></div>
+
+    <br>
+    <a href="../index.html" class="game-button">Back</a>
+
+<script src="gofish.js"></script>
+</body>
+</html>
