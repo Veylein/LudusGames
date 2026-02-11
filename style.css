@@ -1,134 +1,122 @@
 body {
     margin: 0;
     font-family: 'Segoe UI', sans-serif;
-    background: radial-gradient(circle at center, #1b2735, #090a0f);
-    color: white;
+    transition: background 0.4s ease, color 0.4s ease;
+    overflow-x: hidden;
 }
 
-.game-wrapper {
-    padding: 20px;
+.hub {
     text-align: center;
+    margin-top: 120px;
 }
 
-.top-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 40px;
+.glow-title {
+    font-size: 4rem;
+    letter-spacing: 8px;
+    animation: glowPulse 2s infinite alternate;
 }
 
-.scoreboard {
-    font-size: 1.2rem;
-    background: rgba(255,255,255,0.1);
-    padding: 10px 20px;
-    border-radius: 12px;
-    backdrop-filter: blur(6px);
+.subtitle {
+    opacity: 0.7;
+    margin-bottom: 60px;
 }
 
-.table {
-    margin-top: 30px;
-    display: grid;
-    grid-template-rows: 1fr auto 1fr;
-    gap: 30px;
-}
-
-.bot-area,
-.player-area {
-    padding: 20px;
-}
-
-.hand {
+.section-grid {
     display: flex;
     justify-content: center;
-    gap: 10px;
+    gap: 40px;
     flex-wrap: wrap;
 }
 
-.bot-hand .card {
-    background: linear-gradient(135deg, #444, #222);
-    color: transparent;
-    width: 60px;
-    height: 90px;
-}
-
-.center-area {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-}
-
-.deck {
-    width: 80px;
-    height: 110px;
-    background: linear-gradient(135deg, #4caf50, #1b5e20);
-    border-radius: 12px;
-    box-shadow: 0 0 20px #4caf50;
-}
-
-.log {
-    width: 60%;
-    max-height: 120px;
-    overflow-y: auto;
+.section-card {
+    width: 220px;
+    height: 140px;
     background: rgba(255,255,255,0.05);
-    padding: 15px;
-    border-radius: 10px;
-    font-size: 0.9rem;
-}
-
-.card {
-    width: 60px;
-    height: 90px;
-    background: linear-gradient(145deg, #ffffff, #dcdcdc);
-    border-radius: 10px;
-    color: black;
-    font-weight: bold;
+    backdrop-filter: blur(12px);
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    cursor: pointer;
-    opacity: 0;
-    transform: translateY(20px);
-}
-
-.card.show {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.card:hover {
-    transform: translateY(-8px) scale(1.05);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.6);
-}
-
-.controls {
-    margin-top: 15px;
-}
-
-select, button {
-    padding: 8px 15px;
-    border-radius: 8px;
-    border: none;
-    font-size: 1rem;
-}
-
-button {
-    background: #4caf50;
-    color: white;
-    cursor: pointer;
-    transition: 0.2s ease;
-}
-
-button:hover {
-    background: #66bb6a;
-}
-
-.back-button {
-    display: inline-block;
-    margin-top: 20px;
-    color: #4caf50;
+    font-size: 1.3rem;
     text-decoration: none;
+    color: inherit;
+    transition: 0.3s ease;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.section-card:hover {
+    transform: translateY(-10px) scale(1.05);
+    box-shadow: 0 0 30px rgba(0,255,255,0.4);
+}
+
+.control-panel {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0,0,0,0.4);
+    padding: 15px;
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.background-flicker {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        to bottom,
+        transparent,
+        transparent 2px,
+        rgba(255,255,255,0.02) 3px
+    );
+    animation: flicker 3s infinite;
+}
+
+@keyframes flicker {
+    0% { opacity: 0.2; }
+    50% { opacity: 0.4; }
+    100% { opacity: 0.2; }
+}
+
+@keyframes glowPulse {
+    from { text-shadow: 0 0 10px #00ffff; }
+    to { text-shadow: 0 0 30px #ff00ff; }
+}
+
+/* Toggle Switch */
+.switch {
+    position: relative;
+    width: 40px;
+    height: 20px;
+}
+
+.switch input {
+    display: none;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background: #ccc;
+    border-radius: 20px;
+}
+
+.slider:before {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    left: 2px;
+    top: 2px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
 }
