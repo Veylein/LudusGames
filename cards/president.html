@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>President</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="game-wrapper">
+    <div class="top-bar">
+      <h1>President</h1>
+      <button onclick="presidentAction('restart')">Restart</button>
+      <span id="president-scoreboard"></span>
+    </div>
+    <div class="table-area">
+      <div class="hand-section">
+        <h2>Your Hand</h2>
+        <div id="player-hand" class="hand"></div>
+      </div>
+      <div class="center-section">
+        <div id="president-pile" class="deck"></div>
+      </div>
+      <div class="hand-section">
+        <h2>Bot Hand</h2>
+        <div id="bot-hand" class="hand"></div>
+      </div>
+    </div>
+    <div class="controls">
+      <button onclick="presidentAction('play')">Play Selected</button>
+      <button onclick="presidentAction('pass')">Pass</button>
+    </div>
+    <div id="log" class="log"></div>
+  </div>
+  <script src="president.js"></script>
+</body>
+</html>

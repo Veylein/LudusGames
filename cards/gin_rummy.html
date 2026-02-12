@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gin Rummy</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="game-wrapper">
+    <div class="top-bar">
+      <h1>Gin Rummy</h1>
+      <button onclick="ginRummyAction('restart')">Restart</button>
+      <span id="ginrummy-scoreboard"></span>
+    </div>
+    <div class="table-area">
+      <div class="hand-section">
+        <h2>Your Hand</h2>
+        <div id="player-hand" class="hand"></div>
+      </div>
+      <div class="center-section">
+        <div id="ginrummy-deck" class="deck"></div>
+        <div id="ginrummy-discard" class="deck"></div>
+      </div>
+      <div class="hand-section">
+        <h2>Bot Hand</h2>
+        <div id="bot-hand" class="hand"></div>
+      </div>
+    </div>
+    <div class="controls">
+      <button onclick="ginRummyAction('draw')">Draw</button>
+      <button onclick="ginRummyAction('knock')">Knock</button>
+    </div>
+    <div id="log" class="log"></div>
+  </div>
+  <script src="gin_rummy.js"></script>
+</body>
+</html>

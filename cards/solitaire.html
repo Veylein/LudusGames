@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solitaire</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="game-wrapper">
+    <div class="top-bar">
+      <h1>🃏 Solitaire</h1>
+      <div id="solitaire-scoreboard" class="scoreboard">Moves: 0</div>
+    </div>
+    <div class="table">
+      <div class="center-area">
+        <div class="solitaire-board" id="solitaire-board"></div>
+        <div class="log" id="log"></div>
+      </div>
+    </div>
+    <div class="controls">
+      <button onclick="solitaireAction('restart')">Restart</button>
+    </div>
+    <a href="../index.html" class="back-button">Back</a>
+  </div>
+  <script src="solitaire.js"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spoons</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="game-wrapper">
+    <div class="top-bar">
+      <h1>Spoons</h1>
+      <button onclick="spoonsAction('restart')">Restart</button>
+      <span id="spoons-scoreboard"></span>
+    </div>
+    <div class="table-area">
+      <div class="hand-section">
+        <h2>Your Hand</h2>
+        <div id="player-hand" class="hand"></div>
+      </div>
+      <div class="center-section">
+        <div id="spoons-pile" class="deck"></div>
+        <div id="spoons-spoons" class="spoons"></div>
+      </div>
+      <div class="hand-section">
+        <h2>Bot Hand</h2>
+        <div id="bot-hand" class="hand"></div>
+      </div>
+    </div>
+    <div class="controls">
+      <button onclick="spoonsAction('pass')">Pass Card</button>
+      <button onclick="spoonsAction('grab')">Grab Spoon</button>
+    </div>
+    <div id="log" class="log"></div>
+  </div>
+  <script src="spoons.js"></script>
+</body>
+</html>

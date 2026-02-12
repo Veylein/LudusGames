@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cribbage</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="game-wrapper">
+    <div class="top-bar">
+      <h1>🂱 Cribbage</h1>
+      <div id="cribbage-scoreboard" class="scoreboard">You: 0 | Bot: 0</div>
+    </div>
+    <div class="table">
+      <div class="bot-area">
+        <h2>Bot</h2>
+        <div class="hand" id="bot-hand"></div>
+      </div>
+      <div class="center-area">
+        <div class="log" id="log"></div>
+      </div>
+      <div class="player-area">
+        <h2>You</h2>
+        <div class="hand" id="player-hand"></div>
+      </div>
+    </div>
+    <div class="controls">
+      <button onclick="cribbageAction('restart')">Restart</button>
+    </div>
+    <a href="../index.html" class="back-button">Back</a>
+  </div>
+  <script src="cribbage.js"></script>
+</body>
+</html>
