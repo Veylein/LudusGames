@@ -1,23 +1,19 @@
-const themeSelect = document.getElementById("themeSelect");
-const emojiToggle = document.getElementById("emojiToggle");
+const themeBtn = document.getElementById("themeBtn");
+const themeDropdown = document.querySelector(".theme-dropdown");
+const themeOptions = document.querySelectorAll(".theme-menu button");
 
-themeSelect.addEventListener("change", () => {
-    document.body.className = "theme-" + themeSelect.value;
-    localStorage.setItem("theme", themeSelect.value);
+themeBtn.addEventListener("click", () => {
+    themeDropdown.classList.toggle("open");
 });
 
-emojiToggle.addEventListener("change", () => {
-    if (emojiToggle.checked) {
-        startEmojiRain();
-    } else {
-        stopEmojiRain();
-    }
+themeOptions.forEach(btn => {
+    btn.addEventListener("click", () => {
+        document.body.className = btn.dataset.theme;
+        localStorage.setItem("theme", btn.dataset.theme);
+    });
 });
 
 window.onload = () => {
     const savedTheme = localStorage.getItem("theme");
-    if (savedTheme) {
-        document.body.className = "theme-" + savedTheme;
-        themeSelect.value = savedTheme;
-    }
+    if (savedTheme) document.body.className = savedTheme;
 };
