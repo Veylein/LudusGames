@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Street Fighter vs Mortal Kombat - Ludus Arcade</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="../../themes.css">
+    <link rel="stylesheet" href="../arcade.css">
+    <link rel="stylesheet" href="fighting.css">
+</head>
+<body class="theme-classic" data-style="style-arcade">
+
+    <div id="emoji-container"></div>
+    
+    <header class="nav">
+        <div class="logo"><a href="../../index.html" style="text-decoration: none; color: inherit;">LUDUS</a></div>
+        <div class="controls">
+            <button onclick="window.location.href='../index.html'">Arcade Menu</button>
+            <div class="font-dropdown">
+                <button id="fontBtn">Font</button>
+                <div class="font-menu">
+                    <button data-font="retro">Retro</button>
+                    <button data-font="cozy">Cozy</button>
+                    <button data-font="poker">Poker</button>
+                    <button data-font="classic">Classic</button>
+                    <button data-font="discord">Discord</button>
+                </div>
+            </div>
+             <div class="style-dropdown">
+                <button id="styleBtn">Style</button>
+                <div class="style-menu">
+                    <button data-style="style-classic">Classic</button>
+                    <button data-style="style-relaxation">Relaxation</button>
+                    <button data-style="style-arcade">Arcade</button>
+                    <button data-style="style-casino">Casino</button>
+                    <button data-style="style-yacht">Yacht</button>
+                </div>
+            </div>
+            <div class="theme-dropdown">
+                <button id="themeBtn">Theme</button>
+                <div class="theme-menu">
+                    <button data-theme="theme-dark">Dark</button>
+                    <button data-theme="theme-light">Light</button>
+                    <button data-theme="theme-holo">Holographic</button>
+                    <button data-theme="theme-rainbow">Rainbow</button>
+                    <button data-theme="theme-opal-fire">Opal Fire</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div id="mobile-warning">
+        <h1>ACCESS DENIED</h1>
+        <p>SORRY BUT THIS GAME ONLY WORKS ON COMPUTER</p>
+        <p>Please return to main menu.</p>
+        <button onclick="window.location.href='../../index.html'" style="margin-top:20px; padding:10px; background:red; color:white; border:none;">EXIT</button>
+    </div>
+
+    <div class="game-container">
+        <h1 style="color: #ff0000; text-shadow: 2px 2px #fff; margin-bottom: 5px;">MORTAL FIGHTER</h1>
+        <p style="color: #aaaaaa; font-size: 10px; margin-bottom: 20px;">X Edition</p>
+        
+        <div id="fight-container">
+            <div id="fight-bg"></div>
+            <canvas id="canvas"></canvas>
+            
+            <div id="hud">
+                <div class="health-bar-container">
+                    <div id="p1-health" class="health-bar"></div>
+                    <span id="p1-name" class="name-label">PLAYER 1</span>
+                </div>
+                <div id="timer">99</div>
+                <div class="health-bar-container">
+                    <div id="p2-health" class="health-bar"></div>
+                    <span id="p2-name" class="name-label">CPU</span>
+                </div>
+            </div>
+            
+            <div id="message-overlay">FIGHT!</div>
+            
+            <div id="start-screen">
+                <h2>CHOOSE YOUR FIGHTER</h2>
+                <div class="char-select">
+                    <button class="char-btn" onclick="startGame('RYU')">RYU (Street)</button>
+                    <button class="char-btn" onclick="startGame('SCORPION')">SCORPION (Mortal)</button>
+                </div>
+                <div style="margin-top: 30px; font-size: 10px; color: #ccc;">
+                    CONTROLS:<br>
+                    Arrows to Move/Jump/Block<br>
+                    Z: Punch | X: Kick | C: Special
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <script src="../../ui.js"></script>
+    <script src="fighting.js"></script>
+    <script>
+        function startGame(char) {
+            document.getElementById('start-screen').style.display = 'none';
+            // Access function from fighting.js
+            // fighting.js defines initGame globally
+            if (window.initGame) {
+                window.initGame(char);
+                window.gameRunning = true;
+                window.gameLoop();
+            } else {
+                console.error("Game init function not found");
+            }
+        }
+    </script>
+</body>
+</html>
