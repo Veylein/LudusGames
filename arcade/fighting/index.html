@@ -82,10 +82,15 @@
             
             <div id="start-screen">
                 <h2>CHOOSE YOUR FIGHTER</h2>
-                <div class="char-select">
-                    <button class="char-btn" onclick="startGame('RYU')">RYU (Street)</button>
-                    <button class="char-btn" onclick="startGame('SCORPION')">SCORPION (Mortal)</button>
+                <div id="char-grid" class="char-grid">
+                    <!-- Javascript will populate this -->
                 </div>
+                <div id="selected-char-display">
+                    <h3 id="p1-select-name">SELECT A FIGHTER</h3>
+                    <div id="p1-select-preview"></div>
+                </div>
+                <button id="start-btn" onclick="confirmSelection()" disabled>START MATCH</button>
+                
                 <div style="margin-top: 30px; font-size: 10px; color: #ccc;">
                     CONTROLS:<br>
                     Arrows to Move/Jump/Block<br>
