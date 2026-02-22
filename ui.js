@@ -3,38 +3,29 @@
 
 document.addEventListener("DOMContentLoaded", () => {
     initTheme();
-    initFontTheme(); // Added font theme init
+    initStyle(); // Added Style init
+    initFontTheme(); 
     initDifficulty();
     initPoints();
     ensureBackButton();
 });
 
-/* THEME SYSTEM */
+/* THEME SYSTEM (Colors) */
 function initTheme() {
-    const savedTheme = localStorage.getItem("theme") || "theme-classic";
-    // Remove old theme classes but keep others
-    document.body.classList.remove("theme-classic", "theme-relaxation", "theme-arcade", "theme-casino", "theme-yacht", "theme-dark", "theme-light", "theme-holo", "theme-rainbow", "theme-opal-fire");
+    const savedTheme = localStorage.getItem("theme") || "theme-dark"; // Default to dark
+    
+    // Remove old theme classes (colors)
+    document.body.classList.remove("theme-dark", "theme-light", "theme-holo", "theme-rainbow", "theme-opal-fire");
     document.body.classList.add(savedTheme);
 
     const themeBtn = document.getElementById("themeBtn");
-    const themeDropdown = document.querySelector(".theme-dropdown"); // This selects only the FIRST theme dropdown
+    const themeDropdown = document.querySelector(".theme-dropdown");
     
     if (themeBtn && themeDropdown) {
-        // Toggle theme dropdown
         themeBtn.addEventListener("click", (e) => {
             e.stopPropagation();
-            // Close other dropdowns if open (like font dropdown)
-            document.querySelectorAll('.font-dropdown.open').forEach(el => {
-                el.classList.remove('open');
-            });
+            closeAllDropdowns([themeDropdown]);
             themeDropdown.classList.toggle("open");
-        });
-
-        // Close when clicking outside
-        document.addEventListener("click", (e) => {
-            if (!themeDropdown.contains(e.target) && !e.target.closest('#themeBtn')) {
-                themeDropdown.classList.remove("open");
-            }
         });
 
         const themeOptions = themeDropdown.querySelectorAll("button");
@@ -42,20 +33,56 @@ function initTheme() {
             btn.addEventListener("click", () => {
                 const newTheme = btn.dataset.theme;
                 if (newTheme) {
-                    // Remove old themes, keep utility classes
-                    document.body.classList.remove("theme-classic", "theme-relaxation", "theme-arcade", "theme-casino", "theme-yacht", "theme-dark", "theme-light", "theme-holo", "theme-rainbow", "theme-opal-fire");
+                    document.body.classList.remove("theme-dark", "theme-light", "theme-holo", "theme-rainbow", "theme-opal-fire");
                     document.body.classList.add(newTheme);
                     localStorage.setItem("theme", newTheme);
-                    themeDropdown.classList.remove("open"); // Auto-close
+                    themeDropdown.classList.remove("open");
                 }
             });
         });
     }
 }
 
+/* STYLE SYSTEM (Backgrounds/Atmosphere) */
+function initStyle() {
+    const savedStyle = localStorage.getItem("gameStyle") || "style-classic"; // Default
+    // Use data attribute for style to simplify CSS selectors and separate from classes
+    document.body.setAttribute("data-style", savedStyle);
+
+    const styleBtn = document.getElementById("styleBtn");
+    const styleDropdown = document.querySelector(".style-dropdown");
+    
+    if (styleBtn && styleDropdown) {
+        styleBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            closeAllDropdowns([styleDropdown]);
+            styleDropdown.classList.toggle("open");
+        });
+
+        const styleOptions = styleDropdown.querySelectorAll("button");
+        styleOptions.forEach(btn => {
+            btn.addEventListener("click", () => {
+                const newStyle = btn.dataset.style;
+                if (newStyle) {
+                    document.body.setAttribute("data-style", newStyle);
+                    localStorage.setItem("gameStyle", newStyle);
+                    styleDropdown.classList.remove("open");
+                }
+            });
+        });
+    }
+}
+
+function closeAllDropdowns(except = []) {
+    const all = document.querySelectorAll('.theme-dropdown, .style-dropdown, .font-dropdown');
+    all.forEach(el => {
+        if (!except.includes(el)) el.classList.remove('open');
+    });
+}
+
 /* FONT THEME SYSTEM */
 function initFontTheme() {
-    const savedFont = localStorage.getItem("fontTheme") || "retro"; // Default to retro
+    const savedFont = localStorage.getItem("fontTheme") || "retro"; 
     document.body.setAttribute("data-font", savedFont);
 
     const fontBtn = document.getElementById("fontBtn");
@@ -64,17 +91,8 @@ function initFontTheme() {
     if (fontBtn && fontDropdown) {
         fontBtn.addEventListener("click", (e) => {
             e.stopPropagation();
-            // Close other dropdowns
-            document.querySelectorAll('.theme-dropdown.open').forEach(el => {
-                el.classList.remove('open');
-            });
+            closeAllDropdowns([fontDropdown]);
             fontDropdown.classList.toggle("open");
-        });
-
-        document.addEventListener("click", (e) => {
-           if (!fontDropdown.contains(e.target) && !e.target.closest('#fontBtn')) {
-                fontDropdown.classList.remove("open");
-            }
         });
 
         const fontOptions = fontDropdown.querySelectorAll("button");
@@ -90,6 +108,14 @@ function initFontTheme() {
         });
     }
 }
+
+/* Global Click to Close Dropdowns */
+document.addEventListener("click", (e) => {
+    if (!e.target.closest('.theme-dropdown') && !e.target.closest('.style-dropdown') && !e.target.closest('.font-dropdown')) {
+        closeAllDropdowns();
+    }
+});
+
 
 /* DIFFICULTY SYSTEM */
 const DIFFICULTIES = ["Apprentice", "Gambler", "Ruthless"];

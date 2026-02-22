@@ -107,12 +107,12 @@ body::before {
 
 /* THEME & FONT DROPDOWNS - PIXEL STYLE */
 
-.theme-dropdown, .font-dropdown {
+.theme-dropdown, .font-dropdown, .style-dropdown {
     position: relative;
     display: inline-block;
 }
 
-#themeBtn, #fontBtn {
+#themeBtn, #fontBtn, #styleBtn {
     background: #000;
     border: 2px solid var(--border-color);
     padding: 10px 15px;
@@ -124,17 +124,17 @@ body::before {
     text-transform: uppercase;
 }
 
-#themeBtn:active, #fontBtn:active {
+#themeBtn:active, #fontBtn:active, #styleBtn:active {
     transform: translate(2px, 2px);
     box-shadow: 2px 2px 0 var(--shadow-color);
 }
 
-#themeBtn:hover, #fontBtn:hover {
+#themeBtn:hover, #fontBtn:hover, #styleBtn:hover {
     background: var(--accent-color);
     color: #000;
 }
 
-.theme-menu, .font-menu {
+.theme-menu, .font-menu, .style-menu {
     position: absolute;
     top: 50px;
     right: 0;
@@ -147,7 +147,7 @@ body::before {
     min-width: 160px;
 }
 
-.theme-menu button, .font-menu button {
+.theme-menu button, .font-menu button, .style-menu button {
     padding: 12px;
     background: none;
     border: none;
@@ -166,12 +166,12 @@ body::before {
     border-bottom: none;
 }
 
-.theme-menu button:hover, .font-menu button:hover {
+.theme-menu button:hover, .font-menu button:hover, .style-menu button:hover {
     background: var(--secondary-color);
     color: #000;
 }
 
-.theme-dropdown.open .theme-menu, .font-dropdown.open .font-menu { /* Ensure JS toggles .open class */
+.theme-dropdown.open .theme-menu, .font-dropdown.open .font-menu, .style-dropdown.open .style-menu { /* Ensure JS toggles .open class */
     display: flex;
 }
 

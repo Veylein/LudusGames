@@ -1,100 +1,129 @@
-/* LUDUS THEMES - 5 STYLES */
+/* LUDUS THEMES: COLORS (Text, Borders, Accents) */
+
+/* DEFAULT (Dark) is in style.css or implied */
+.theme-dark {
+    /* Uses base variables */
+}
+
+.theme-light {
+    --bg-color: #f0f0f0;
+    --text-color: #333333;
+    --accent-color: #ff0055; 
+    --secondary-color: #0055ff; 
+    --border-color: #000000;
+    --shadow-color: #888888;
+}
+
+.theme-holo {
+    --bg-color: #220033;
+    --text-color: #00ffff;
+    --accent-color: #ff00ff;
+    --secondary-color: #ffff00;
+    --border-color: rgba(255,255,255,0.8);
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+}
+/* Only animate background if no specific style overrides it, or apply to body itself if style is present? */
+/* Actually, themes usually set colors. If a style sets a background image, it overrides the theme's background-color/gradient */
+
+.theme-rainbow {
+    animation: rainbowEffect 5s linear infinite;
+}
+@keyframes rainbowEffect {
+    0% { filter: hue-rotate(0deg); }
+    100% { filter: hue-rotate(360deg); }
+}
+
+.theme-opal-fire {
+    --bg-color: #1a0505;
+    --text-color: #ffcc00;
+    --accent-color: #ff4500;
+    --secondary-color: #ff00ff;
+    --border-color: #ffaa00;
+    --shadow-color: #550000;
+    background: linear-gradient(135deg, #2b0a0a, #4a0e0e);
+}
+
+
+/* --- STYLES: BACKGROUNDS & ATMOSPHERE (Wallpapers) --- */
 
 /* 1. CLASSIC (Retro Grid - Default) */
-.theme-classic {
-    /* Uses default variables from style.css */
+body[data-style="style-classic"] {
+    /* Uses default grid from style.css */
+    /* Ensure grid is visible */
+    background-image: 
+        linear-gradient(rgba(255, 0, 255, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 0, 255, 0.1) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: center top;
+    animation: gridScroll 20s linear infinite;
+    background-attachment: scroll; /* Grid scrolls */
 }
 
 /* 2. RELAXATION (Cozy, Chillaxing) */
-.theme-relaxation {
-    --bg-color: #2c3e50;
-    --text-color: #f7f9f9;
-    --accent-color: #e67e22; 
-    --secondary-color: #1abc9c;
-    --border-color: #bdc3c7;
-    --shadow-color: #34495e;
-}
-
-body.theme-relaxation {
-    background: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%);
+body[data-style="style-relaxation"] {
+    /* Beautiful Sunset / Sky */
+    background: linear-gradient(to bottom, rgba(53, 92, 125, 0.6), rgba(108, 91, 123, 0.6)),
+                url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2073&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
     background-attachment: fixed;
-    animation: none; 
-}
-body.theme-relaxation::before { display: none; }
-
-
-/* 3. ARCADE (Pacman, Snake, etc style) */
-.theme-arcade {
-    --bg-color: #000;
-    --text-color: #ffcc00; 
-    --accent-color: #ff0000; 
-    --secondary-color: #0000ff; 
-    --border-color: #ffcc00;
-    --shadow-color: #0000aa;
-}
-
-body.theme-arcade {
-    background-color: #000;
-    background-image: 
-        radial-gradient(circle, #333 1px, transparent 1px),
-        radial-gradient(circle, #333 1px, transparent 1px);
-    background-size: 20px 20px;
-    background-position: 0 0, 10px 10px;
-    animation: arcadeScroll 4s linear infinite;
-}
-
-@keyframes arcadeScroll {
-    0% { background-position: 0 0, 10px 10px; }
-    100% { background-position: 20px 20px, 30px 30px; }
-}
-
-
-/* 4. CASINO (Vegas Style - Green Felt) */
-.theme-casino {
-    --bg-color: #043815; 
-    --text-color: #ffd700; 
-    --accent-color: #ff0000; 
-    --secondary-color: #000000; 
-    --border-color: #ffd700;
-    --shadow-color: #000000;
-}
-
-body.theme-casino {
-    background: #043815;
-    background-image: repeating-linear-gradient(
-        45deg,
-        rgba(255,255,255,0.05) 0px,
-        rgba(255,255,255,0.05) 2px,
-        transparent 2px,
-        transparent 10px
-    );
     animation: none;
 }
-body.theme-casino::before {
-    background: radial-gradient(circle at center, transparent 30%, #000 100%);
-    background-size: 100% 100%;
-    opacity: 0.6;
+/* Hide CRT scanlines for relaxation */
+body[data-style="style-relaxation"]::before { display: none; }
+
+
+/* 3. ARCADE (Pacman, 8-bit Heroes) */
+body[data-style="style-arcade"] {
+    background-color: #000;
+    /* Dark arcade with neon */
+    background-image: 
+        linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)),
+        url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2070&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    animation: none;
+}
+/* Keep CRT scanlines for Arcade, maybe enhance them */
+body[data-style="style-arcade"]::before {
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    background-size: 100% 2px, 3px 100%;
+}
+
+
+/* 4. CASINO (Vegas Style) */
+body[data-style="style-casino"] {
+    background-color: #043815;
+    /* Casino Table felt texture or Vegas lights */
+    background-image: 
+        linear-gradient(rgba(5, 42, 25, 0.9), rgba(5, 42, 25, 0.9)),
+        url('https://images.unsplash.com/photo-1596838132731-3301c3fd4317?q=80&w=2070&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    animation: none;
+    /* Highlight borders with gold if in this style regardless of theme? Optional */
+    --border-color: #ffd700;
+}
+body[data-style="style-casino"]::before {
+    /* Gold Vignette */
+    background: radial-gradient(circle, rgba(255,215,0,0.05) 0%, transparent 80%);
+    opacity: 0.5;
 }
 
 
 /* 5. YACHT (Ocean Luxury) */
-.theme-yacht {
-    --bg-color: #fff;
-    --text-color: #002147; 
-    --accent-color: #c0c0c0; 
-    --secondary-color: #ff4500; 
-    --border-color: #002147;
-    --shadow-color: rgba(0,0,0,0.2);
-}
-
-body.theme-yacht {
-    background: linear-gradient(180deg, #87CEEB 0%, #1E90FF 100%);
+body[data-style="style-yacht"] {
+    background-color: #e0f7fa;
+    /* Ocean view */
+    background-image: 
+        linear-gradient(rgba(255,255,255,0.4), rgba(255,255,255,0.1)),
+        url('https://images.unsplash.com/photo-1566375638412-0ab9fa086975?q=80&w=2070&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
     background-attachment: fixed;
-    animation: waveMotion 8s ease-in-out infinite alternate;
+    animation: none;
 }
-body.theme-yacht::before { display: none; }
-
-@keyframes waveMotion {
-    0% { background-position: 0% 0%; }
-    100% { background-position: 0% 10%; }
-}
+body[data-style="style-yacht"]::before { display: none; }
