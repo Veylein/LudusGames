@@ -64,7 +64,8 @@ const MK_CAST = [
     { id: "JAX", name: "JAX", color: "#dddddd", detail: "#444444", skin: "#885533", type: "BIG", special: "#aa00ff" }
 ];
 
-[...SF_CAST, ...MK_CAST].forEach(c => {
+const ALL_CAST = SF_CAST.concat(MK_CAST);
+ALL_CAST.forEach(c => {
     CHARACTERS[c.id] = {
         name: c.name,
         color: c.color,
