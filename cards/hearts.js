@@ -3,7 +3,7 @@ console.log("Game loaded: hearts.js");
 
 // Hearts - Basic 4-player (1 human, 3 bots)
 const heartsRanks = ["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
-const heartsSuits = ["♠","♥","♦","♣"];
+const heartsSuits = ["\u2660","\u2665","\u2666","\u2663"];
 
 let heartsDeck = [];
 let hands = [[],[],[],[]]; // 0: player, 1-3: bots
@@ -33,12 +33,12 @@ function heartsInit() {
 	scores = [0,0,0,0];
 	trick = [];
 	trickPlayers = [];
-	currentPlayer = hands[0].findIndex(c => c === "2♣"); // 2♣ starts
+	currentPlayer = hands[0].findIndex(c => c === "2\u2663"); // 2\u2663 starts
 	if (currentPlayer === -1) currentPlayer = 0;
 	heartsBroken = false;
 	roundOver = false;
 	updateHeartsUI();
-	logDiv.innerHTML = "New round! 2♣ starts.";
+	logDiv.innerHTML = "New round! 2\u2663 starts.";
 	if (currentPlayer !== 0) setTimeout(botPlay, 1000);
 }
 
@@ -71,7 +71,7 @@ function updateHeartsUI() {
 	playerHandDiv.innerHTML = "";
 	hands[0].forEach((card, idx) => {
 		const div = document.createElement("div");
-		div.className = `card show ${card.includes('♥') || card.includes('♦') ? 'red' : ''}`;
+		div.className = `card show ${card.includes('\u2665') || card.includes('\u2666') ? 'red' : ''}`;
 		div.textContent = card;
 		div.onclick = () => playCard(idx);
 		playerHandDiv.appendChild(div);
@@ -90,7 +90,7 @@ function updateHeartsUI() {
 	trickDiv.innerHTML = "";
 	trick.forEach((card, i) => {
 		let d = document.createElement("div");
-		d.className = `card show ${card.includes('♥') || card.includes('♦') ? 'red' : ''}`;
+		d.className = `card show ${card.includes('\u2665') || card.includes('\u2666') ? 'red' : ''}`;
 		d.textContent = card;
 		trickDiv.appendChild(d);
 	});
@@ -136,7 +136,7 @@ function nextPlayer() {
 			}
 		}
 		let winner = trickPlayers[highIdx];
-		let points = trick.filter(c => c.slice(-1) === "♥").length + trick.filter(c => c === "Q♠").length * 13;
+		let points = trick.filter(c => c.slice(-1) === "\u2665").length + trick.filter(c => c === "Q\u2660").length * 13;
 		scores[winner] += points;
 		if (window.addPoints && winner === 0) window.addPoints(10);
 		logDiv.innerHTML += `<br>Trick won by ${winner === 0 ? 'You' : 'Bot'+winner} (+${points})`;

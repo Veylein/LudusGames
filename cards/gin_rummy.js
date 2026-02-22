@@ -3,7 +3,7 @@ console.log("Game loaded: gin_rummy.js");
 
 // Gin Rummy - 2 players (1 human, 1 bot), basic draw/discard/knock
 const ginRanks = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
-const ginSuits = ["♠","♥","♦","♣"];
+const ginSuits = ["\u2660","\u2665","\u2666","\u2663"];
 
 let ginDeck = [];
 let ginHands = [[],[]]; // 0: player, 1: bot
@@ -56,7 +56,7 @@ function updateGinUI() {
 	ginPlayerHandDiv.innerHTML = "";
 	ginHands[0].forEach((card, idx) => {
 		const div = document.createElement("div");
-		div.className = `card show ${card.includes('♥') || card.includes('♦') ? 'red' : ''}`;
+		div.className = `card show ${card.includes('\u2665') || card.includes('\u2666') ? 'red' : ''}`;
 		div.textContent = card;
 		if (ginDrawn && ginCurrentPlayer === 0) {
 			div.onclick = () => ginDiscardCard(idx);
@@ -79,7 +79,7 @@ function updateGinUI() {
 	let discardContent = "";
 	if (ginDiscard.length) {
 		let card = ginDiscard[ginDiscard.length-1];
-		discardContent = `<div class='card show ${card.includes('♥') || card.includes('♦') ? 'red' : ''}'>${card}</div>`;
+		discardContent = `<div class='card show ${card.includes('\u2665') || card.includes('\u2666') ? 'red' : ''}'>${card}</div>`;
 	}
 	ginDiscardDiv.innerHTML = discardContent;
 	ginDiscardDiv.onclick = () => ginRummyAction('draw_discard');

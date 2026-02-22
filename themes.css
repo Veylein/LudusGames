@@ -1,80 +1,100 @@
-/* UPDATED THEMES FOR RETRO STYLE */
+/* LUDUS THEMES - 5 STYLES */
 
-.theme-dark {
-    /* DEFAULT */
+/* 1. CLASSIC (Retro Grid - Default) */
+.theme-classic {
+    /* Uses default variables from style.css */
 }
 
-.theme-light {
-    --bg-color: #f0f0f0;
-    --text-color: #333333;
-    --accent-color: #ff0055; /* Darker Pink */
-    --secondary-color: #0055ff; /* Darker Blue */
-    --border-color: #000000;
-    --shadow-color: #888888;
+/* 2. RELAXATION (Cozy, Chillaxing) */
+.theme-relaxation {
+    --bg-color: #2c3e50;
+    --text-color: #f7f9f9;
+    --accent-color: #e67e22; 
+    --secondary-color: #1abc9c;
+    --border-color: #bdc3c7;
+    --shadow-color: #34495e;
 }
 
-body.theme-light {
+body.theme-relaxation {
+    background: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%);
+    background-attachment: fixed;
+    animation: none; 
+}
+body.theme-relaxation::before { display: none; }
+
+
+/* 3. ARCADE (Pacman, Snake, etc style) */
+.theme-arcade {
+    --bg-color: #000;
+    --text-color: #ffcc00; 
+    --accent-color: #ff0000; 
+    --secondary-color: #0000ff; 
+    --border-color: #ffcc00;
+    --shadow-color: #0000aa;
+}
+
+body.theme-arcade {
+    background-color: #000;
     background-image: 
-        linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+        radial-gradient(circle, #333 1px, transparent 1px),
+        radial-gradient(circle, #333 1px, transparent 1px);
+    background-size: 20px 20px;
+    background-position: 0 0, 10px 10px;
+    animation: arcadeScroll 4s linear infinite;
 }
 
-.theme-holo {
-    --bg-color: #220033;
-    --text-color: #00ffff;
-    --accent-color: #ff00ff;
-    --secondary-color: #ffff00;
-    --border-color: rgba(255,255,255,0.8);
-    
-    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
-    background-size: 400% 400%;
-    animation: holoShift 15s ease infinite;
+@keyframes arcadeScroll {
+    0% { background-position: 0 0, 10px 10px; }
+    100% { background-position: 20px 20px, 30px 30px; }
 }
 
-@keyframes holoShift {
-    0% { background-position: 0% 50% }
-    50% { background-position: 100% 50% }
-    100% { background-position: 0% 50% }
+
+/* 4. CASINO (Vegas Style - Green Felt) */
+.theme-casino {
+    --bg-color: #043815; 
+    --text-color: #ffd700; 
+    --accent-color: #ff0000; 
+    --secondary-color: #000000; 
+    --border-color: #ffd700;
+    --shadow-color: #000000;
 }
 
-.theme-rainbow {
-    animation: rainbowEffect 5s linear infinite;
+body.theme-casino {
+    background: #043815;
+    background-image: repeating-linear-gradient(
+        45deg,
+        rgba(255,255,255,0.05) 0px,
+        rgba(255,255,255,0.05) 2px,
+        transparent 2px,
+        transparent 10px
+    );
+    animation: none;
+}
+body.theme-casino::before {
+    background: radial-gradient(circle at center, transparent 30%, #000 100%);
+    background-size: 100% 100%;
+    opacity: 0.6;
 }
 
-@keyframes rainbowEffect {
-    0% { filter: hue-rotate(0deg); }
-    100% { filter: hue-rotate(360deg); }
+
+/* 5. YACHT (Ocean Luxury) */
+.theme-yacht {
+    --bg-color: #fff;
+    --text-color: #002147; 
+    --accent-color: #c0c0c0; 
+    --secondary-color: #ff4500; 
+    --border-color: #002147;
+    --shadow-color: rgba(0,0,0,0.2);
 }
 
-.theme-opal-fire {
-    --bg-color: #1a0505; /* Deep dark red/brown base */
-    --text-color: #ffcc00; /* Gold/Fire text */
-    --accent-color: #ff4500; /* Orange Red */
-    --secondary-color: #ff00ff; /* Magenta/Purple highlights */
-    --border-color: #ffaa00; /* Orange border */
-    --shadow-color: #550000; /* Deep red shadow */
-    
-    background: linear-gradient(135deg, #2b0a0a, #4a0e0e);
-    position: relative;
-    overflow: hidden;
+body.theme-yacht {
+    background: linear-gradient(180deg, #87CEEB 0%, #1E90FF 100%);
+    background-attachment: fixed;
+    animation: waveMotion 8s ease-in-out infinite alternate;
 }
+body.theme-yacht::before { display: none; }
 
-/* Opal Fire Specific Animation */
-body.theme-opal-fire::after {
-    content: "";
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255, 69, 0, 0.1) 10%, transparent 40%),
-                radial-gradient(circle, rgba(255, 0, 255, 0.05) 20%, transparent 50%);
-    animation: opalShimmer 8s ease-in-out infinite alternate;
-    pointer-events: none;
-    z-index: -1;
-}
-
-@keyframes opalShimmer {
-    0% { transform: translate(0, 0) scale(1); opacity: 0.5; }
-    100% { transform: translate(-20px, -20px) scale(1.1); opacity: 0.8; }
+@keyframes waveMotion {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 0% 10%; }
 }

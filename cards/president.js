@@ -3,7 +3,7 @@ console.log("Game loaded: president.js");
 
 // President - 2 players (1 human, 1 bot), basic play/pass
 const presRanks = ["3","4","5","6","7","8","9","10","J","Q","K","A","2"];
-const presSuits = ["♠","♥","♦","♣"];
+const presSuits = ["\u2660","\u2665","\u2666","\u2663"];
 
 let presDeck = [];
 let presHands = [[],[]]; // 0: player, 1: bot
@@ -55,7 +55,7 @@ function updatePresUI() {
 	presPlayerHandDiv.innerHTML = "";
 	presHands[0].forEach((card, idx) => {
 		const div = document.createElement("div");
-		div.className = `card show ${card.includes('♥') || card.includes('♦') ? 'red' : ''}` + (presSelected.includes(idx) ? " selected" : "");
+		div.className = `card show ${card.includes('\u2665') || card.includes('\u2666') ? 'red' : ''}` + (presSelected.includes(idx) ? " selected" : "");
 		div.textContent = card;
 		div.onclick = () => presSelectCard(idx);
 		presPlayerHandDiv.appendChild(div);
@@ -72,7 +72,7 @@ function updatePresUI() {
 	let pileContent = "";
 	if (presPile.length) {
 		let card = presPile[presPile.length-1];
-		pileContent = `<div class='card show ${card.includes('♥') || card.includes('♦') ? 'red' : ''}'>${card}</div>`;
+		pileContent = `<div class='card show ${card.includes('\u2665') || card.includes('\u2666') ? 'red' : ''}'>${card}</div>`;
 	}
 	presPileDiv.innerHTML = pileContent;
 	// Scoreboard

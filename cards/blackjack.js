@@ -1,7 +1,7 @@
 /* SINGLE PLAYER RETRO BLACKJACK */
 
 const ranks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
-const suits = ["♠", "♥", "♦", "♣"];
+const suits = ["\u2660", "\u2665", "\u2666", "\u2663"];
 
 let deck = [];
 let dealerHand = [];
@@ -201,7 +201,7 @@ function updateDisplay(showDealer = false) {
             cDiv.classList.add("back");
         } else {
             cDiv.innerText = `${card.rank}${card.suit}`;
-            if (card.suit === "♥" || card.suit === "♦") cDiv.classList.add("red");
+            if (card.suit === "\u2665" || card.suit === "\u2666") cDiv.classList.add("red");
         }
         dealerArea.appendChild(cDiv);
     });
@@ -215,7 +215,7 @@ function updateDisplay(showDealer = false) {
         const cDiv = document.createElement("div");
         cDiv.className = "card";
         cDiv.innerText = `${card.rank}${card.suit}`;
-        if (card.suit === "♥" || card.suit === "♦") cDiv.classList.add("red");
+        if (card.suit === "\u2665" || card.suit === "\u2666") cDiv.classList.add("red");
         playerArea.appendChild(cDiv);
     });
     

@@ -3,7 +3,7 @@ console.log("Game loaded: poker.js");
 
 // Poker (Texas Hold'em) - Simple Single Player vs Bot
 const pokerRanks = ["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
-const pokerSuits = ["♠","♥","♦","♣"];
+const pokerSuits = ["\u2660", "\u2665", "\u2666", "\u2663"];
 
 let pokerDeck = [];
 let playerChips = 1000;
@@ -58,7 +58,7 @@ function updatePokerUI() {
 	playerHand.forEach(card => {
 		const div = document.createElement("div");
 		div.className = "card";
-        if (card.includes('♥') || card.includes('♦')) div.classList.add('red');
+        if (card.includes('\u2665') || card.includes('\u2666')) div.classList.add('red');
 		div.textContent = card;
 		playerHandDiv.appendChild(div);
 	});
@@ -69,7 +69,7 @@ function updatePokerUI() {
 		div.className = "card";
         // If showing down, reveal
         if (roundStage === 4 && !botFolded) {
-             if (card.includes('♥') || card.includes('♦')) div.classList.add('red');
+             if (card.includes('\u2665') || card.includes('\u2666')) div.classList.add('red');
              div.textContent = card;
         } else {
              div.textContent = "?";
@@ -82,7 +82,7 @@ function updatePokerUI() {
 	communityCards.forEach(card => {
 		const div = document.createElement("div");
 		div.className = "card";
-        if (card.includes('♥') || card.includes('♦')) div.classList.add('red');
+        if (card.includes('\u2665') || card.includes('\u2666')) div.classList.add('red');
 		div.textContent = card;
 		communityDiv.appendChild(div);
 	});

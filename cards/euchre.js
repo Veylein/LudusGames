@@ -3,7 +3,7 @@ console.log("Game loaded: euchre.js");
 
 // Euchre - 4 players (1 human, 3 bots), trick-taking only (no bidding, no trump for simplicity)
 const euchreRanks = ["9","10","J","Q","K","A"];
-const euchreSuits = ["♠","♥","♦","♣"];
+const euchreSuits = ["\u2660","\u2665","\u2666","\u2663"];
 
 let euchreDeck = [];
 let euchreHands = [[],[],[],[]]; // 0: player, 1-3: bots
@@ -68,7 +68,7 @@ function updateEuchreUI() {
 	euchrePlayerHandDiv.innerHTML = "";
 	euchreHands[0].forEach((card, idx) => {
 		const div = document.createElement("div");
-		div.className = `card show ${card.includes('♥') || card.includes('♦') ? 'red' : ''}`;
+		div.className = `card show ${card.includes('\u2665') || card.includes('\u2666') ? 'red' : ''}`;
 		div.textContent = card;
 		div.onclick = () => euchrePlayCard(idx);
 		euchrePlayerHandDiv.appendChild(div);
@@ -87,7 +87,7 @@ function updateEuchreUI() {
 	euchreTrickDiv.innerHTML = "";
 	euchreTrick.forEach((card, i) => {
 		let d = document.createElement("div");
-		d.className = `card show ${card.includes('♥') || card.includes('♦') ? 'red' : ''}`;
+		d.className = `card show ${card.includes('\u2665') || card.includes('\u2666') ? 'red' : ''}`;
 		d.textContent = card;
 		euchreTrickDiv.appendChild(d);
 	});

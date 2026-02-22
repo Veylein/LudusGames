@@ -3,7 +3,7 @@ console.log("Game loaded: pinochle.js");
 
 // Pinochle - 4 players (1 human, 3 bots), trick-taking only (no bidding, no melds for simplicity)
 const pinochleRanks = ["9","J","Q","K","10","A"];
-const pinochleSuits = ["♠","♥","♦","♣"];
+const pinochleSuits = ["\u2660","\u2665","\u2666","\u2663"];
 
 let pinochleDeck = [];
 let pinochleHands = [[],[],[],[]]; // 0: player, 1-3: bots
@@ -69,7 +69,7 @@ function updatePinochleUI() {
 	pinochlePlayerHandDiv.innerHTML = "";
 	pinochleHands[0].forEach((card, idx) => {
 		const div = document.createElement("div");
-		div.className = `card show ${card.includes('♥') || card.includes('♦') ? 'red' : ''}`;
+		div.className = `card show ${card.includes('\u2665') || card.includes('\u2666') ? 'red' : ''}`;
 		div.textContent = card;
 		div.onclick = () => pinochlePlayCard(idx);
 		pinochlePlayerHandDiv.appendChild(div);
@@ -88,7 +88,7 @@ function updatePinochleUI() {
 	pinochleTrickDiv.innerHTML = "";
 	pinochleTrick.forEach((card, i) => {
 		let d = document.createElement("div");
-		d.className = `card show ${card.includes('♥') || card.includes('♦') ? 'red' : ''}`;
+		d.className = `card show ${card.includes('\u2665') || card.includes('\u2666') ? 'red' : ''}`;
 		d.textContent = card;
 		pinochleTrickDiv.appendChild(d);
 	});

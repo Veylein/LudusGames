@@ -2,7 +2,7 @@
 /* WAR - BATTLE CARD GAME */
 
 const ranks = ["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
-const suits = ["♠","♥","♦","♣"];
+const suits = ["\u2660", "\u2665", "\u2666", "\u2663"];
 
 let deck = [];
 let playerDeck = [];
@@ -68,7 +68,7 @@ function updateUI() {
             [pCard, bCard].forEach(card => {
                 const c = document.createElement("div");
                 c.className = "card";
-                if (["", ""].includes(card.suit)) c.classList.add("red");
+                if (["\u2665", "\u2666"].includes(card.suit)) c.classList.add("red");
                 c.innerText = `${card.rank}${card.suit}`;
                 fieldDiv.appendChild(c);
             });

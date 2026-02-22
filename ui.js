@@ -11,8 +11,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /* THEME SYSTEM */
 function initTheme() {
-    const savedTheme = localStorage.getItem("theme") || "theme-dark";
-    document.body.className = savedTheme;
+    const savedTheme = localStorage.getItem("theme") || "theme-classic";
+    // Remove old theme classes but keep others
+    document.body.classList.remove("theme-classic", "theme-relaxation", "theme-arcade", "theme-casino", "theme-yacht", "theme-dark", "theme-light", "theme-holo", "theme-rainbow", "theme-opal-fire");
+    document.body.classList.add(savedTheme);
 
     const themeBtn = document.getElementById("themeBtn");
     const themeDropdown = document.querySelector(".theme-dropdown"); // This selects only the FIRST theme dropdown
@@ -40,7 +42,9 @@ function initTheme() {
             btn.addEventListener("click", () => {
                 const newTheme = btn.dataset.theme;
                 if (newTheme) {
-                    document.body.className = newTheme;
+                    // Remove old themes, keep utility classes
+                    document.body.classList.remove("theme-classic", "theme-relaxation", "theme-arcade", "theme-casino", "theme-yacht", "theme-dark", "theme-light", "theme-holo", "theme-rainbow", "theme-opal-fire");
+                    document.body.classList.add(newTheme);
                     localStorage.setItem("theme", newTheme);
                     themeDropdown.classList.remove("open"); // Auto-close
                 }

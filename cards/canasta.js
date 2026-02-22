@@ -3,7 +3,7 @@ console.log("Game loaded: canasta.js");
 
 // Canasta - 2 players (1 human, 1 bot), simplified draw/discard
 const canastaRanks = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
-const canastaSuits = ["♠","♥","♦","♣"];
+const canastaSuits = ["\u2660","\u2665","\u2666","\u2663"];
 
 let canastaDeck = [];
 let canastaHands = [[],[]]; // 0: player, 1: bot
@@ -57,7 +57,7 @@ function updateCanastaUI() {
 	canastaPlayerHandDiv.innerHTML = "";
 	canastaHands[0].forEach((card, idx) => {
 		const div = document.createElement("div");
-		div.className = `card show ${card.includes('♥') || card.includes('♦') ? 'red' : ''}`;
+		div.className = `card show ${card.includes('\u2665') || card.includes('\u2666') ? 'red' : ''}`;
 		div.textContent = card;
 		div.onclick = () => canastaPlayCard(idx);
 		canastaPlayerHandDiv.appendChild(div);
@@ -75,7 +75,7 @@ function updateCanastaUI() {
 	if (canastaDiscard.length) {
 		let d = document.createElement("div");
 		let card = canastaDiscard[canastaDiscard.length-1];
-		d.className = `card show ${card.includes('♥') || card.includes('♦') ? 'red' : ''}`;
+		d.className = `card show ${card.includes('\u2665') || card.includes('\u2666') ? 'red' : ''}`;
 		d.textContent = card;
 		canastaDiscardDiv.appendChild(d);
 	}

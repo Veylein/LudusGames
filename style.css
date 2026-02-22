@@ -37,6 +37,12 @@ body[data-font="classic"] {
     --main-font: 'Libre Baskerville', serif;
 }
 
+body[data-font="discord"] {
+    --main-font: "gg sans", "Whitney", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 500; /* Discord uses slightly heavier weight */
+}
+
+
 body {
     min-height: 100vh;
     background-color: var(--bg-color);

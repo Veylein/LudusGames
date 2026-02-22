@@ -3,7 +3,7 @@ console.log("Game loaded: rummy.js");
 // Rummy game logic will go here
 // Rummy - 2 players (1 human, 1 bot)
 const rummyRanks = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
-const rummySuits = ["♠","♥","♦","♣"];
+const rummySuits = ["\u2660","\u2665","\u2666","\u2663"];
 
 let rummyDeck = [];
 let rummyHands = [[],[]]; // 0: player, 1: bot
@@ -56,7 +56,7 @@ function updateRummyUI() {
 	rummyPlayerHandDiv.innerHTML = "";
 	rummyHands[0].forEach((card, idx) => {
 		const div = document.createElement("div");
-		div.className = `card show ${card.includes('♥') || card.includes('♦') ? 'red' : ''}`;
+		div.className = `card show ${card.includes('\u2665') || card.includes('\u2666') ? 'red' : ''}`;
 		div.textContent = card;
 		div.onclick = () => rummyPlayCard(idx);
 		rummyPlayerHandDiv.appendChild(div);
@@ -74,7 +74,7 @@ function updateRummyUI() {
 	if (rummyDiscard.length) {
 		let d = document.createElement("div");
 		let card = rummyDiscard[rummyDiscard.length-1];
-		d.className = `card show ${card.includes('♥') || card.includes('♦') ? 'red' : ''}`;
+		d.className = `card show ${card.includes('\u2665') || card.includes('\u2666') ? 'red' : ''}`;
 		d.textContent = card;
 		rummyDiscardDiv.appendChild(d);
 	}

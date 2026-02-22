@@ -3,7 +3,7 @@ console.log("Game loaded: spoons.js");
 
 // Spoons - 2 players (1 human, 1 bot), basic pass/grab, first to grab spoon wins
 const spoonsRanks = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
-const spoonsSuits = ["♠","♥","♦","♣"];
+const spoonsSuits = ["\u2660","\u2665","\u2666","\u2663"];
 
 let spoonsDeck = [];
 let spoonsHands = [[],[]]; // 0: player, 1: bot
@@ -59,7 +59,7 @@ function updateSpoonsUI() {
 	spoonsHands[0].forEach((card, idx) => {
 		const div = document.createElement("div");
 		div.className = "card show";
-		if (card.includes("♥") || card.includes("♦")) {
+		if (card.includes("\u2665") || card.includes("\u2666")) {
 			div.classList.add("red");
 		}
 		div.textContent = card;
@@ -83,7 +83,7 @@ function updateSpoonsUI() {
 		let top = spoonsPile[spoonsPile.length-1];
 		let c = document.createElement("div");
 		c.className = "card show";
-		if (top.includes("♥") || top.includes("♦")) {
+		if (top.includes("\u2665") || top.includes("\u2666")) {
 			c.classList.add("red");
 		}
 		c.textContent = top;

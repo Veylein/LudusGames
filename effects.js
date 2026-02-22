@@ -2,7 +2,7 @@ const emojiToggle = document.getElementById("emojiToggle");
 const container = document.getElementById("emoji-container");
 
 let rainInterval;
-const symbols = ["♠", "♥", "♦", "♣", "1", "0", "L", "U", "D", "U", "S"];
+const symbols = ["\u2660", "\u2665", "\u2666", "\u2663", "1", "0", "L", "U", "D", "U", "S"];
 const colors = ["#00ff9d", "#ff00ff", "#00ffff"];
 
 if (emojiToggle) {

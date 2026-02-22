@@ -3,9 +3,10 @@
 .game-wrapper {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    min-height: 100vh;
     padding: 20px;
-    background: #1a0b2e; /* Dark purple felt */
+    background: transparent; /* Allow body theme to show */
+    color: var(--text-color);
 }
 
 .top-bar {
@@ -110,23 +111,25 @@
 }
 
 .card {
-    width: 50px;
-    height: 70px;
+    width: 60px;
+    height: 84px;
     background: #fff;
     color: #000;
     border: 2px solid #000;
+    border-radius: 5px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: 20px;
     font-weight: bold;
-    box-shadow: 3px 3px 0 #000;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
     /* Pixel art corners - no radius */
-    image-rendering: pixelated;
+    /* image-rendering: pixelated; removed pixelated to look cleaner */
     transition: transform 0.2s, margin-top 0.2s;
     cursor: default;
     user-select: none;
     position: relative;
+    margin: 5px; /* Add margin to ensure visibility */
 }
 
 .card:hover {
@@ -138,9 +141,17 @@
     color: #ff0055;
 }
 
-.card.hidden {
+.card.hidden, .card.back {
     background: #333;
     color: #333;
+    background-image: repeating-linear-gradient(
+        45deg,
+        #222,
+        #222 5px,
+        #333 5px,
+        #333 10px
+    );
+}
     background-image: repeating-linear-gradient(
         45deg,
         #222,

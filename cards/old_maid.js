@@ -3,7 +3,7 @@ console.log("Game loaded: old_maid.js");
 
 // Old Maid - 3 players (1 human, 2 bots)
 const omRanks = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
-const omSuits = ["♠","♥","♦","♣"];
+const omSuits = ["\u2660","\u2665","\u2666","\u2663"];
 
 let omDeck = [];
 let omHands = [[],[],[]]; // 0: player, 1-2: bots
@@ -83,7 +83,7 @@ function updateOmUI() {
 	omPlayerHandDiv.innerHTML = "";
 	omHands[0].forEach((card, idx) => {
 		const div = document.createElement("div");
-		div.className = `card show ${card.includes('♥') || card.includes('♦') ? 'red' : ''}`;
+		div.className = `card show ${card.includes('\u2665') || card.includes('\u2666') ? 'red' : ''}`;
 		div.textContent = card;
 		// In Old Maid, you generally don't click your own cards to play, 
 		// but maybe to see them. The game logic `omPickCard` seems to pick from *next* player?

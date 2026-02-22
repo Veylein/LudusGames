@@ -3,7 +3,7 @@ console.log("Game loaded: bridge.js");
 
 // Bridge - 4 players (1 human, 3 bots), trick-taking only (no bidding)
 const bridgeRanks = ["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
-const bridgeSuits = ["♠","♥","♦","♣"];
+const bridgeSuits = ["\u2660","\u2665","\u2666","\u2663"];
 
 let bridgeDeck = [];
 let bridgeHands = [[],[],[],[]]; // 0: player, 1-3: bots
@@ -68,7 +68,7 @@ function updateBridgeUI() {
 	bridgePlayerHandDiv.innerHTML = "";
 	bridgeHands[0].forEach((card, idx) => {
 		const div = document.createElement("div");
-		div.className = `card show ${card.includes('♥') || card.includes('♦') ? 'red' : ''}`;
+		div.className = `card show ${card.includes('\u2665') || card.includes('\u2666') ? 'red' : ''}`;
 		div.textContent = card;
 		div.onclick = () => bridgePlayCard(idx);
 		bridgePlayerHandDiv.appendChild(div);
@@ -87,7 +87,7 @@ function updateBridgeUI() {
 	bridgeTrickDiv.innerHTML = "";
 	bridgeTrick.forEach((card, i) => {
 		let d = document.createElement("div");
-		d.className = `card show ${card.includes('♥') || card.includes('♦') ? 'red' : ''}`;
+		d.className = `card show ${card.includes('\u2665') || card.includes('\u2666') ? 'red' : ''}`;
 		d.textContent = card;
 		bridgeTrickDiv.appendChild(d);
 	});

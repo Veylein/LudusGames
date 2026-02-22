@@ -3,7 +3,7 @@ console.log("Game loaded: snap.js");
 
 // Snap - 2 players (1 human, 1 bot)
 const snapRanks = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
-const snapSuits = ["♠","♥","♦","♣"];
+const snapSuits = ["\u2660","\u2665","\u2666","\u2663"];
 
 let snapDeck = [];
 let snapHands = [[],[]]; // 0: player, 1: bot
@@ -80,7 +80,7 @@ function updateSnapUI() {
 		let topCard = snapPile[snapPile.length - 1];
 		let c = document.createElement("div");
 		c.className = "card show";
-		if (topCard.includes("♥") || topCard.includes("♦")) {
+		if (topCard.includes("\u2665") || topCard.includes("\u2666")) {
 			c.classList.add("red");
 		}
 		c.textContent = topCard;

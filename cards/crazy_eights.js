@@ -3,7 +3,7 @@ console.log("Game loaded: crazy_eights.js");
 
 // Crazy Eights - 3 players (1 human, 2 bots)
 const ceRanks = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
-const ceSuits = ["♠","♥","♦","♣"];
+const ceSuits = ["\u2660","\u2665","\u2666","\u2663"];
 
 let ceDeck = [];
 let ceHands = [[],[],[]]; // 0: player, 1-2: bots
@@ -57,7 +57,7 @@ function updateCeUI() {
 	cePlayerHandDiv.innerHTML = "";
 	ceHands[0].forEach((card, idx) => {
 		const div = document.createElement("div");
-		div.className = `card show ${card.includes('♥') || card.includes('♦') ? 'red' : ''}`;
+		div.className = `card show ${card.includes('\u2665') || card.includes('\u2666') ? 'red' : ''}`;
 		div.textContent = card;
 		div.onclick = () => cePlayCard(idx);
 		cePlayerHandDiv.appendChild(div);
@@ -77,7 +77,7 @@ function updateCeUI() {
 	if (ceDiscard.length) {
 		let d = document.createElement("div");
 		let card = ceDiscard[ceDiscard.length-1];
-		d.className = `card show ${card.includes('♥') || card.includes('♦') ? 'red' : ''}`;
+		d.className = `card show ${card.includes('\u2665') || card.includes('\u2666') ? 'red' : ''}`;
 		d.textContent = card;
 		ceDiscardDiv.appendChild(d);
 	}

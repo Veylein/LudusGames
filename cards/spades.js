@@ -3,7 +3,7 @@ console.log("Game loaded: spades.js");
 
 // Spades - Basic 4-player (1 human, 3 bots)
 const spadesRanks = ["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
-const spadesSuits = ["♠","♥","♦","♣"];
+const spadesSuits = ["\u2660","\u2665","\u2666","\u2663"];
 
 let spadesDeck = [];
 let hands = [[],[],[],[]]; // 0: player, 1-3: bots
@@ -71,7 +71,7 @@ function updateSpadesUI() {
 	hands[0].forEach((card, idx) => {
 		const div = document.createElement("div");
 		div.className = "card show";
-		if (card.includes("♥") || card.includes("♦")) {
+		if (card.includes("\u2665") || card.includes("\u2666")) {
 			div.classList.add("red");
 		}
 		div.textContent = card;
@@ -107,7 +107,7 @@ function updateSpadesUI() {
 	trick.forEach((card) => {
 		let d = document.createElement("div");
 		d.className = "card show";
-		if (card.includes("♥") || card.includes("♦")) {
+		if (card.includes("\u2665") || card.includes("\u2666")) {
 			d.classList.add("red");
 		}
 		d.textContent = card;

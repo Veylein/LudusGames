@@ -3,7 +3,7 @@ console.log("Game loaded: solitaire.js");
 
 // Solitaire (Klondike) - Basic Implementation
 const solRanks = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
-const solSuits = ["♠","♥","♦","♣"];
+const solSuits = ["\u2660","\u2665","\u2666","\u2663"];
 
 let solDeck = [];
 let tableau = [];
@@ -87,7 +87,7 @@ function updateSolitaireUI() {
     if (waste.length > 0) {
         let topWaste = waste[waste.length-1];
         wasteDiv.textContent = topWaste.card; // topWaste is {card: "10H", ...} wait, waste is array of objects {card, faceUp}
-        if (topWaste.card.includes("♥") || topWaste.card.includes("♦")) wasteDiv.classList.add("red");
+        if (topWaste.card.includes("\u2665") || topWaste.card.includes("\u2666")) wasteDiv.classList.add("red");
     }
 	
     swDiv.appendChild(stockDiv);
@@ -103,9 +103,9 @@ function updateSolitaireUI() {
         if (foundations[i].length > 0) {
             let topC = foundations[i][foundations[i].length-1];
             pile.textContent = topC;
-            if (topC.includes("♥") || topC.includes("♦")) pile.classList.add("red");
+            if (topC.includes("\u2665") || topC.includes("\u2666")) pile.classList.add("red");
         } else {
-            pile.textContent = ["♠","♥","♦","♣"][i]; // Placeholder suit
+            pile.textContent = ["\u2660","\u2665","\u2666","\u2663"][i]; // Placeholder suit
             pile.style.opacity = "0.3";
         }
 		fDiv.appendChild(pile);
@@ -128,7 +128,7 @@ function updateSolitaireUI() {
                 cardDiv.textContent = "?";
             } else {
                 cardDiv.textContent = c.card;
-                if (c.card.includes("♥") || c.card.includes("♦")) cardDiv.classList.add("red");
+                if (c.card.includes("\u2665") || c.card.includes("\u2666")) cardDiv.classList.add("red");
             }
 			cardDiv.onclick = () => selectTableau(i, idx);
 			colDiv.appendChild(cardDiv);

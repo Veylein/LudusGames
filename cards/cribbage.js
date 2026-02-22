@@ -3,7 +3,7 @@ console.log("Game loaded: cribbage.js");
 
 // Cribbage - 2 players (1 human, 1 bot), simplified pegging only
 const cribRanks = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
-const cribSuits = ["♠","♥","♦","♣"];
+const cribSuits = ["\u2660","\u2665","\u2666","\u2663"];
 
 let cribDeck = [];
 let cribHands = [[],[]]; // 0: player, 1: bot
@@ -52,7 +52,7 @@ function updateCribUI() {
 	cribPlayerHandDiv.innerHTML = "";
 	cribHands[0].forEach((card, idx) => {
 		const div = document.createElement("div");
-		div.className = `card show ${card.includes('♥') || card.includes('♦') ? 'red' : ''}`;
+		div.className = `card show ${card.includes('\u2665') || card.includes('\u2666') ? 'red' : ''}`;
 		div.textContent = card;
 		div.onclick = () => cribPlayCard(idx);
 		cribPlayerHandDiv.appendChild(div);
