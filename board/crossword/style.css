@@ -1,0 +1,239 @@
+:root {
+    --grid-size: 15; /* can be overridden by JS */
+    --cell-size: 32px;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'Press Start 2P', cursive;
+}
+
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+    width: 100%;
+}
+
+.crossword-wrapper {
+    display: flex;
+    gap: 30px;
+    margin-top: 20px;
+    flex-wrap: wrap; 
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.crossword-grid-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.crossword-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--grid-size), var(--cell-size));
+    grid-template-rows: repeat(var(--grid-size), var(--cell-size));
+    gap: 1px;
+    background-color: #333;
+    padding: 10px;
+    border: 4px solid #fff;
+    user-select: none;
+}
+
+.grid-cell {
+    width: var(--cell-size);
+    height: var(--cell-size);
+    background-color: #000;
+    color: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
+    cursor: default;
+    position: relative;
+    border: none;
+    text-transform: uppercase;
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: bold;
+}
+
+.grid-cell.active-cell {
+    background-color: #fff;
+    cursor: pointer;
+}
+
+.grid-cell.active-cell:focus {
+    background-color: #ffffcc;
+    outline: 2px solid #3498db;
+    z-index: 10;
+}
+
+.grid-cell.highlight-word {
+    background-color: #e6f7ff;
+}
+
+.grid-cell.highlight-selected {
+    background-color: #ffeb3b; 
+}
+
+.cell-number {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    font-size: 8px;
+    color: #333;
+    pointer-events: none;
+    font-family: sans-serif;
+}
+
+input.cell-input {
+    width: 100%;
+    height: 100%;
+    border: none;
+    text-align: center;
+    background: transparent;
+    font-size: 18px;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #000;
+    caret-color: transparent; /* hide cursor */
+    padding: 0;
+    margin: 0;
+    font-family: inherit;
+}
+
+.grid-cell.black-cell {
+    background-color: #000;
+}
+
+.grid-cell.correct {
+    color: #27ae60;
+}
+
+.grid-cell.incorrect {
+    color: #c0392b;
+}
+
+/* Sidebar */
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    width: 300px;
+    max-height: 600px;
+}
+
+.timer-display {
+    font-size: 14px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.controls-area {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    padding: 8px 12px;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    font-family: inherit;
+    font-size: 10px;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+.action-btn:hover { background: #c0392b; }
+.action-btn.secondary { background: #3498db; }
+.action-btn.secondary:hover { background: #2980b9; }
+
+
+.clues-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    border: 2px solid #fff;
+    background: rgba(0,0,0,0.5);
+    padding: 15px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.clue-section h3 {
+    margin-top: 0;
+    font-size: 12px;
+    border-bottom: 1px solid #666;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
+
+.clue-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.clue-item {
+    font-size: 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    color: #ccc;
+    padding: 4px;
+}
+
+.clue-item:hover {
+    background-color: rgba(255,255,255,0.1);
+}
+
+.clue-item.active-clue {
+    background-color: #3498db;
+    color: #fff;
+}
+
+.clue-item.solved {
+    text-decoration: line-through;
+    color: #666;
+}
+
+.clue-display-mobile {
+    margin-top: 10px;
+    padding: 10px;
+    background: #333;
+    color: #fff;
+    width: 100%;
+    text-align: center;
+    font-size: 12px;
+    border: 1px solid #666;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+.modal.hidden { display: none; }
+
+.modal-content {
+    background: #fff;
+    color: #000;
+    padding: 30px;
+    text-align: center;
+    border: 4px solid #000;
+}

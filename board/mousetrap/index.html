@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mouse Trap - Ludus Games</title>
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="../../themes.css">
+    <link rel="stylesheet" href="mousetrap.css">
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <a href="../index.html" class="back-link">← Back to Board Games</a>
+            <h1>Mouse Trap (Abstract)</h1>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+                <em>Enable Dark Mode!</em>
+            </div>
+        </header>
+
+        <main>
+            <div class="game-layout">
+                <div class="sidebar">
+                    <div class="players-list">
+                        <!-- Player scorecards go here -->
+                        <div class="player-card active" id="p1-card">
+                            <h3>Player 1 (Red)</h3>
+                            <div class="stats">
+                                <span>🧀 Cheese: <b id="p1-cheese">0</b></span>
+                            </div>
+                        </div>
+                        <div class="player-card" id="p2-card">
+                            <h3>Player 2 (Blue)</h3>
+                            <div class="stats">
+                                <span>🧀 Cheese: <b id="p2-cheese">0</b></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="trap-status">
+                        <h3>Trap Construction</h3>
+                        <div class="trap-parts">
+                            <div class="part" id="part-gear">⚙️ Gears</div>
+                            <div class="part" id="part-crank">🔄 Crank</div>
+                            <div class="part" id="part-bucket">🪣 Bucket</div>
+                            <div class="part" id="part-cage">🕸️ Cage</div>
+                        </div>
+                        <p id="trap-msg">Build parts to trap opponents!</p>
+                    </div>
+
+                    <div class="controls">
+                        <div class="dice-display" id="dice-val">🎲</div>
+                        <button id="roll-btn">Roll Die</button>
+                        <p id="game-log">Game Start! P1's Turn.</p>
+                    </div>
+                </div>
+
+                <div class="board-container">
+                    <div class="board" id="game-board">
+                        <!-- Generate spaces via JS -->
+                    </div>
+                    <!-- Absolute positioned pieces -->
+                    <div class="piece p1" id="p1-piece" style="display:none">🐭</div>
+                    <div class="piece p2" id="p2-piece" style="display:none">🐭</div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="../../effects.js"></script>
+    <script src="../../ui.js"></script>
+    <script src="mousetrap.js"></script>
+</body>
+</html>

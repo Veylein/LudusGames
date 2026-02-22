@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yahtzee - Ludus Games</title>
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="../../themes.css">
+    <link rel="stylesheet" href="yahtzee.css">
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <a href="../index.html" class="back-link">← Back to Board Games</a>
+            <h1>Yahtzee</h1>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+                <em>Enable Dark Mode!</em>
+            </div>
+        </header>
+
+        <main>
+            <div class="game-area">
+                <div class="dice-container">
+                    <div class="dice-wrapper">
+                        <div class="die" id="die-0" data-index="0">1</div>
+                        <div class="die" id="die-1" data-index="1">2</div>
+                        <div class="die" id="die-2" data-index="2">3</div>
+                        <div class="die" id="die-3" data-index="3">4</div>
+                        <div class="die" id="die-4" data-index="4">5</div>
+                    </div>
+                    <div class="controls">
+                        <button id="roll-btn">Roll Dice (3)</button>
+                        <div id="turn-indicator">Turn: 1/13</div>
+                    </div>
+                </div>
+
+                <div class="scorecard">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Upper Section</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="score-row" data-category="ones">
+                                <td>Ones</td>
+                                <td class="score-value" id="score-ones"></td>
+                            </tr>
+                            <tr class="score-row" data-category="twos">
+                                <td>Twos</td>
+                                <td class="score-value" id="score-twos"></td>
+                            </tr>
+                            <tr class="score-row" data-category="threes">
+                                <td>Threes</td>
+                                <td class="score-value" id="score-threes"></td>
+                            </tr>
+                            <tr class="score-row" data-category="fours">
+                                <td>Fours</td>
+                                <td class="score-value" id="score-fours"></td>
+                            </tr>
+                            <tr class="score-row" data-category="fives">
+                                <td>Fives</td>
+                                <td class="score-value" id="score-fives"></td>
+                            </tr>
+                            <tr class="score-row" data-category="sixes">
+                                <td>Sixes</td>
+                                <td class="score-value" id="score-sixes"></td>
+                            </tr>
+                            <tr class="total-row">
+                                <td>Sum</td>
+                                <td id="upper-sum">0</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td>Bonus (63+)</td>
+                                <td id="upper-bonus">0</td>
+                            </tr>
+                            <tr class="total-row">
+                                <td><strong>Upper Total</strong></td>
+                                <td id="upper-total"><strong>0</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Lower Section</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="score-row" data-category="three-kind">
+                                <td>3 of a Kind</td>
+                                <td class="score-value" id="score-three-kind"></td>
+                            </tr>
+                            <tr class="score-row" data-category="four-kind">
+                                <td>4 of a Kind</td>
+                                <td class="score-value" id="score-four-kind"></td>
+                            </tr>
+                            <tr class="score-row" data-category="full-house">
+                                <td>Full House</td>
+                                <td class="score-value" id="score-full-house"></td>
+                            </tr>
+                            <tr class="score-row" data-category="small-straight">
+                                <td>Small Straight</td>
+                                <td class="score-value" id="score-small-straight"></td>
+                            </tr>
+                            <tr class="score-row" data-category="large-straight">
+                                <td>Large Straight</td>
+                                <td class="score-value" id="score-large-straight"></td>
+                            </tr>
+                            <tr class="score-row" data-category="yahtzee">
+                                <td>Yahtzee</td>
+                                <td class="score-value" id="score-yahtzee"></td>
+                            </tr>
+                            <tr class="score-row" data-category="chance">
+                                <td>Chance</td>
+                                <td class="score-value" id="score-chance"></td>
+                            </tr>
+                            <tr class="total-row">
+                                <td><strong>Lower Total</strong></td>
+                                <td id="lower-total"><strong>0</strong></td>
+                            </tr>
+                            <tr class="grand-total-row">
+                                <td><strong>GRAND TOTAL</strong></td>
+                                <td id="grand-total"><strong>0</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div id="game-over-modal" class="modal">
+                <div class="modal-content">
+                    <h2>Game Over!</h2>
+                    <p>Your Final Score: <span id="final-score">0</span></p>
+                    <button id="restart-btn">Play Again</button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+    <script src="../../ui.js"></script>
+    <script src="yahtzee.js"></script>
+</body>
+</html>
