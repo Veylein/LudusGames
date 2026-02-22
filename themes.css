@@ -1,0 +1,80 @@
+/* UPDATED THEMES FOR RETRO STYLE */
+
+.theme-dark {
+    /* DEFAULT */
+}
+
+.theme-light {
+    --bg-color: #f0f0f0;
+    --text-color: #333333;
+    --accent-color: #ff0055; /* Darker Pink */
+    --secondary-color: #0055ff; /* Darker Blue */
+    --border-color: #000000;
+    --shadow-color: #888888;
+}
+
+body.theme-light {
+    background-image: 
+        linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+}
+
+.theme-holo {
+    --bg-color: #220033;
+    --text-color: #00ffff;
+    --accent-color: #ff00ff;
+    --secondary-color: #ffff00;
+    --border-color: rgba(255,255,255,0.8);
+    
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: holoShift 15s ease infinite;
+}
+
+@keyframes holoShift {
+    0% { background-position: 0% 50% }
+    50% { background-position: 100% 50% }
+    100% { background-position: 0% 50% }
+}
+
+.theme-rainbow {
+    animation: rainbowEffect 5s linear infinite;
+}
+
+@keyframes rainbowEffect {
+    0% { filter: hue-rotate(0deg); }
+    100% { filter: hue-rotate(360deg); }
+}
+
+.theme-opal-fire {
+    --bg-color: #1a0505; /* Deep dark red/brown base */
+    --text-color: #ffcc00; /* Gold/Fire text */
+    --accent-color: #ff4500; /* Orange Red */
+    --secondary-color: #ff00ff; /* Magenta/Purple highlights */
+    --border-color: #ffaa00; /* Orange border */
+    --shadow-color: #550000; /* Deep red shadow */
+    
+    background: linear-gradient(135deg, #2b0a0a, #4a0e0e);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Opal Fire Specific Animation */
+body.theme-opal-fire::after {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 69, 0, 0.1) 10%, transparent 40%),
+                radial-gradient(circle, rgba(255, 0, 255, 0.05) 20%, transparent 50%);
+    animation: opalShimmer 8s ease-in-out infinite alternate;
+    pointer-events: none;
+    z-index: -1;
+}
+
+@keyframes opalShimmer {
+    0% { transform: translate(0, 0) scale(1); opacity: 0.5; }
+    100% { transform: translate(-20px, -20px) scale(1.1); opacity: 0.8; }
+}

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blackjack</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="cards.css">
+</head>
+<body>
+  <div class="game-wrapper">
+    <div class="top-bar">
+      <h1>🂡 Blackjack</h1>
+      <div id="blackjack-scoreboard" class="scoreboard">Wins: 0</div>
+    </div>
+    <div class="table">
+      <div class="bot-area">
+        <div class="player-hand-container">
+            <div class="player-info">
+                <strong>DEALER</strong><br>
+                <span id="dealer-score">?</span>
+            </div>
+            <div class="hand" id="dealer-hand"></div>
+        </div>
+      </div>
+      <div class="center-area">
+        <div class="log" id="log"></div>
+      </div>
+
+      <div class="player-area">
+        <div class="player-hand-container active-turn" style="min-width: 300px;">
+            <div class="player-info">
+                <strong>PLAYER 1</strong><br>
+                <span id="player-score">Score: 0</span>
+            </div>
+            <div class="hand" id="player-hand"></div>
+        </div>
+      </div>
+      
+      <div class="controls" id="game-controls">
+          <button onclick="blackjackAction('hit')">Hit</button>
+          <button onclick="blackjackAction('stand')">Stand</button>
+          <button onclick="newGame()">New Hand</button>
+      </div>
+    </div>
+  </div>
+  <script src="blackjack.js"></script>
+  <script src="../ui.js"></script>
+</body>
+</html>

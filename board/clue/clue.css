@@ -1,0 +1,301 @@
+:root {
+    --clue-red: #d32f2f;
+    --clue-yellow: #fbc02d;
+    --clue-white: #eeeeee;
+    --clue-green: #388e3c;
+    --clue-blue: #1976d2;
+    --clue-purple: #7b1fa2;
+    --board-bg: #4e342e;
+    --room-bg: #f5f5f5;
+    --corridor-bg: #bdbdbd;
+}
+
+body.theme-dark {
+    background-color: #121212;
+    color: #e0e0e0;
+}
+
+.game-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+    height: 90vh;
+}
+
+/* Board Styling */
+.board-container {
+    background-color: var(--board-bg);
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+/* 
+   We will treat the board as a 5x5 grid of "Zones".
+   1,1 Study | 1,2 Hallway | 1,3 Hall | 1,4 Hallway | 1,5 Lounge
+   ...
+*/
+.board-grid {
+    display: grid;
+    grid-template-columns: repeat(24, 1fr);
+    grid-template-rows: repeat(25, 1fr);
+    gap: 1px;
+    width: 100%;
+    aspect-ratio: 24/25;
+    max-height: 90vh;
+    background-color: #5d4037; /* Wall color */
+}
+
+.room-cell {
+    background-color: var(--room-bg);
+    border: none;
+    /* Remove text from individual cells */
+    color: transparent; 
+}
+.room-cell.room-label-cell {
+    color: #333;
+    font-weight: bold;
+    font-size: 0.7rem;
+    pointer-events: none; /* Let clicks pass through label if needed, or handle normally */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    overflow: visible;
+    white-space: nowrap;
+    z-index: 5;
+}
+
+.corridor-cell {
+    background-color: #eecfa1; /* Flooring color */
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+.blocked-cell {
+    background-color: transparent;
+    border: none;
+}
+
+.start-cell {
+    background-color: #eecfa1;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+.door-cell {
+    background-color: #eecfa1; /* Flooring */
+    position: relative;
+    /* Maybe add a door graphic border later */
+}
+
+/* Specific Room Colors for flavor */
+.room-kitchen { background-color: #fff3e0; }
+.room-ballroom { background-color: #fce4ec; }
+.room-conservatory { background-color: #e8f5e9; }
+.room-billiard { background-color: #e0f2f1; }
+.room-library { background-color: #fff8e1; }
+.room-study { background-color: #efebe9; }
+.room-hall { background-color: #f3e5f5; }
+.room-lounge { background-color: #e1f5fe; }
+.room-dining { background-color: #fbe9e7; }
+.room-cellar { background-color: #212121; border: none; }
+
+/* Player Tokens - Smaller */
+.player-token {
+    width: 14px;
+    height: 14px;
+    border: 1px solid white;
+    box-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    z-index: 20;
+}
+
+/* Highlight */
+.room-cell.highlight, .corridor-cell.highlight, .start-cell.highlight, .door-cell.highlight {
+    background-color: rgba(255, 255, 0, 0.6) !important;
+    cursor: pointer;
+    box-shadow: inset 0 0 5px orange;
+}
+
+/* Colors for specific tokens */
+.token-scarlet { background-color: var(--clue-red); }
+.token-mustard { background-color: var(--clue-yellow); }
+.token-white { background-color: var(--clue-white); }
+.token-green { background-color: var(--clue-green); }
+.token-peacock { background-color: var(--clue-blue); }
+.token-plum { background-color: var(--clue-purple); }
+
+/* Multiple players in one room handling */
+.room-cell .token-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+}
+
+/* Sidebar & Panels */
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background: rgba(30, 30, 30, 0.9);
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.panel {
+    background: #2c2c2c;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #444;
+}
+
+.panel h2 {
+    margin-top: 0;
+    font-size: 1.1rem;
+    color: var(--clue-yellow);
+    border-bottom: 1px solid #555;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
+
+.action-btn {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 8px;
+    background-color: #3f51b5;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s;
+}
+
+.action-btn:hover:not(:disabled) {
+    background-color: #5c6bc0;
+}
+
+.action-btn:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.secondary-btn {
+    background: #546e7a;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 5px;
+}
+
+#dice-display {
+    font-size: 2rem;
+    text-align: center;
+}
+
+.log-box {
+    flex-grow: 1;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 0.9rem;
+    overflow-y: auto;
+    max-height: 200px;
+}
+
+.log-entry {
+    margin-bottom: 5px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 2px;
+}
+.log-entry.important { color: #ffd700; }
+.log-entry.move { color: #4fc3f7; }
+.log-entry.card { color: #f06292; }
+
+/* Modal Styling */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+.modal-overlay.hidden { display: none; }
+
+.modal {
+    background: #333;
+    padding: 20px;
+    border-radius: 8px;
+    min-width: 300px;
+    max-width: 600px;
+    border: 1px solid #555;
+    color: white;
+}
+.modal.hidden { display: none; }
+
+.selection-group {
+    margin-bottom: 15px;
+}
+.selection-group label {
+    display: block;
+    margin-bottom: 5px;
+}
+.selection-group select {
+    width: 100%;
+    padding: 8px;
+    background: #444;
+    color: white;
+    border: 1px solid #666;
+}
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.card-item {
+    background: white;
+    color: black;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+    font-size: 0.8rem;
+    border: 2px solid #999;
+}
+.card-suspect { border-color: var(--clue-red); border-width: 3px; }
+.card-weapon { border-color: #555; border-width: 3px; }
+.card-room { border-color: var(--clue-green); border-width: 3px; }
+
+/* Notebook styling in modal */
+.notebook-checklist {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+}
+.notebook-column h3 {
+    border-bottom: 1px solid #666;
+}
+.notebook-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+}
+.notebook-item input { margin-right: 8px; }
+.notebook-item.crossed-out { text-decoration: line-through; color: #888; }

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ludus - Card Games</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../themes.css">
+</head>
+
+<body class="theme-dark">
+
+<div id="emoji-container"></div>
+
+<header class="nav">
+    <div class="logo"><a href="../index.html" style="text-decoration: none; color: inherit;">LUDUS</a></div>
+
+    <div class="controls">
+
+        <div class="score-display">
+            PTS: <span class="points-display">0</span>
+        </div>
+
+        <div class="difficulty-control">
+            <select id="difficultySelect">
+                <option value="0">Apprentice</option>
+                <option value="1">Gambler</option>
+                <option value="2">Ruthless</option>
+            </select>
+        </div>
+
+        <div class="font-dropdown">
+            <button id="fontBtn">Font</button>
+            <div class="font-menu">
+                <button data-font="retro">Retro</button>
+                <button data-font="cozy">Cozy</button>
+                <button data-font="poker">Poker</button>
+                <button data-font="classic">Classic</button>
+            </div>
+        </div>
+
+        <div class="theme-dropdown">
+            <button id="themeBtn">Theme</button>
+            <div class="theme-menu">
+                <button data-theme="theme-dark">Dark</button>
+                <button data-theme="theme-light">Light</button>
+                <button data-theme="theme-holo">Holographic</button>
+                <button data-theme="theme-rainbow">Rainbow</button>
+                <button data-theme="theme-opal-fire">Opal Fire</button>
+            </div>
+        </div>
+
+        <label class="switch">
+            <input type="checkbox" id="emojiToggle">
+            <span class="slider"></span>
+        </label>
+
+    </div>
+</header>
+
+<main class="hero">
+
+    <h1 class="glow-title">CARD GAMES</h1>
+    <p class="subtitle"><a href="../index.html" style="color: var(--primary); text-decoration: none;">&lt; Back to Home</a></p>
+
+        <div class="section-grid">
+            <div class="section-card-list warning-border">
+                <div class="card-games-grid">
+                    <a href="gofish.html" class="game-link"><span>Go Fish</span></a>
+                    <a href="poker.html" class="game-link"><span>Poker</span></a>
+                    <a href="blackjack.html" class="game-link"><span>Blackjack</span></a>
+                    <a href="solitaire.html" class="game-link"><span>Solitaire</span></a>
+                    <a href="hearts.html" class="game-link"><span>Hearts</span></a>
+                    <a href="spades.html" class="game-link"><span>Spades</span></a>
+                    <a href="crazy_eights.html" class="game-link"><span>Crazy Eights</span></a>
+                    <a href="rummy.html" class="game-link"><span>Rummy</span></a>
+                    <a href="war.html" class="game-link"><span>War</span></a>
+                    <a href="bridge.html" class="game-link"><span>Bridge</span></a>
+                    <a href="euchre.html" class="game-link"><span>Euchre</span></a>
+                    <a href="pinochle.html" class="game-link"><span>Pinochle</span></a>
+                    <a href="old_maid.html" class="game-link"><span>Old Maid</span></a>
+                    <a href="snap.html" class="game-link"><span>Snap</span></a>
+                    <a href="slapjack.html" class="game-link"><span>Slapjack</span></a>
+                    <a href="canasta.html" class="game-link"><span>Canasta</span></a>
+                    <a href="cribbage.html" class="game-link"><span>Cribbage</span></a>
+                    <a href="gin_rummy.html" class="game-link"><span>Gin Rummy</span></a>
+                    <a href="president.html" class="game-link"><span>President</span></a>
+                    <a href="spoons.html" class="game-link"><span>Spoons</span></a>
+                </div>
+            </div>
+        </div>
+
+</main>
+
+<script src="../ui.js"></script>
+<script src="../effects.js"></script>
+
+</body>
+</html>

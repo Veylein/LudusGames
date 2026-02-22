@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ludus - Monopoly</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="../../themes.css">
+    <link rel="stylesheet" href="monopoly.css">
+    <style>
+        .monopoly-wrapper {
+            margin-top: 20px;
+        }
+        .board {
+            /* Ensure the board is properly centered and sized */
+            width: fit-content;
+        }
+        .space {
+            position: relative;
+        }
+    </style>
+</head>
+
+<body class="theme-dark">
+
+<div id="emoji-container"></div>
+
+<header class="nav">
+    <div class="logo"><a href="../../index.html" style="text-decoration: none; color: inherit;">LUDUS</a></div>
+
+    <div class="controls">
+
+        <div class="score-display">
+            PTS: <span class="points-display">0</span>
+        </div>
+
+        <div class="difficulty-control">
+            <select id="difficultySelect">
+                <option value="0">Apprentice</option>
+                <option value="1">Gambler</option>
+                <option value="2">Ruthless</option>
+            </select>
+        </div>
+
+        <div class="font-dropdown">
+            <button id="fontBtn">Font</button>
+            <div class="font-menu">
+                <button data-font="retro">Retro</button>
+                <button data-font="cozy">Cozy</button>
+                <button data-font="poker">Poker</button>
+                <button data-font="classic">Classic</button>
+            </div>
+        </div>
+
+        <div class="theme-dropdown">
+            <button id="themeBtn">Theme</button>
+            <div class="theme-menu">
+                <button data-theme="theme-dark">Dark</button>
+                <button data-theme="theme-light">Light</button>
+                <button data-theme="theme-holo">Holographic</button>
+                <button data-theme="theme-rainbow">Rainbow</button>
+                <button data-theme="theme-opal-fire">Opal Fire</button>
+            </div>
+        </div>
+        
+        <label class="switch" style="margin-left: 10px;">
+            <input type="checkbox" id="emojiToggle">
+            <span class="slider"></span>
+        </label>
+        
+    </div>
+</header>
+<div style="margin: 10px 20px;">
+    <a href="../index.html" style="color: var(--primary-color); text-decoration: none;">&lt; Back to Board Games</a>
+</div>
+
+<main class="hero">
+    <h1 class="glow-title">NEON MONOPOLY</h1>
+    
+    <div class="monopoly-wrapper">
+        
+        <!-- THE BOARD GRID -->
+        <div class="board" id="board">
+            
+            <div class="board-center">
+                <div class="center-logo">LUDUS<br>ESTATE</div>
+                <div id="dice-display" class="dice-area">
+                    <div class="die" style="font-size:40px; border:none; background:transparent;">⚀</div>
+                    <div class="die" style="font-size:40px; border:none; background:transparent;">⚀</div>
+                </div>
+            </div>
+            <!-- Spaces 0-39 injected by JS -->
+            <!-- Tokens injected by JS -->
+        </div>
+
+        <!-- SIDE PANEL CONTROL -->
+        <div class="game-controls-panel">
+            <div style="text-align:center; margin-bottom: 10px; font-weight:bold;">PLAYERS</div>
+            <div id="player-list">
+                <!-- Player cards injected here -->
+            </div>
+            
+            <div class="action-buttons">
+                <!-- Human UI -->
+                <button id="btn-roll" class="action-btn" onclick="actionRoll()">Roll Dice</button>
+                <button id="btn-buy" class="action-btn" disabled onclick="actionBuy()">Buy Property</button>
+                <button id="btn-end" class="action-btn" disabled onclick="actionEndTurn()">End Turn</button>
+            </div>
+            
+            <div class="log-console" id="log">
+                <div>> Initializing System...</div>
+            </div>
+        </div>
+
+    </div>
+
+</main>
+
+<script src="../../ui.js"></script>
+<script src="../../effects.js"></script>
+<script src="monopoly.js"></script>
+<script>
+    // Start game on load
+    window.addEventListener('load', function() {
+        if (window.updatePointsDisplay) window.updatePointsDisplay();
+        initGame();
+    });
+</script>
+
+</body>
+</html>

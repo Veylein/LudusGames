@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Canasta</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="cards.css">
+</head>
+<body>
+  <div class="game-wrapper">
+    <div class="top-bar">
+      <h1>🂡 Canasta</h1>
+      <div id="canasta-scoreboard" class="scoreboard">You: 0 | Bot: 0</div>
+    </div>
+    <div class="table">
+      <div class="bot-area">
+        <div class="player-hand-container">
+          <div class="player-info">Bot</div>
+          <div class="hand" id="bot-hand"></div>
+        </div>
+      </div>
+      <div class="center-area">
+        <div class="deck-area" style="display: flex; gap: 20px; justify-content: center; align-items: center;">
+            <div class="discard-pile" id="discard-pile"></div>
+            <div class="draw-pile" id="draw-pile"></div>
+        </div>
+        <div class="log" id="log"></div>
+      </div>
+      <div class="player-area">
+        <div class="player-hand-container active-turn">
+          <div class="player-info">
+            <strong>YOU</strong>
+          </div>
+          <div class="hand" id="player-hand"></div>
+        </div>
+        <div class="controls">
+          <button onclick="canastaAction('restart')">Restart</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="canasta.js"></script>
+  <script src="../ui.js"></script>
+</body>
+</html>

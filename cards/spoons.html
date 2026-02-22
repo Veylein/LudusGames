@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spoons</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="cards.css">
+</head>
+<body>
+  <div class="game-wrapper">
+    <div class="top-bar">
+      <h1>🥄 Spoons</h1>
+      <div id="spoons-scoreboard" class="scoreboard"></div>
+    </div>
+    <div class="table">
+      <div class="bot-area">
+        <h2>Bot Hand</h2>
+        <div id="bot-hand" class="hand"></div>
+      </div>
+      <div class="center-area">
+        <div id="spoons-pile" class="pile"></div> <!-- Renamed from deck to pile for consistency -->
+        <div id="spoons-spoons" class="spoons-container"></div>
+        <div id="log" class="log"></div>
+      </div>
+      <div class="player-area">
+        <h2>Your Hand</h2>
+        <div id="player-hand" class="hand"></div>
+      </div>
+    </div>
+    <div class="controls">
+      <button onclick="spoonsAction('pass')">Pass Card</button>
+      <button onclick="spoonsAction('grab')">Grab Spoon</button>
+      <button onclick="spoonsAction('restart')">Restart</button>
+    </div>
+  </div>
+  <script src="spoons.js"></script>
+  <script src="../ui.js"></script>
+</body>
+</html>

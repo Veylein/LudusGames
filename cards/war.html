@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>War</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="cards.css">
+</head>
+<body>
+  <div class="game-wrapper">
+    <div class="top-bar">
+      <h1>⚔️ War</h1>
+      <div id="war-scoreboard" class="scoreboard">You: 26 | Bot: 26</div>
+    </div>
+    <div class="table">
+      <div class="bot-area">
+        <h2>Bot</h2>
+        <div class="hand" id="bot-hand"></div>
+      </div>
+      <div class="center-area">
+        <div class="battlefield" id="battlefield"></div>
+        <div class="log" id="log"></div>
+      </div>
+      <div class="player-area">
+        <h2>You</h2>
+        <div class="hand" id="player-hand"></div>
+      </div>
+    </div>
+    <div class="controls">
+      <button onclick="warAction('play')">Play Card</button>
+      <button onclick="warAction('restart')">Restart</button>
+    </div>
+  </div>
+  <script src="war.js"></script>
+  <script src="../ui.js"></script>
+</body>
+</html>

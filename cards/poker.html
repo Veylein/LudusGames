@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Poker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="cards.css">
+</head>
+<body>
+  <div class="game-wrapper">
+    <div class="top-bar">
+      <h1>♠️ Poker</h1>
+      <div id="poker-scoreboard" class="scoreboard">Texas Hold'em</div>
+    </div>
+    <div class="table">
+      <!-- BOT AREA (Top) -->
+      <div class="bot-area">
+        <div class="player-hand-container">
+            <div class="player-info">
+                <strong>OPPONENT</strong><br>
+                <span id="bot-chips">Chips: $1000</span>
+            </div>
+            <div class="hand" id="bot-hand"></div>
+        </div>
+      </div>
+      
+      <!-- CENTER AREA (Community Cards + Pot) -->
+      <div class="center-area">
+        <div class="pot" id="pot">Pot: $0</div>
+        <div class="community-cards hand" id="community-cards" style="margin: 20px 0; min-height: 80px; min-width: 300px; border: 2px dashed rgba(255,255,255,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center;"></div>
+        <div class="log" id="log" style="max-height: 100px; overflow-y: auto; text-align: center; color: #aaa; font-size: 10px;"></div>
+      </div>
+
+      <!-- PLAYER AREA (Bottom) -->
+      <div class="player-area">
+        <div class="player-hand-container active-turn">
+            <div class="player-info">
+                <strong>YOU</strong><br>
+                <span id="player-chips">Chips: $1000</span>
+            </div>
+            <div class="hand" id="player-hand"></div>
+        </div>
+        <div class="controls">
+          <button onclick="pokerAction('check')">Check</button>
+          <button onclick="pokerAction('bet')">Bet</button>
+          <button onclick="pokerAction('fold')">Fold</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="poker.js"></script>
+  <script src="../ui.js"></script>
+</body>
+</html>

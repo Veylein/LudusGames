@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ludus - Tic Tac Toe</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="../../themes.css">
+    <style>
+        .board-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-top: 40px;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-gap: 15px;
+            margin: 20px auto;
+            background: rgba(0,0,0,0.5);
+            padding: 15px;
+            border: 4px solid var(--border-color);
+            box-shadow: 10px 10px 0 rgba(0,0,0,0.5);
+        }
+        .cell {
+            width: 100px;
+            height: 100px;
+            background: #222; /* Darker cell background */
+            border: 2px solid #444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 64px; /* Larger font */
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+            color: white;
+        }
+        .cell:hover {
+            background: #333;
+            border-color: var(--accent-color);
+        }
+        .cell.x { 
+            color: var(--primary-color, cyan); 
+            text-shadow: 0 0 10px var(--primary-color, cyan);
+        }
+        .cell.o { 
+            color: var(--secondary-color, magenta); 
+            text-shadow: 0 0 10px var(--secondary-color, magenta);
+        }
+        
+        .status-bar {
+            margin-top: 20px;
+            padding: 10px 20px;
+            border: 2px solid var(--text-color);
+            background: rgba(0,0,0,0.8);
+            font-size: 16px;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        .retro-btn {
+            background: #000;
+            color: var(--accent-color);
+            border: 2px solid var(--accent-color);
+            padding: 10px 20px;
+            font-family: 'Press Start 2P', cursive;
+            text-transform: uppercase;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 4px 4px 0 var(--accent-color);
+            transition: transform 0.1s;
+        }
+        .retro-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 var(--accent-color);
+        }
+    </style>
+</head>
+
+<body class="theme-dark">
+
+<div id="emoji-container"></div>
+
+<header class="nav">
+    <div class="logo"><a href="../../index.html" style="text-decoration: none; color: inherit;">LUDUS</a></div>
+
+    <div class="controls">
+
+        <div class="score-display">
+            PTS: <span class="points-display">0</span>
+        </div>
+
+        <div class="difficulty-control">
+            <select id="difficultySelect">
+                <option value="0">Apprentice</option>
+                <option value="1">Gambler</option>
+                <option value="2">Ruthless</option>
+            </select>
+        </div>
+
+        <div class="font-dropdown">
+            <button id="fontBtn">Font</button>
+            <div class="font-menu">
+                <button data-font="retro">Retro</button>
+                <button data-font="cozy">Cozy</button>
+                <button data-font="poker">Poker</button>
+                <button data-font="classic">Classic</button>
+            </div>
+        </div>
+
+        <div class="theme-dropdown">
+            <button id="themeBtn">Theme</button>
+            <div class="theme-menu">
+                <button data-theme="theme-dark">Dark</button>
+                <button data-theme="theme-light">Light</button>
+                <button data-theme="theme-holo">Holographic</button>
+                <button data-theme="theme-rainbow">Rainbow</button>
+                <button data-theme="theme-opal-fire">Opal Fire</button>
+            </div>
+        </div>
+        
+    </div>
+</header>
+<div style="margin: 10px 20px;">
+    <a href="../index.html" style="color: var(--primary-color); text-decoration: none;">&lt; Back to Board Games</a>
+</div>
+
+<main class="hero">
+    <h1 class="glow-title">TIC TAC TOE</h1>
+    
+    <div class="board-container">
+        <div class="status-bar" id="status">Player Start (X)</div>
+        
+        <div class="board" id="board">
+            <div class="cell" onclick="handleCellClick(0)"></div>
+            <div class="cell" onclick="handleCellClick(1)"></div>
+            <div class="cell" onclick="handleCellClick(2)"></div>
+            <div class="cell" onclick="handleCellClick(3)"></div>
+            <div class="cell" onclick="handleCellClick(4)"></div>
+            <div class="cell" onclick="handleCellClick(5)"></div>
+            <div class="cell" onclick="handleCellClick(6)"></div>
+            <div class="cell" onclick="handleCellClick(7)"></div>
+            <div class="cell" onclick="handleCellClick(8)"></div>
+        </div>
+        
+        <button onclick="resetGame()" class="retro-btn">New Game</button>
+    </div>
+
+</main>
+
+<script src="../../ui.js"></script>
+<script src="../../effects.js"></script>
+<script>
+    /* GAME LOGIC */
+    let boardState = ["", "", "", "", "", "", "", "", ""];
+    let gameActive = true;
+    let currentPlayer = "X"; // Human is always X
+    const statusDisplay = document.getElementById("status");
+    let cells;
+
+    // Use window.onload to ensure elements are ready if script runs early
+    window.addEventListener('DOMContentLoaded', () => {
+        cells = document.querySelectorAll(".cell");
+        if (window.updatePointsDisplay) window.updatePointsDisplay();
+    });
+
+    const WINNING_COMBINATIONS = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8],
+        [0, 3, 6], [1, 4, 7], [2, 5, 8],
+        [0, 4, 8], [2, 4, 6]
+    ];
+
+    function handleCellClick(index) {
+        if (boardState[index] !== "" || !gameActive || currentPlayer !== "X") return;
+        
+        makeMove(index, "X");
+        
+        if (gameActive) {
+            statusDisplay.innerText = "Bot Thinking...";
+            setTimeout(botMove, 500);
+        }
+    }
+
+    function makeMove(index, player) {
+        boardState[index] = player;
+        cells[index].innerText = player;
+        cells[index].classList.remove("x", "o"); // clear old
+        cells[index].classList.add(player.toLowerCase());
+        
+        let won = checkWin(player);
+        if (won) {
+            endGame(player === "X" ? "win" : "lose");
+        } else if (!boardState.includes("")) {
+            endGame("draw");
+        } else {
+            currentPlayer = player === "X" ? "O" : "X";
+            if (currentPlayer === "X") statusDisplay.innerText = "Your Turn (X)";
+        }
+    }
+
+    function botMove() {
+        if (!gameActive) return;
+        
+        let move = -1;
+        const difficulty = window.getDifficulty ? window.getDifficulty() : 1;
+        
+        // 1. Try to Win (Ruthless/Gambler)
+        if (difficulty > 0) move = findBestMove("O");
+        
+        // 2. Block Player (Ruthless/Gambler)
+        if (move === -1 && difficulty > 0) move = findBestMove("X");
+        
+        // 3. Random (Apprentice or no better move)
+        if (move === -1) {
+            const available = boardState.map((val, idx) => val === "" ? idx : null).filter(val => val !== null);
+            if (available.length > 0) {
+                move = available[Math.floor(Math.random() * available.length)];
+            }
+        }
+        
+        if (move !== -1) {
+             makeMove(move, "O");
+        }
+    }
+
+    function findBestMove(player) {
+        for (let combo of WINNING_COMBINATIONS) {
+            const [a, b, c] = combo;
+            if (boardState[a] === player && boardState[b] === player && boardState[c] === "") return c;
+            if (boardState[a] === player && boardState[c] === player && boardState[b] === "") return b;
+            if (boardState[b] === player && boardState[c] === player && boardState[a] === "") return a;
+        }
+        return -1;
+    }
+
+    function checkWin(player) {
+        return WINNING_COMBINATIONS.some(combination => {
+            return combination.every(index => {
+                return boardState[index] === player;
+            });
+        });
+    }
+
+    function endGame(result) {
+        gameActive = false;
+        if (result === "win") {
+            statusDisplay.innerText = "VICTORY! (+20 PTS)";
+            statusDisplay.style.color = "var(--primary-color)";
+            if (window.addPoints) window.addPoints(20);
+        } else if (result === "lose") {
+            statusDisplay.innerText = "DEFEAT! Bot Wins.";
+            statusDisplay.style.color = "var(--secondary-color)";
+        } else {
+            statusDisplay.innerText = "DRAW! (+5 PTS)";
+            if (window.addPoints) window.addPoints(5);
+        }
+    }
+
+    function resetGame() {
+        gameActive = true;
+        currentPlayer = "X";
+        boardState = ["", "", "", "", "", "", "", "", ""];
+        statusDisplay.innerText = "Player Start (X)";
+        statusDisplay.style.color = "inherit";
+        cells.forEach(cell => {
+            cell.innerText = "";
+            cell.classList.remove("x", "o");
+        });
+        statusDisplay.style.color = "";
+    }
+</script>
+
+</body>
+</html>

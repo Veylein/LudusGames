@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ludus - Connections</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../themes.css">
+</head>
+
+<body class="theme-dark">
+
+<div id="emoji-container"></div>
+
+<header class="nav">
+    <div class="logo"><a href="../index.html" style="text-decoration: none; color: inherit;">LUDUS</a></div>
+
+    <div class="controls">
+
+        <div class="score-display">
+            PTS: <span class="points-display">0</span>
+        </div>
+
+        <div class="difficulty-control">
+            <select id="difficultySelect">
+                <option value="0">Apprentice</option>
+                <option value="1">Gambler</option>
+                <option value="2">Ruthless</option>
+            </select>
+        </div>
+
+        <div class="font-dropdown">
+            <button id="fontBtn">Font</button>
+            <div class="font-menu">
+                <button data-font="retro">Retro</button>
+                <button data-font="cozy">Cozy</button>
+                <button data-font="poker">Poker</button>
+                <button data-font="classic">Classic</button>
+            </div>
+        </div>
+
+        <div class="theme-dropdown">
+            <button id="themeBtn">Theme</button>
+            <div class="theme-menu">
+                <button data-theme="theme-dark">Dark</button>
+                <button data-theme="theme-light">Light</button>
+                <button data-theme="theme-holo">Holographic</button>
+                <button data-theme="theme-rainbow">Rainbow</button>
+                <button data-theme="theme-opal-fire">Opal Fire</button>
+            </div>
+        </div>
+
+        <label class="switch">
+            <input type="checkbox" id="emojiToggle">
+            <span class="slider"></span>
+        </label>
+
+    </div>
+</header>
+<div style="margin: 10px 20px;">
+    <a href="../index.html" style="color: var(--primary-color); text-decoration: none;">&lt; Back to Home</a>
+</div>
+
+<main class="hero" style="min-height: 60vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+    <h1 class="glow-title">CONNECTIONS</h1>
+    <p class="subtitle">Find the links between the words.</p>
+    
+    <div style="font-size: 64px; margin: 40px;">🔗</div>
+    
+    <p style="color: var(--secondary-color); font-size: 12px; text-align: center; max-width: 600px;">
+        Daily puzzles are being generated...
+    </p>
+    
+    <div style="margin-top:20px; text-align:center; color:#666;">
+        [ Coming Soon ]
+    </div>
+
+</main>
+
+<script src="../ui.js"></script>
+<script src="../effects.js"></script>
+
+</body>
+</html>
