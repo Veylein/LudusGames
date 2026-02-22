@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pacman - Ludus Arcade</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="../../themes.css">
+    <link rel="stylesheet" href="../arcade.css">
+</head>
+<body class="theme-dark">
+    <div id="emoji-container"></div>
+    <header class="nav">
+        <div class="logo"><a href="../../index.html" style="text-decoration: none; color: inherit;">LUDUS</a></div>
+        <div class="controls">
+            <div class="score-display">PTS: <span class="points-display">0</span></div>
+            <div class="difficulty-control">
+                <select id="difficultySelect">
+                    <option value="0">Apprentice</option>
+                    <option value="1">Gambler</option>
+                    <option value="2">Ruthless</option>
+                </select>
+            </div>
+            <div class="font-dropdown">
+                <button id="fontBtn">Font</button>
+                <div class="font-menu">
+                    <button data-font="retro">Retro</button>
+                    <button data-font="cozy">Cozy</button>
+                    <button data-font="poker">Poker</button>
+                    <button data-font="classic">Classic</button>
+                </div>
+            </div>
+            <div class="theme-dropdown">
+                <button id="themeBtn">Theme</button>
+                <div class="theme-menu">
+                    <button data-theme="theme-dark">Dark</button>
+                    <button data-theme="theme-light">Light</button>
+                    <button data-theme="theme-holo">Holographic</button>
+                    <button data-theme="theme-rainbow">Rainbow</button>
+                    <button data-theme="theme-opal-fire">Opal Fire</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="game-container">
+        <div class="score-hud">Score: <span id="game-score">0</span></div>
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+        <div class="controls-info">Arrow Keys to Move</div>
+        
+        <div id="gameOver" class="game-over-screen">
+            <h2>GAME OVER</h2>
+            <p>Score: <span id="final-score">0</span></p>
+            <button class="restart-btn" onclick="startGame()">Try Again</button>
+            <br><br>
+            <a href="../index.html" style="color: var(--text-color);">Back to Arcade</a>
+        </div>
+    </main>
+
+    <script src="../../ui.js"></script>
+    <script src="../../effects.js"></script>
+    <script src="pacman.js"></script>
+</body>
+</html>
