@@ -1,15 +1,15 @@
-// Fighting Game Engine - Ludus Fighter
+// Fighting Game Engine - Ludus Fighter X Ultimate
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-const p1HealthBar = document.getElementById("p1-health");
-const p2HealthBar = document.getElementById("p2-health");
+const p1HealthBar = document.querySelector("#p1-health");
+const p2HealthBar = document.querySelector("#p2-health");
 const messageOverlay = document.getElementById("message-overlay");
 const p1NameLabel = document.getElementById("p1-name");
 const p2NameLabel = document.getElementById("p2-name");
 const timerDiv = document.getElementById("timer");
-const charGrid = document.getElementById("char-grid");
+const charGrid = document.querySelector(".char-grid");
 const startBtn = document.getElementById("start-btn");
 
 // --- DEVICE CHECK ---
@@ -35,33 +35,33 @@ let roundTime = 99;
 let timerInterval;
 
 // --- CHARACTERS ---
-// 10 Street Fighter inspired, 10 Mortal Kombat inspired
+// Detailed Data for Procedural Painter
 const CHARACTERS = {};
 
 const SF_CAST = [
-    { id: "RYU", name: "RYU", color: "#ececec", detail: "#dd0000", type: "GI", special: "#00bbff" },
-    { id: "KEN", name: "KEN", color: "#cc0000", detail: "#ffff00", type: "GI", special: "#ff4444" },
-    { id: "CHUN", name: "CHUN-LI", color: "#0000ff", detail: "#ffff00", type: "FEMALE", special: "#ccddee" },
-    { id: "GUILE", name: "GUILE", color: "#445500", detail: "#ffff00", type: "MILITARY", special: "#ffff00" },
-    { id: "ZANG", name: "ZANGIEF", color: "#dd0000", detail: "#eeddaa", type: "BIG", special: "#ff0000" },
-    { id: "DHAL", name: "DHALSIM", color: "#eeaa00", detail: "#ff0000", type: "SKINNY", special: "#dd4400" },
-    { id: "BLNK", name: "BLANKA", color: "#00dd00", detail: "#dd4400", type: "BEAST", special: "#ffff00" },
-    { id: "HOND", name: "E.HONDA", color: "#eeffff", detail: "#0000ff", type: "BIG", special: "#dddddd" },
-    { id: "VEGA", name: "VEGA", color: "#eeeeee", detail: "#dd00dd", type: "MASK", special: "#ff00dd" },
-    { id: "BISON", name: "M.BISON", color: "#dd0000", detail: "#444444", type: "MILITARY", special: "#aa00aa" }
+    { id: "RYU", name: "RYU", color: "#ececec", detail: "#dd0000", skin: "#ffccaa", type: "GI", special: "#00bbff" },
+    { id: "KEN", name: "KEN", color: "#cc0000", detail: "#ffff00", skin: "#ffccaa", type: "GI", special: "#ff4444" },
+    { id: "CHUN", name: "CHUN-LI", color: "#0000ff", detail: "#ffff00", skin: "#ffccaa", type: "FEMALE", special: "#ccddee" },
+    { id: "GUILE", name: "GUILE", color: "#445500", detail: "#ffff00", skin: "#ffccaa", type: "MILITARY", special: "#ffff00" },
+    { id: "ZANG", name: "ZANGIEF", color: "#dd0000", detail: "#eeddaa", skin: "#ffccaa", type: "BIG", special: "#ff0000" },
+    { id: "DHAL", name: "DHALSIM", color: "#eeaa00", detail: "#ff0000", skin: "#885533", type: "SKINNY", special: "#dd4400" },
+    { id: "BLNK", name: "BLANKA", color: "#00dd00", detail: "#dd4400", skin: "#00dd00", type: "BEAST", special: "#ffff00" },
+    { id: "HOND", name: "E.HONDA", color: "#eeffff", detail: "#0000ff", skin: "#ffccaa", type: "BIG", special: "#dddddd" },
+    { id: "VEGA", name: "VEGA", color: "#eeeeee", detail: "#dd00dd", skin: "#ffccaa", type: "MASK", special: "#ff00dd" },
+    { id: "BISON", name: "M.BISON", color: "#dd0000", detail: "#444444", skin: "#ffccaa", type: "MILITARY", special: "#aa00aa" }
 ];
 
 const MK_CAST = [
-    { id: "SCORP", name: "SCORPION", color: "#ffff00", detail: "#000000", type: "NINJA", special: "#ff8800" },
-    { id: "SUB-Z", name: "SUB-ZERO", color: "#00aaff", detail: "#000000", type: "NINJA", special: "#00ffff" },
-    { id: "RAID", name: "RAIDEN", color: "#ffffff", detail: "#0000aa", type: "HAT", special: "#aaddff" },
-    { id: "LIU", name: "LIU KANG", color: "#111111", detail: "#dd0000", type: "SHIRTLESS", special: "#ff4400" },
-    { id: "KANO", name: "KANO", color: "#ffffff", detail: "#dd0000", type: "EYE", special: "#ff0000" },
-    { id: "SONYA", name: "SONYA", color: "#448844", detail: "#eeeeee", type: "FEMALE", special: "#ff44aa" },
-    { id: "CAGE", name: "J.CAGE", color: "#444444", detail: "#6666ff", type: "SHADES", special: "#22ff22" },
-    { id: "REPT", name: "REPTILE", color: "#00dd00", detail: "#000000", type: "NINJA", special: "#00dd00" },
-    { id: "KITAN", name: "KITANA", color: "#0022dd", detail: "#000000", type: "FEMALE_NINJA", special: "#8888ff" },
-    { id: "JAX", name: "JAX", color: "#dddddd", detail: "#444444", type: "BIG", special: "#aa00ff" }
+    { id: "SCORP", name: "SCORPION", color: "#ffff00", detail: "#000000", skin: "#ffccaa", type: "NINJA", special: "#ff8800" },
+    { id: "SUB-Z", name: "SUB-ZERO", color: "#00aaff", detail: "#000000", skin: "#ffccaa", type: "NINJA", special: "#00ffff" },
+    { id: "RAID", name: "RAIDEN", color: "#ffffff", detail: "#0000aa", skin: "#ffccaa", type: "HAT", special: "#aaddff" },
+    { id: "LIU", name: "LIU KANG", color: "#111111", detail: "#dd0000", skin: "#ffccaa", type: "SHIRTLESS", special: "#ff4400" },
+    { id: "KANO", name: "KANO", color: "#ffffff", detail: "#dd0000", skin: "#ffccaa", type: "EYE", special: "#ff0000" },
+    { id: "SONYA", name: "SONYA", color: "#448844", detail: "#eeeeee", skin: "#ffccaa", type: "FEMALE", special: "#ff44aa" },
+    { id: "CAGE", name: "J.CAGE", color: "#444444", detail: "#6666ff", skin: "#ffccaa", type: "SHADES", special: "#22ff22" },
+    { id: "REPT", name: "REPTILE", color: "#00dd00", detail: "#000000", skin: "#00dd00", type: "NINJA", special: "#00dd00" },
+    { id: "KITAN", name: "KITANA", color: "#0022dd", detail: "#000000", skin: "#ffccaa", type: "FEMALE_NINJA", special: "#8888ff" },
+    { id: "JAX", name: "JAX", color: "#dddddd", detail: "#444444", skin: "#885533", type: "BIG", special: "#aa00ff" }
 ];
 
 [...SF_CAST, ...MK_CAST].forEach(c => {
@@ -69,11 +69,12 @@ const MK_CAST = [
         name: c.name,
         color: c.color,
         detailColor: c.detail,
+        skinColor: c.skin,
         renderType: c.type,
         width: c.type === "BIG" ? 70 : 50,
         height: c.type === "BIG" ? 110 : 100,
         id: c.id,
-        speed: c.type === "BIG" ? 3 : (c.type === "NINJA" || c.type === "FEMALE" || c.type==="FEMALE_NINJA") ? 7 : 5,
+        speed: c.type === "BIG" ? 4 : (c.type === "NINJA" || c.type === "FEMALE" || c.type==="FEMALE_NINJA") ? 7 : 5,
         jump: c.type === "BIG" ? -12 : -15,
         attacks: {
             punch: { damage: c.type==="BIG" ? 12 : 8, range: 60, frame: 10, color: "#fff" },
@@ -89,6 +90,29 @@ const MK_CAST = [
     };
 });
 
+class Particle {
+    constructor(x, y, color, size) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.size = size;
+        this.life = 20;
+        this.vx = (Math.random() - 0.5) * 10;
+        this.vy = (Math.random() - 0.5) * 10;
+    }
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life--;
+        this.size *= 0.9;
+    }
+    draw(ctx) {
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x, this.y, this.size, this.size);
+    }
+}
+let particles = [];
+
 class Fighter {
     constructor(x, y, charData, isBot = false) {
         this.x = x;
@@ -102,6 +126,7 @@ class Fighter {
         
         this.isBot = isBot;
         this.health = 100;
+        this.maxHealth = 100;
         this.isDead = false;
         
         // State Machine
@@ -113,10 +138,34 @@ class Fighter {
         this.currentAttack = null;
         
         this.projectiles = [];
+        this.hitStun = 0;
+
+        // Animation Props
+        this.animFrame = 0;
+        this.idleBounce = 0;
     }
     
     update(opponent) {
         if (this.isDead || !gameRunning) return;
+
+        this.animFrame++;
+        this.idleBounce = Math.sin(this.animFrame * 0.1) * 2; // Breathing affect
+
+        // Apply Hit Stun
+        if (this.hitStun > 0) {
+            this.hitStun--;
+            this.state = "hit";
+            // Friction
+            this.vx *= 0.8;
+            this.x += this.vx;
+            // Gravity still applies
+            if (this.y + this.height < FLOOR_Y) this.vy += GRAVITY;
+            else { this.y = FLOOR_Y - this.height; this.vy = 0; }
+            this.y += this.vy;
+            return; // Skip normal update
+        } else if (this.state === "hit") {
+            this.state = "idle";
+        }
 
         // Gravity
         if (this.y + this.height < FLOOR_Y) {
@@ -159,12 +208,15 @@ class Fighter {
         for (let i = this.projectiles.length - 1; i >= 0; i--) {
             let p = this.projectiles[i];
             p.x += p.vx;
+            
             // Hit check
             if (
                 p.x < opponent.x + opponent.width && p.x + p.width > opponent.x &&
                 p.y < opponent.y + opponent.height && p.y + p.height > opponent.y
             ) {
                 opponent.takeDamage(p.damage); // Projectile Impact
+                // Create hit spark at impact location
+                particles.push(new Particle(p.x, p.y, "#ffaa00", 15));
                 this.projectiles.splice(i, 1);
             } else if (p.x < 0 || p.x > WIDTH) {
                 this.projectiles.splice(i, 1);
@@ -175,9 +227,7 @@ class Fighter {
         if (this.isBot) this.botAI(opponent);
         
         // Direction facing (only if not busy doing something direction-locked)
-        // If attacking, stay facing the direction of attack until done
         if (this.state !== "attack" && this.state !== "hit" && this.state !== "dead") {
-             // Avoid flicker if very close
              if (Math.abs(opponent.x - this.x) > 10) {
                 this.direction = (opponent.x > this.x) ? 1 : -1;
              }
@@ -185,9 +235,7 @@ class Fighter {
     }
     
     botAI(opponent) {
-        if (this.state === "hit" || this.state === "dead" || this.state === "attack") {
-            // Cannot change velocity while hit/attacking in this simple model if locked
-            if (this.state === "hit") this.vx = 0; 
+        if (this.state === "hit" || this.state === "dead" || this.state === "attack" || this.hitStun > 0) {
             return;
         }
 
@@ -213,8 +261,11 @@ class Fighter {
                 if (roll < 0.4) this.attack("punch");
                 else if (roll < 0.7) this.attack("kick");
                 else if (roll < 0.8 && dist > 200) this.attack("special");
+                else if (roll > 0.9) this.block(true);
             }
         }
+        
+        if (this.state === "block" && Math.random() < 0.1) this.block(false);
         
         // Jump anti-projectile or random, but rarely
         if (Math.random() < 0.005 && this.y === FLOOR_Y - this.height) {
@@ -223,19 +274,20 @@ class Fighter {
     }
     
     move(dir) {
-        if (this.state === "block" || this.state === "attack" || this.state === "hit" || this.state === "dead") return;
+        if (this.state === "block" || this.state === "attack" || this.state === "hit" || this.state === "dead" || this.hitStun > 0) return;
         this.vx = dir * this.data.speed;
         this.state = "move";
     }
     
     jump() {
-        if (this.y === FLOOR_Y - this.height && this.state !== "hit" && this.state !== "dead" && this.state !== "block") {
+        if (this.y === FLOOR_Y - this.height && this.state !== "hit" && this.state !== "dead" && this.state !== "block" && this.hitStun <= 0) {
             this.vy = this.data.jump;
             this.state = "jump";
         }
     }
     
     block(active) {
+        if (this.hitStun > 0 || this.state === "attack") return;
         if (this.state === "idle" || this.state === "move" || this.state === "block") {
             this.state = active ? "block" : "idle";
             this.vx = 0;
@@ -243,7 +295,8 @@ class Fighter {
     }
     
     attack(type) {
-        if (this.attackCooldown > 0 || this.state === "attack" || this.state === "hit" || (this.state !== "idle" && this.state !== "move" && this.state !== "jump")) return;
+        if (this.attackCooldown > 0 || this.state === "attack" || this.state === "hit" || this.hitStun > 0) return;
+        if (this.state !== "idle" && this.state !== "move" && this.state !== "jump") return;
         
         this.vx = 0; // Stop moving to attack
         this.state = "attack";
@@ -256,48 +309,55 @@ class Fighter {
         this.projectiles.push({
             x: this.x + (this.direction === 1 ? this.width : -20),
             y: this.y + 30,
-            width: 30, height: 20,
+            width: 30, height: 30,
             vx: this.direction * 12,
             color: this.currentAttack.color,
-            damage: this.currentAttack.damage
+            damage: this.currentAttack.damage,
+            type: "projectile"
         });
     }
     
     checkHit(opponent) {
         const range = this.currentAttack.range;
+        const attackRectX = this.direction === 1 ? this.x + this.width : this.x - range;
         
-        let inRange = false;
-        // Hitbox rect check
-        // Attacker: this.x, width. Range extends forward.
-        let attackRectX = this.direction === 1 ? this.x + this.width : this.x - range;
-        let attackRectW = range;
-        
-        // Opponent rect
-        let oppX = opponent.x;
-        let oppW = opponent.width;
-        
-        // Check 1D overlap on X
-        if (attackRectX < oppX + oppW && attackRectX + attackRectW > oppX) {
-            inRange = true;
+        // Simple 1D overlap check for melee
+        let hit = false;
+        if (this.direction === 1) {
+            if (opponent.x < attackRectX + range && opponent.x + opponent.width > this.x) hit = true;
+        } else {
+            if (opponent.x + opponent.width > attackRectX && opponent.x < this.x + this.width) hit = true;
         }
         
-        if (inRange && (Math.abs(this.y - opponent.y) < 50)) {
+        if (hit && (Math.abs(this.y - opponent.y) < 50)) {
             opponent.takeDamage(this.currentAttack.damage);
+            // Create Hit Spark
+            particles.push(new Particle(attackRectX, this.y + 40, "#fff", 10));
         }
     }
     
     takeDamage(amount) {
         if (this.isDead) return;
-        if (this.state === "block") amount = Math.floor(amount * 0.2);
+        
+        if (this.state === "block") {
+            amount = Math.floor(amount * 0.2); // Chip damage
+            // Block spark
+            particles.push(new Particle(this.x + (this.width/2), this.y + 40, "#00aaff", 5));
+        } else {
+            this.hitStun = 20; // Frames of stun
+            this.state = "hit";
+            // Blood/Hit Effect
+            for(let i=0; i<5; i++) {
+                particles.push(new Particle(this.x + (this.width/2), this.y + 40, "#ff0000", 8));
+            }
+        }
         
         this.health -= amount;
         if (this.health <= 0) {
             this.health = 0;
             this.die();
         } else {
-            this.state = "hit";
-            this.vx = -this.direction * 5; // Knockback
-            setTimeout(() => { if(!this.isDead) { this.state = "idle"; this.vx=0; } }, 250);
+            this.vx = -this.direction * 8; // Knockback
         }
         updateHUD();
     }
@@ -305,114 +365,167 @@ class Fighter {
     die() {
         this.isDead = true;
         this.state = "dead";
-        setTimeout(() => endGame(this.isBot ? "player" : "bot"), 1500);
+        this.hitStun = 0;
+        setTimeout(() => endGame(this.isBot ? "player" : "bot"), 2000);
     }
     
     draw(ctx) {
         const type = this.data.renderType;
         const c1 = this.data.color;
         const c2 = this.data.detailColor;
+        const skin = this.data.skinColor || "#ffccaa";
         
-        // Save Context
         ctx.save();
         
-        // Flip if facing left
+        // Flip Context
         if (this.direction === -1) {
             ctx.translate(this.x + this.width/2, this.y + this.height/2);
             ctx.scale(-1, 1);
             ctx.translate(-(this.x + this.width/2), -(this.y + this.height/2));
         }
 
+        let bounceY = (this.state === "idle") ? this.idleBounce : 0;
+        let drawY = this.y + bounceY;
+
+        // Shadow
+        ctx.fillStyle = "rgba(0,0,0,0.3)";
+        ctx.beginPath();
+        ctx.ellipse(this.x + this.width/2, FLOOR_Y, this.width/1.5, 10, 0, 0, Math.PI*2);
+        ctx.fill();
+
         // --- DRAWING PROCEDURAL PIXEL ART ---
-        // Base Body (Skin)
-        ctx.fillStyle = "#eec"; // Skin tone default
-        if (type === "BIG") ctx.fillRect(this.x, this.y + 10, this.width, this.height - 10);
-        else ctx.fillRect(this.x + 10, this.y, 30, this.height);
         
-        // Clothes / Style
+        if (this.state === "dead") {
+            // Lying down: rotate canvas 90 deg around center
+             ctx.translate(this.x + this.width/2, this.y + this.height/2);
+             ctx.rotate(-Math.PI/2);
+             ctx.translate(-(this.x + this.width/2), -(this.y + this.height/2));
+             drawY += 40; // Adjust position
+        }
+
+        // LEGS
+        ctx.fillStyle = (type === "SHIRTLESS" || type === "MILITARY") ? "#111" : c1;
+        if (type === "FEMALE" || type === "FEMALE_NINJA") ctx.fillStyle = skin;
+
+        // Spread legs for stance
+        let legOffset = (this.state === "move") ? Math.sin(this.animFrame * 0.5) * 10 : 0;
+        
+        // Pants Color
+        if (type === "GI" || type === "NINJA") ctx.fillStyle = c1;
+        else if (type === "MILITARY") ctx.fillStyle = "#453";
+        else if (type === "SHIRTLESS") ctx.fillStyle = "#111";
+
+        // Draw Left Leg
+        ctx.fillRect(this.x + 10 - legOffset, drawY + 60, 15, 40);
+        // Draw Right Leg
+        ctx.fillRect(this.x + 25 + legOffset, drawY + 60, 15, 40);
+        
+        // Boots/Feet
+        ctx.fillStyle = "#111";
+        ctx.fillRect(this.x + 8 - legOffset, drawY + 95, 20, 5);
+        ctx.fillRect(this.x + 23 + legOffset, drawY + 95, 20, 5);
+
+        // TORSO
+        ctx.fillStyle = (type === "SHIRTLESS" || type === "BEAST") ? skin : c1;
+        if (type === "MILITARY") ctx.fillStyle = skin; // Vest later
+        
+        ctx.fillRect(this.x + 5, drawY + 30, 40, 35);
+
+        // Vest/Gi Top
         if (type === "GI" || type === "NINJA") {
             ctx.fillStyle = c1;
-            ctx.fillRect(this.x, this.y + 30, this.width, 45); // Top
-            ctx.fillRect(this.x, this.y + 75, this.width, 25); // Pants
+            // V-Neck shape
+            ctx.beginPath();
+            ctx.moveTo(this.x + 5, drawY + 30);
+            ctx.lineTo(this.x + 45, drawY + 30);
+            ctx.lineTo(this.x + 45, drawY + 65);
+            ctx.lineTo(this.x + 5, drawY + 65);
+            ctx.fill();
             
-            ctx.fillStyle = c2; 
-            ctx.fillRect(this.x + 10, this.y + 20, this.width - 20, 5); // Headband
-            ctx.fillRect(this.x, this.y + 55, this.width, 8); // Belt
-        }
-        else if (type === "SHIRTLESS") {
-            ctx.fillStyle = "#111"; // Pants
-            ctx.fillRect(this.x, this.y + 60, this.width, 40);
-            ctx.fillStyle = c2; // Headband
-            ctx.fillRect(this.x + 5, this.y + 15, 40, 5);
-        } 
-        else if (type === "MILITARY") {
-            ctx.fillStyle = "#453"; // Camo pants
-            ctx.fillRect(this.x, this.y + 50, this.width, 50);
-            ctx.fillStyle = c1; // Shirt
-            ctx.fillRect(this.x + 5, this.y + 30, this.width - 10, 20);
-        }
-        else if (type === "FEMALE" || type === "FEMALE_NINJA") {
-            ctx.fillStyle = c1;
-            ctx.fillRect(this.x + 5, this.y + 30, 40, 40); // Leotard
-            ctx.fillStyle = c2; // Boots / Detail
-            ctx.fillRect(this.x + 10, this.y + 80, 10, 20);
-            ctx.fillRect(this.x + 30, this.y + 80, 10, 20);
-            
-            // Mask for ninja female
-            if (type === "FEMALE_NINJA") {
-                ctx.fillStyle = c1;
-                ctx.fillRect(this.x + 15, this.y + 10, 20, 10);
-            }
-        }
-        else if (type === "BEAST") {
-             ctx.fillStyle = c1; // Skin is green/orange
-             ctx.fillRect(this.x + 5, this.y + 20, 40, 80);
-             ctx.fillStyle = c2; // Shorts
-             ctx.fillRect(this.x + 5, this.y + 70, 40, 20);
-        }
-        else if (type === "MASK" || type === "SHADES") {
-             // Suit for Vega/Cage
-            ctx.fillStyle = c1; // Suit or bare chest
-             ctx.fillRect(this.x + 10, this.y + 30, 30, 70);
-             ctx.fillStyle = "#000"; // Pants
-             ctx.fillRect(this.x + 10, this.y + 70, 30, 30);
+            // Belt
+            ctx.fillStyle = "#111";
+            ctx.fillRect(this.x + 5, drawY + 60, 40, 5);
+        } else if (type === "MILITARY") {
+             ctx.fillStyle = "#342"; // Green Vest
+             ctx.fillRect(this.x + 5, drawY + 30, 40, 20);
         }
 
-        // Feature: Head
-        // For non-masked, draw face details?
-        if (type !== "NINJA" && type !== "MASK") {
-             ctx.fillStyle = "#000"; // Eyes
-             ctx.fillRect(this.x + 30, this.y + 10, 4, 2);
+        // HEAD
+        ctx.fillStyle = skin;
+        if (type === "NINJA" || type === "FEMALE_NINJA" || type === "MASK") ctx.fillStyle = c1; // Hood/Mask base
+        ctx.fillRect(this.x + 12, drawY, 26, 30);
+
+        // Face Detail
+        if (type === "NINJA" || type === "FEMALE_NINJA") {
+             ctx.fillStyle = skin; // Eye slit
+             ctx.fillRect(this.x + 12, drawY + 10, 26, 8);
+        } else if (type === "MASK") {
+             // Mask detail
+             ctx.fillStyle = "#fff";
+             ctx.fillRect(this.x + 16, drawY + 8, 18, 18);
         }
 
-        // Animations (Limbs - Procedural)
-        const armX = this.x + 20;
-        const armY = this.y + 40;
+        // Headband / Hair / Hat
+        ctx.fillStyle = c2;
+        if (type === "HAT") {
+            ctx.beginPath();
+            ctx.moveTo(this.x, drawY + 5);
+            ctx.lineTo(this.x + 50, drawY + 5);
+            ctx.lineTo(this.x + 25, drawY - 10);
+            ctx.fill();
+        } else {
+             ctx.fillRect(this.x + 12, drawY, 26, 8); // Bandana
+             // Bandana knots
+             if (this.state === "move") {
+                let knotY = Math.sin(this.animFrame * 0.5) * 5;
+                ctx.fillRect(this.x + 2, drawY + 5 + knotY, 10, 4);
+             }
+        }
+
+        // ARMS
+        // Changing arm position based on action
+        let armX = this.x + 20; 
         
-        ctx.fillStyle = "#eec"; // Skin or glove
-        if (type === "NINJA" || type === "GI") ctx.fillStyle = "#eec"; 
+        ctx.fillStyle = skin;
+        if (type === "NINJA" || type === "GI") ctx.fillStyle = skin; 
         
         if (this.state === "attack") {
             if (this.currentAttack === this.data.attacks.punch) {
                 // Punch arm extended
-                ctx.fillRect(this.x + 40, this.y + 35, 40, 12); 
+                ctx.fillRect(this.x + 35, drawY + 35, 40, 10); // Arm out
+                ctx.fillStyle = "#a83232"; // Glove/Fist
+                ctx.fillRect(this.x + 75, drawY + 32, 10, 16);
             } else if (this.currentAttack === this.data.attacks.kick) {
                 // Kick leg extended
-                ctx.fillRect(this.x + 40, this.y + 70, 50, 15); 
+                ctx.fillStyle = (type === "SHIRTLESS") ? "#111" : c1;
+                ctx.fillRect(this.x + 35, drawY + 60, 50, 12); 
+                // Foot
+                ctx.fillStyle = "#111";
+                ctx.fillRect(this.x + 85, drawY + 58, 10, 16);
+                
+                // Keep arms in guard
+                ctx.fillStyle = skin;
+                ctx.fillRect(this.x + 20, drawY + 35, 10, 25);
             } else {
-                 // Special pose (Hands forward)
+                 // Special pose (Hadouken hands)
+                 ctx.fillRect(this.x + 35, drawY + 40, 30, 10); 
                  ctx.fillStyle = this.currentAttack.color;
-                 ctx.fillRect(this.x + 45, this.y + 40, 20, 20); 
+                 // Glow
+                 ctx.globalAlpha = 0.5;
+                 ctx.beginPath();
+                 ctx.arc(this.x + 65, drawY + 45, 15, 0, Math.PI*2);
+                 ctx.fill();
+                 ctx.globalAlpha = 1.0;
             }
         } 
         else if (this.state === "block") {
-            ctx.fillStyle = "#555"; // Shadow block visual
-            ctx.fillRect(this.x + 20, this.y + 20, 20, 40); // Arms up
-        } 
-        else {
-            // Idle arms hanging
-            ctx.fillRect(this.x + 15, this.y + 40, 10, 30);
-            ctx.fillRect(this.x + 35, this.y + 40, 10, 30);
+            // Guard up
+            ctx.fillRect(this.x + 25, drawY + 25, 15, 25); // Forearm vertical
+            ctx.fillRect(this.x + 25, drawY + 25, 15, 25);
+        } else {
+            // Idle arms
+            ctx.fillRect(this.x + 15, drawY + 35, 10, 25);
+            ctx.fillRect(this.x + 35, drawY + 38, 10, 25);
         }
         
         // Restore context
@@ -420,7 +533,16 @@ class Fighter {
 
         // Projectiles
         this.projectiles.forEach(p => {
+             // Glow
+             ctx.globalAlpha = 0.6;
              ctx.fillStyle = p.color;
+             ctx.beginPath();
+             ctx.arc(p.x + p.width/2, p.y + p.height/2, p.width, 0, Math.PI*2);
+             ctx.fill();
+             
+             // Core
+             ctx.globalAlpha = 1.0;
+             ctx.fillStyle = "#fff";
              ctx.beginPath();
              ctx.arc(p.x + p.width/2, p.y + p.height/2, p.width/2, 0, Math.PI*2);
              ctx.fill();
@@ -428,166 +550,124 @@ class Fighter {
     }
 }
 
-// --- GAME LOGIC ---
-let player1, bot;
-let selectedCharKey = null;
+// --- BACKGROUND STAGE ---
+// Procedural Background
+function drawStage(ctx) {
+    // SKY
+    const gradient = ctx.createLinearGradient(0, 0, 0, HEIGHT);
+    gradient.addColorStop(0, "#000022");
+    gradient.addColorStop(0.5, "#001144");
+    gradient.addColorStop(1, "#220011");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0,0,WIDTH,HEIGHT);
 
-// Initial Grid Pop
-function initSelection() {
-    if(!charGrid) return;
-    charGrid.innerHTML = "";
-    Object.keys(CHARACTERS).forEach(key => {
-        const char = CHARACTERS[key];
-        const cell = document.createElement("div");
-        cell.className = "char-cell";
+    // MOON
+    ctx.fillStyle = "#ffffee";
+    ctx.beginPath();
+    ctx.arc(700, 80, 40, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.2)";
+    ctx.beginPath();
+    ctx.arc(700, 80, 50, 0, Math.PI*2);
+    ctx.fill();
+
+    // CITYSCAPE (Parallax back)
+    // Dark silhouette
+    ctx.fillStyle = "#000511";
+    for(let i=0; i<10; i++) {
+        let x = i*100;
+        let h = 150 + Math.sin(i*132)*50; 
+        ctx.fillRect(x, 480 - h - 100, 110, h + 100);
         
-        // Mini preview block
-        const mini = document.createElement("div");
-        mini.style.backgroundColor = char.color;
-        mini.style.borderTop = `5px solid ${char.detailColor}`;
-        cell.appendChild(mini);
-        
-        // Label
-        const label = document.createElement("span");
-        label.innerText = char.name.substring(0,3);
-        label.style.position="absolute";
-        label.style.top="2px";
-        label.style.fontSize="6px";
-        label.style.color="#fff";
-        cell.appendChild(label);
-
-        cell.onclick = () => selectChar(key, cell);
-        charGrid.appendChild(cell);
-    });
-}
-
-function selectChar(key, cell) {
-    document.querySelectorAll(".char-cell").forEach(c => c.classList.remove("selected"));
-    cell.classList.add("selected");
-    
-    selectedCharKey = key;
-    document.getElementById("p1-select-name").innerText = CHARACTERS[key].name;
-    
-    // Preview Box
-    const p = document.getElementById("p1-select-preview");
-    p.style.backgroundColor = CHARACTERS[key].color;
-    p.style.borderColor = CHARACTERS[key].detailColor;
-    p.style.boxShadow = `0 0 10px ${CHARACTERS[key].detailColor}`;
-    
-    startBtn.disabled = false;
-}
-
-window.confirmSelection = function() {
-    if (!selectedCharKey) return;
-    initGame(selectedCharKey);
-}
-
-function initGame(charKey) {
-    document.getElementById("start-screen").style.display = "none";
-    canvas.width = WIDTH;
-    canvas.height = HEIGHT;
-    
-    player1 = new Fighter(100, FLOOR_Y - 100, CHARACTERS[charKey]);
-    
-    // Pick Bot (Random)
-    const keys = Object.keys(CHARACTERS);
-    const botKey = keys[Math.floor(Math.random() * keys.length)];
-    bot = new Fighter(600, FLOOR_Y - 100, CHARACTERS[botKey], true);
-    
-    p1NameLabel.innerText = CHARACTERS[charKey].name;
-    p2NameLabel.innerText = CHARACTERS[botKey].name;
-    
-    gameRunning = true;
-    roundTime = 99;
-    updateHUD();
-    
-    if (timerInterval) clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-        if (!gameRunning) return;
-        roundTime--;
-        if (roundTime <= 0) checkWinByTime();
-        updateHUD();
-    }, 1000);
-    
-    messageOverlay.style.display = "flex";
-    messageOverlay.innerText = "FIGHT!";
-    setTimeout(() => { messageOverlay.style.display = "none"; }, 1000);
-    
-    gameLoop();
-}
-
-function updateHUD() {
-    p1HealthBar.style.width = player1.health + "%";
-    p2HealthBar.style.width = bot.health + "%";
-    timerDiv.innerText = roundTime;
-}
-
-function checkWinByTime() {
-    if (player1.health > bot.health) endGame("player");
-    else if (bot.health > player1.health) endGame("bot");
-    else endGame("draw");
-}
-
-function endGame(winner) {
-    gameRunning = false;
-    clearInterval(timerInterval);
-    messageOverlay.style.display = "flex";
-    
-    if (winner === "player") {
-        messageOverlay.innerText = "YOU WIN!";
-        messageOverlay.style.color = "#0f0";
-    } else if (winner === "bot") {
-        messageOverlay.innerText = "YOU LOSE!";
-        messageOverlay.style.color = "#f00";
-    } else {
-        messageOverlay.innerText = "DRAW";
-        messageOverlay.style.color = "#fff";
+        // Windows
+        ctx.fillStyle = "#443300";
+        if(i%2===0) {
+             for(let w=0; w<4; w++) {
+                 ctx.fillRect(x+10 + (w*15), 480 - h - 80, 8, 8);
+                 ctx.fillRect(x+10 + (w*15), 480 - h - 60, 8, 8);
+             }
+        }
+        ctx.fillStyle = "#000511";
     }
+
+    // GROUND
+    const groundGrad = ctx.createLinearGradient(0, FLOOR_Y, 0, HEIGHT);
+    groundGrad.addColorStop(0, "#221100");
+    groundGrad.addColorStop(1, "#000000");
+    ctx.fillStyle = groundGrad;
+    ctx.fillRect(0, FLOOR_Y, WIDTH, HEIGHT - FLOOR_Y);
     
-    setTimeout(() => {
-        document.getElementById("start-screen").style.display = "flex";
-        messageOverlay.style.display = "none";
-        initSelection();
-    }, 3000);
+    // Grid lines on ground (Perspective)
+    ctx.strokeStyle = "#442211";
+    ctx.beginPath();
+    
+    // Moving lines based on player position to simulate camera pan
+    let panX = player1 ? (player1.x * -0.5) % 100 : 0;
+    
+    // Vertical-ish lines
+    for(let i=-500; i<WIDTH+500; i+=100) {
+        let lineX = i + panX;
+        ctx.moveTo(lineX + 300, FLOOR_Y); // Converge slightly? No, straight is fine for arcade
+        ctx.lineTo(lineX - 300, HEIGHT); 
+    }
+    // Horizontal lines
+    for(let i=FLOOR_Y; i<HEIGHT; i+=20) {
+         ctx.moveTo(0, i);
+         ctx.lineTo(WIDTH, i);
+    }
+    ctx.stroke();
 }
+
+// Fixed Key Handling
+const keys = {};
 
 function gameLoop() {
-    if (!gameRunning) return;
+    // Canvas Loop
+    if (!gameRunning) {
+        // Still draw background if paused/ended?
+    }
     
-    ctx.clearRect(0, 0, WIDTH, HEIGHT);
+    // Clear
+    ctx.clearRect(0,0,WIDTH,HEIGHT);
+    drawStage(ctx);
     
-    // Reset player velocity frame-to-frame for arcadey controls
-    // except when in states that lock movement (like being hit)
-    if (player1.state === "move" || player1.state === "idle") {
-        player1.vx = 0;
-        // Input Handling
-        if (Object.keys(keys).length > 0) {
+    // Game Logic
+    if (gameRunning) {
+        // Reset player velocity frame-to-frame for tighter control
+        if (player1.state === "move" || player1.state === "idle") {
+            player1.vx = 0;
+            // Input Handling
             if (keys["ArrowLeft"]) player1.move(-1);
             if (keys["ArrowRight"]) player1.move(1);
             if (keys["ArrowDown"]) player1.block(true);
-            else if (player1.state === "block") player1.block(false); // Unblock
+            else if (player1.state === "block") player1.block(false); 
+        } else if (player1.state === "block") {
+            if (!keys["ArrowDown"]) player1.block(false);
         }
-    } else if (player1.state === "block") {
-        // Allow unblocking even if blocked
-        if (!keys["ArrowDown"]) player1.block(false);
+        
+        if (keys["ArrowUp"]) player1.jump();
+        if (keys["z"]) player1.attack("punch");
+        if (keys["x"]) player1.attack("kick");
+        if (keys["c"]) player1.attack("special");
+        
+        player1.update(bot);
+        bot.update(player1);
     }
     
-    if (keys["ArrowUp"]) player1.jump();
-    if (keys["z"]) player1.attack("punch");
-    if (keys["x"]) player1.attack("kick");
-    if (keys["c"]) player1.attack("special");
+    if (player1) player1.draw(ctx);
+    if (bot) bot.draw(ctx);
     
-    player1.update(bot);
-    bot.update(player1);
-    
-    player1.draw(ctx);
-    bot.draw(ctx);
+    // Particles
+    for(let i=particles.length-1; i>=0; i--) {
+        particles[i].update();
+        particles[i].draw(ctx);
+        if(particles[i].life <= 0) particles.splice(i,1);
+    }
     
     requestAnimationFrame(gameLoop);
 }
 
 // Global Event Listeners
-const keyss = {}; // Local scope variable name conflict avoid
 window.addEventListener("keydown", (e) => {
     keys[e.key] = true;
     if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)) e.preventDefault();
@@ -597,9 +677,16 @@ window.addEventListener("keyup", (e) => {
 });
 
 // Init
-// Wait for DOM
+function startGameLoopOnce() {
+    requestAnimationFrame(gameLoop); // Start the render loop immediately for BG
+}
+
 if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initSelection);
+    document.addEventListener("DOMContentLoaded", () => {
+        initSelection();
+        startGameLoopOnce();
+    });
 } else {
     initSelection();
+    startGameLoopOnce();
 }
