@@ -214,38 +214,84 @@ function draw() {
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Walls
-    ctx.fillStyle = '#1111aa';
+    // Draw Walls
+    ctx.strokeStyle = '#2222ff';
+    ctx.lineWidth = 2;
     walls.forEach(w => {
-        ctx.fillRect(w.x * TILE_SIZE, w.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        // Instead of fillRect, let's draw outlines for a neon look
+        let wx = w.x * TILE_SIZE;
+        let wy = w.y * TILE_SIZE;
+        ctx.strokeRect(wx + 4, wy + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+        
+        // Inner detail
+        ctx.strokeRect(wx + 8, wy + 8, TILE_SIZE - 16, TILE_SIZE - 16);
     });
     
-    // Dots
-    ctx.fillStyle = 'white';
+    // Draw Dots
+    ctx.fillStyle = '#ffb8ae'; // Pale pink/peach
     dots.forEach(d => {
+        let dx = d.x * TILE_SIZE + TILE_SIZE/2;
+        let dy = d.y * TILE_SIZE + TILE_SIZE/2;
         if (d.type === 3) {
-            ctx.beginPath();
-            ctx.arc(d.x * TILE_SIZE + TILE_SIZE/2, d.y * TILE_SIZE + TILE_SIZE/2, 6, 0, Math.PI * 2);
-            ctx.fill();
+            // Power Pellet - Blink
+            if (Math.floor(Date.now() / 200) % 2 === 0) {
+                ctx.beginPath();
+                ctx.arc(dx, dy, 6, 0, Math.PI * 2);
+                ctx.fill();
+            }
         } else {
-            ctx.fillRect(d.x * TILE_SIZE + TILE_SIZE/2 - 2, d.y * TILE_SIZE + TILE_SIZE/2 - 2, 4, 4);
+            ctx.fillRect(dx - 2, dy - 2, 4, 4);
         }
     });
     
-    // Player
-    ctx.fillStyle = 'yellow';
+    // Draw Player (Pacman)
+    let px = player.x * TILE_SIZE + TILE_SIZE/2;
+    let py = player.y * TILE_SIZE + TILE_SIZE/2;
+    let mouthOpen = (Math.sin(Date.now() / 100) + 1) * 0.2; // 0 to 0.4
+    
+    let angle = 0;
+    if (player.dx === 1) angle = 0;
+    if (player.dx === -1) angle = Math.PI;
+    if (player.dy === 1) angle = Math.PI/2;
+    if (player.dy === -1) angle = -Math.PI/2;
+
+    ctx.fillStyle = '#ffff00';
     ctx.beginPath();
-    // Simple Pacman mouth animation could go here
-    ctx.arc(player.x * TILE_SIZE + TILE_SIZE/2, player.y * TILE_SIZE + TILE_SIZE/2, TILE_SIZE/2 - 2, 0.2 * Math.PI, 1.8 * Math.PI);
-    ctx.lineTo(player.x * TILE_SIZE + TILE_SIZE/2, player.y * TILE_SIZE + TILE_SIZE/2);
+    ctx.moveTo(px, py);
+    ctx.arc(px, py, TILE_SIZE/2 - 2, angle + mouthOpen, angle + 2*Math.PI - mouthOpen);
+    ctx.closePath();
     ctx.fill();
     
-    // Ghosts
+    // Draw Ghosts
     ghosts.forEach(g => {
+        let gx = g.x * TILE_SIZE;
+        let gy = g.y * TILE_SIZE;
+        
         ctx.fillStyle = g.color;
+        
+        // Body (Circle top, rect bottom)
         ctx.beginPath();
-        ctx.arc(g.x * TILE_SIZE + TILE_SIZE/2, g.y * TILE_SIZE + TILE_SIZE/2, TILE_SIZE/2 - 2, 0, Math.PI * 2);
+        ctx.arc(gx + TILE_SIZE/2, gy + TILE_SIZE/2 - 2, TILE_SIZE/2 - 2, Math.PI, 0);
+        ctx.lineTo(gx + TILE_SIZE - 2, gy + TILE_SIZE - 2);
+        
+        // Wavy bottom
+        for(let i=1; i<=3; i++) {
+            ctx.lineTo(gx + TILE_SIZE - 2 - (i * (TILE_SIZE-4)/3), (i%2==0) ? gy + TILE_SIZE - 2 : gy + TILE_SIZE - 6);
+        }
+        ctx.lineTo(gx + 2, gy + TILE_SIZE - 2);
         ctx.fill();
+
+        // Eyes
+        ctx.fillStyle = 'white';
+        ctx.beginPath(); ctx.arc(gx + TILE_SIZE/3, gy + TILE_SIZE/3, 4, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(gx + 2*TILE_SIZE/3, gy + TILE_SIZE/3, 4, 0, Math.PI*2); ctx.fill();
+        
+        // Pupils
+        ctx.fillStyle = 'blue';
+        let lookX = (g.dx * 2);
+        let lookY = (g.dy * 2);
+        ctx.beginPath(); ctx.arc(gx + TILE_SIZE/3 + lookX, gy + TILE_SIZE/3 + lookY, 2, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(gx + 2*TILE_SIZE/3 + lookX, gy + TILE_SIZE/3 + lookY, 2, 0, Math.PI*2); ctx.fill();
     });
 }
 

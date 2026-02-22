@@ -137,20 +137,63 @@ function update() {
 
 function draw() {
     ctx.fillStyle = 'black';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, canvas.width, canvas.height); // Clear screen
 
-    // Player
-    ctx.fillStyle = '#0f0';
-    ctx.fillRect(player.x, player.y, player.width, player.height);
+    // Draw Player (retro spaceship)
+    ctx.fillStyle = '#00ff00';
+    // Base
+    ctx.fillRect(player.x, player.y + 12, player.width, 8);
+    // Mid
+    ctx.fillRect(player.x + 4, player.y + 6, player.width - 8, 6);
+    // Tip
+    ctx.fillRect(player.x + 12, player.y, 6, 6);
 
-    // Aliens
-    ctx.fillStyle = '#fff';
-    aliens.forEach(a => {
-        if (a.active) ctx.fillRect(a.x, a.y, a.width, a.height);
+    // Draw Aliens
+    let time = Date.now();
+    aliens.forEach((a, index) => {
+        if (!a.active) return;
+        
+        let ax = a.x;
+        let ay = a.y;
+        
+        // Color based on row
+        let row = Math.floor(index / 8); 
+        // 8 is cols 
+        // But index keeps increasing.
+        // Wait, index is global index in flat list.
+        // Aliens were pushed row by row (0..rows, 0..cols).
+        // Since cols=8, this works.
+        
+        if (row === 0) ctx.fillStyle = '#ff00ff';
+        else if (row === 1) ctx.fillStyle = '#00ffff';
+        else ctx.fillStyle = '#ffff00';
+        
+        // Animation Toggle
+        let frame = Math.floor(time / 500) % 2;
+
+        if (frame === 0) {
+            // Pose A (Arms Down)
+            ctx.fillRect(ax + 4, ay, 22, 14); // Body
+            ctx.clearRect(ax + 8, ay + 4, 4, 4); // Eye L
+            ctx.clearRect(ax + 18, ay + 4, 4, 4); // Eye R
+            ctx.fillRect(ax, ay + 8, 4, 8); // Arm L
+            ctx.fillRect(ax + 26, ay + 8, 4, 8); // Arm R
+            ctx.fillRect(ax + 4, ay + 14, 4, 4); // Leg L
+            ctx.fillRect(ax + 22, ay + 14, 4, 4); // Leg R
+        } else {
+            // Pose B (Arms Up)
+            ctx.fillRect(ax + 4, ay, 22, 14); // Body
+            ctx.clearRect(ax + 8, ay + 4, 4, 4); // Eye L
+            ctx.clearRect(ax + 18, ay + 4, 4, 4); // Eye R
+            ctx.fillRect(ax, ay, 4, 8); // Arm L
+            ctx.fillRect(ax + 26, ay, 4, 8); // Arm R
+            ctx.fillRect(ax + 8, ay + 14, 4, 4); // Leg L
+            ctx.fillRect(ax + 18, ay + 14, 4, 4); // Leg R
+        }
     });
 
-    // Bullets
-    ctx.fillStyle = '#ff0';
+    // Draw Bullets
+    ctx.fillStyle = '#ffffff';
     player.bullets.forEach(b => {
         ctx.fillRect(b.x, b.y, b.width, b.height);
     });

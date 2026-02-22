@@ -181,29 +181,80 @@ function rectIntersect(r1, r2) {
 }
 
 function draw() {
-    ctx.fillStyle = '#111';
+    ctx.fillStyle = '#000'; // Black background
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Player
-    ctx.fillStyle = '#0f0';
-    ctx.fillRect(player.x, player.y, player.width, player.height);
-
-    // Centipede
-    ctx.fillStyle = '#f0f';
-    centipede.forEach(seg => {
-        ctx.beginPath();
-        ctx.arc(seg.x + SEGMENT_SIZE/2, seg.y + SEGMENT_SIZE/2, SEGMENT_SIZE/2, 0, Math.PI*2);
-        ctx.fill();
-    });
-
-    // Mushrooms
+    // Draw Mushrooms
     mushrooms.forEach(m => {
-        ctx.fillStyle = `rgba(255, 0, 0, ${m.health / 3})`;
-        ctx.fillRect(m.x, m.y, m.width, m.height);
+        let mx = m.x;
+        let my = m.y;
+        let size = m.width;
+        
+        ctx.fillStyle = (m.health > 2) ? '#ff4500' : ((m.health > 1) ? '#ff6347' : '#cd5c5c');
+        
+        // Cap
+        ctx.beginPath();
+        ctx.arc(mx + size/2, my + size/2, size/2 - 1, Math.PI, 0); 
+        ctx.lineTo(mx + size - 2, my + size - 2); 
+        ctx.lineTo(mx + 2, my + size - 2); 
+        ctx.fill();
+        
+        // Stem
+        ctx.fillStyle = '#f5deb3';
+        ctx.fillRect(mx + size/3, my + size/2, size/3, size/2 - 2);
+        
+        // Spots
+        ctx.fillStyle = '#fff';
+        if (m.health > 0) {
+            ctx.beginPath(); ctx.arc(mx + size/3, my + size/4, 2, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(mx + 2*size/3, my + size/4, 2, 0, Math.PI*2); ctx.fill();
+        }
     });
 
-    // Bullets
-    ctx.fillStyle = '#ff0';
+    // Draw Centipede
+    centipede.forEach((seg, index) => {
+        let cx = seg.x;
+        let cy = seg.y;
+        
+        ctx.fillStyle = '#32cd32'; // Lime Green
+        ctx.beginPath();
+        ctx.arc(cx + SEGMENT_SIZE/2, cy + SEGMENT_SIZE/2, SEGMENT_SIZE/2, 0, Math.PI*2);
+        ctx.fill();
+        
+        // Eyes
+        ctx.fillStyle = '#ff0000';
+        ctx.beginPath(); ctx.arc(cx + SEGMENT_SIZE/3, cy + SEGMENT_SIZE/3, 2, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx + 2*SEGMENT_SIZE/3, cy + SEGMENT_SIZE/3, 2, 0, Math.PI*2); ctx.fill();
+        
+        // Legs (animated)
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1;
+        let time = Date.now();
+        let legOffset = Math.sin((time / 100) + index) * 5;
+        
+        ctx.beginPath();
+        ctx.moveTo(cx + SEGMENT_SIZE/2, cy + SEGMENT_SIZE/2);
+        ctx.lineTo(cx + SEGMENT_SIZE/2 - 6, cy + SEGMENT_SIZE + legOffset);
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.moveTo(cx + SEGMENT_SIZE/2, cy + SEGMENT_SIZE/2);
+        ctx.lineTo(cx + SEGMENT_SIZE/2 + 6, cy + SEGMENT_SIZE - legOffset);
+        ctx.stroke();
+    });
+
+    // Draw Player (Shooter)
+    ctx.fillStyle = '#ffffff';
+    // Body
+    ctx.beginPath();
+    ctx.moveTo(player.x + player.width/2, player.y); // Top Tip
+    ctx.lineTo(player.x + player.width, player.y + player.height); // Bottom Right
+    ctx.lineTo(player.x + player.width/2, player.y + player.height - 5); // Bottom Indent
+    ctx.lineTo(player.x, player.y + player.height); // Bottom Left
+    ctx.fill();
+    
+    // Draw Bullets
+    ctx.fillStyle = '#ff00ff'; // Magenta Laser
     player.bullets.forEach(b => {
         ctx.fillRect(b.x, b.y, b.width, b.height);
     });

@@ -86,18 +86,69 @@ function update() {
 
 function draw() {
     // Background
-    ctx.fillStyle = '#000';
+    ctx.fillStyle = '#111';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Snake
-    ctx.fillStyle = 'lime';
-    for (let i = 0; i < snake.length; i++) {
-        ctx.fillRect(snake[i].x * gridSize, snake[i].y * gridSize, gridSize - 2, gridSize - 2);
+    // Draw Grid (faint)
+    ctx.strokeStyle = '#222';
+    ctx.lineWidth = 0.5;
+    for(let i=0; i<tileCountX; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i*gridSize, 0);
+        ctx.lineTo(i*gridSize, canvas.height);
+        ctx.stroke();
+    }
+    for(let j=0; j<tileCountY; j++) {
+        ctx.beginPath();
+        ctx.moveTo(0, j*gridSize);
+        ctx.lineTo(canvas.width, j*gridSize);
+        ctx.stroke();
     }
 
-    // Food
-    ctx.fillStyle = 'red';
-    ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize - 2, gridSize - 2);
+    // Snake
+    for (let i = 0; i < snake.length; i++) {
+        ctx.fillStyle = (i === 0) ? '#00ff9d' : '#00cc7a'; // Head vs Body
+        
+        // Draw rounded rects
+        let x = snake[i].x * gridSize;
+        let y = snake[i].y * gridSize;
+        let size = gridSize - 2;
+        
+        ctx.beginPath();
+        if (i === 0) {
+            // Head specialized drawing
+            ctx.arc(x + gridSize/2, y + gridSize/2, size/2, 0, Math.PI*2);
+            ctx.fill();
+            
+            // Eyes
+            ctx.fillStyle = '#000';
+            // Direction based eyes
+            let eyeX1 = x + gridSize/3, eyeY1 = y + gridSize/3;
+            let eyeX2 = x + 2*gridSize/3, eyeY2 = y + gridSize/3;
+            
+            if (dx === 1) { eyeX1 += 4; eyeX2 += 4; }
+            if (dx === -1) { eyeX1 -= 4; eyeX2 -= 4; }
+            if (dy === 1) { eyeY1 += 4; eyeY2 += 4; }
+            if (dy === -1) { eyeY1 -= 4; eyeY2 -= 4; }
+
+            ctx.beginPath(); ctx.arc(eyeX1, eyeY1, 2, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(eyeX2, eyeY2, 2, 0, Math.PI*2); ctx.fill();
+        } else {
+            // Body segments
+            ctx.fillRect(x + 1, y + 1, size, size);
+        }
+    }
+
+    // Food (Apple)
+    let fx = food.x * gridSize + gridSize/2;
+    let fy = food.y * gridSize + gridSize/2;
+    ctx.fillStyle = '#ff0055';
+    ctx.beginPath();
+    ctx.arc(fx, fy, gridSize/2 - 2, 0, Math.PI*2);
+    ctx.fill();
+    // Stem
+    ctx.fillStyle = '#00ff00';
+    ctx.fillRect(fx - 1, fy - gridSize/2, 2, 4);
 }
 
 function spawnFood() {

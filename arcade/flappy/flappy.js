@@ -18,8 +18,50 @@ const bird = {
     velocity: 0,
     
     draw: function() {
-        ctx.fillStyle = '#ff0';
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        ctx.save();
+        ctx.translate(this.x + this.width/2, this.y + this.height/2);
+        // Rotate based on velocity
+        let rotation = Math.min(Math.PI / 4, Math.max(-Math.PI / 4, (this.velocity * 0.1)));
+        ctx.rotate(rotation);
+        
+        // Body
+        ctx.fillStyle = '#f8e71c'; // Yellow
+        ctx.beginPath();
+        ctx.ellipse(0, 0, this.width/2 + 2, this.height/2, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#555';
+        ctx.stroke();
+        
+        // Eye
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(6, -6, 5, 0, Math.PI*2);
+        ctx.fill();
+        ctx.stroke();
+        
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(7, -6, 2, 0, Math.PI*2); // Pupil
+        ctx.fill();
+        
+        // Wing
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.ellipse(-6, 2, 6, 4, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Beak
+        ctx.fillStyle = '#f5a623'; // Orange
+        ctx.beginPath();
+        ctx.moveTo(8, 2);
+        ctx.lineTo(16, 6);
+        ctx.lineTo(8, 10);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.restore();
     },
     
     update: function() {
@@ -50,11 +92,30 @@ const pipes = {
     gap: 120, // Reduced gap size
     
     draw: function() {
-        ctx.fillStyle = '#0f0';
+        ctx.fillStyle = '#73bf2e'; // Classic green
+        ctx.strokeStyle = '#2f5a10'; // Dark green outline
+        ctx.lineWidth = 2;
+
         for (let i = 0; i < this.items.length; i++) {
             let p = this.items[i];
-            ctx.fillRect(p.x, 0, this.width, p.top);
-            ctx.fillRect(p.x, canvas.height - p.bottom, this.width, p.bottom);
+            
+            // Top Pipe
+            let topH = p.top;
+            ctx.fillRect(p.x, 0, this.width, topH);
+            ctx.strokeRect(p.x, 0, this.width, topH);
+            
+            // Cap (Rim) for Top Pipe
+            ctx.fillRect(p.x - 2, topH - 20, this.width + 4, 20);
+            ctx.strokeRect(p.x - 2, topH - 20, this.width + 4, 20);
+            
+            // Bottom Pipe
+            let botY = canvas.height - p.bottom;
+            ctx.fillRect(p.x, botY, this.width, p.bottom);
+            ctx.strokeRect(p.x, botY, this.width, p.bottom);
+            
+            // Cap (Rim) for Bottom Pipe
+            ctx.fillRect(p.x - 2, botY, this.width + 4, 20);
+            ctx.strokeRect(p.x - 2, botY, this.width + 4, 20);
         }
     },
     

@@ -151,33 +151,86 @@ function update() {
 
 function draw() {
     ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, canvas.width, canvas.height); // Background
 
-    // Platforms
-    ctx.fillStyle = '#a52a2a'; // Brown
-    platforms.forEach(p => {
-        ctx.fillRect(p.x, p.y, p.width, p.height);
-    });
-
-    // Ladders (visual only for now)
-    ctx.fillStyle = '#00f';
+    // Draw Ladders
+    ctx.fillStyle = '#00BFFF'; // Deep Sky Blue
     ladders.forEach(l => {
-        ctx.fillRect(l.x, l.y, 20, l.height);
-        for(let i=0; i<l.height; i+=10) {
-            ctx.fillRect(l.x, l.y+i, 20, 2);
+        // Vertical Rails
+        ctx.fillRect(l.x, l.y, 4, l.height);
+        ctx.fillRect(l.x + 16, l.y, 4, l.height);
+        // Rungs
+        for(let yh = l.y; yh < l.y + l.height; yh += 10) {
+            ctx.fillRect(l.x, yh, 20, 2);
         }
     });
 
-    // Player
-    ctx.fillStyle = '#f00';
-    ctx.fillRect(player.x, player.y, player.width, player.height);
-
-    // Barrels
-    ctx.fillStyle = '#8B4513';
-    barrels.forEach(b => {
+    // Draw Platforms (Girders)
+    platforms.forEach(p => {
+        ctx.fillStyle = '#b22222'; // Red Girder
+        ctx.fillRect(p.x, p.y, p.width, p.height);
+        
+        // Girder details (X pattern)
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+        for(let i = 0; i < p.width - 10; i+=20) {
+            ctx.moveTo(p.x + i, p.y + 1);
+            ctx.lineTo(p.x + i + 10, p.y + p.height - 1);
+            ctx.moveTo(p.x + i + 10, p.y + 1);
+            ctx.lineTo(p.x + i, p.y + p.height - 1);
+        }
+        ctx.stroke();
+    });
+
+    // Draw Kong (Top Left/Center decor)
+    // Assuming Kong is near the top platform
+    let kongX = 50; 
+    let kongY = 80;
+    ctx.fillStyle = '#8B4513'; // Brown Ape
+    ctx.fillRect(kongX, kongY, 40, 40); // Body
+    ctx.fillRect(kongX + 10, kongY - 10, 20, 10); // Head
+    ctx.fillStyle = '#ffcc99'; // Face
+    ctx.fillRect(kongX + 15, kongY - 5, 10, 5);
+    // Arms
+    ctx.fillStyle = '#8B4513';
+    if (Math.floor(Date.now() / 500) % 2 === 0) {
+        ctx.fillRect(kongX - 10, kongY, 10, 30); // Left Arm Down
+        ctx.fillRect(kongX + 40, kongY - 20, 10, 30); // Right Arm Up (Throwing)
+    } else {
+        ctx.fillRect(kongX - 10, kongY - 20, 10, 30); // Left Arm Up
+        ctx.fillRect(kongX + 40, kongY, 10, 30); // Right Arm Down
+    }
+
+    // Draw Player (Jumpman/Mario-ish)
+    ctx.fillStyle = '#f00'; // Red shirt
+    ctx.fillRect(player.x + 4, player.y + 10, 12, 10);
+    ctx.fillStyle = '#00f'; // Blue overalls
+    ctx.fillRect(player.x + 4, player.y + 20, 12, 10);
+    ctx.fillStyle = '#ffcc99'; // Skin
+    ctx.fillRect(player.x + 6, player.y + 2, 8, 8); // Head
+    ctx.fillStyle = '#f00'; // Hat
+    ctx.fillRect(player.x + 4, player.y, 14, 4);
+    
+    // Draw Barrels
+    ctx.fillStyle = '#8B4513'; // Wood Brown
+    ctx.strokeStyle = '#000'; 
+    barrels.forEach(b => {
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        // Rotate based on x position to simulate rolling
+        ctx.rotate(b.x / 10); 
+        
+        ctx.beginPath();
+        ctx.arc(0, 0, b.r, 0, Math.PI * 2);
         ctx.fill();
+        ctx.stroke();
+        
+        // Barrel Detail (Hoops)
+        ctx.fillStyle = '#000';
+        ctx.fillRect(-b.r, -2, b.r*2, 4);
+        
+        ctx.restore();
     });
 }
 

@@ -49,16 +49,16 @@ function update() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Dino Physics
-    if (dino.y < 200) {
-        dino.dy += gravity;
-        dino.grounded = false;
-    } else {
+    dino.dy += gravity;
+    dino.y += dino.dy;
+
+    if (dino.y > 200) {
         dino.y = 200;
         dino.dy = 0;
         dino.grounded = true;
+    } else {
+        dino.grounded = false;
     }
-    
-    dino.y += dino.dy;
 
     // Draw Ground
     ctx.beginPath();
@@ -69,8 +69,7 @@ function update() {
     ctx.stroke();
 
     // Draw Dino
-    ctx.fillStyle = dino.color;
-    ctx.fillRect(dino.x, dino.y, dino.width, dino.height);
+    drawDino(dino.x, dino.y, dino.width, dino.height, dino.color);
 
     // Obstacle Spawning
     spawnTimer++;
@@ -82,7 +81,7 @@ function update() {
             y: 240 - obstacleHeight,
             width: 20,
             height: obstacleHeight,
-            color: '#ff0000'
+            color: '#ff0055' // Retro Red
         });
     }
 
@@ -92,15 +91,14 @@ function update() {
         obs.x -= gameSpeed;
 
         // Draw Obstacle
-        ctx.fillStyle = obs.color;
-        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+        drawCactus(obs.x, obs.y, obs.width, obs.height, obs.color);
 
         // Collision Logic
         if (
-            dino.x < obs.x + obs.width &&
-            dino.x + dino.width > obs.x &&
+            dino.x < obs.x + obs.width - 10 && // Reduced hit box
+            dino.x + dino.width > obs.x + 10 && 
             dino.y < obs.y + obs.height &&
-            dino.y + dino.height > obs.y
+            dino.y + dino.height > obs.y + 10
         ) {
             endGame();
         }
@@ -120,7 +118,43 @@ function update() {
 function jump() {
     if (dino.grounded) {
         dino.dy = -dino.jumpForce;
+        dino.grounded = false;
     }
+}
+
+function drawDino(x, y, w, h, color) {
+    ctx.fillStyle = color;
+    // Body
+    ctx.fillRect(x + 10, y + 10, w - 20, h - 15);
+    // Head
+    ctx.fillRect(x + 15, y, w - 15, 15);
+    // Eye
+    ctx.fillStyle = 'black';
+    ctx.fillRect(x + 25, y + 2, 4, 4);
+    
+    ctx.fillStyle = color;
+    // Tail
+    ctx.fillRect(x, y + 15, 10, 10);
+    // Legs (animated simply)
+    if (Math.floor(Date.now() / 100) % 2 === 0) {
+        ctx.fillRect(x + 10, y + h - 5, 5, 5);
+        ctx.fillRect(x + w - 15, y + h - 5, 5, 5);
+    } else {
+        ctx.fillRect(x + 15, y + h - 5, 5, 5);
+        ctx.fillRect(x + w - 10, y + h - 5, 5, 5);
+    }
+}
+
+function drawCactus(x, y, w, h, color) {
+    ctx.fillStyle = color;
+    // Main stem
+    ctx.fillRect(x + w/3, y, w/3, h);
+    // Left arm
+    ctx.fillRect(x, y + h/3, w/3, h/3);
+    ctx.fillRect(x, y + h/3 - 5, w/3, 5);
+    // Right arm
+    ctx.fillRect(x + 2*w/3, y + h/4, w/3, h/3);
+    ctx.fillRect(x + 2*w/3, y + h/4 - 5, w/3, 5);
 }
 
 document.addEventListener('keydown', (e) => {
