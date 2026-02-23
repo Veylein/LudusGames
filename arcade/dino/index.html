@@ -2,73 +2,67 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dino Run - Ludus Arcade</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dino Run - Ludus Arcade</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../../style.css">
     <link rel="stylesheet" href="../../themes.css">
-    <link rel="stylesheet" href="../arcade.css">
+    <link rel="stylesheet" href="dino.css">
 </head>
-<body class="theme-classic">
-    <div id="emoji-container"></div>
-    <header class="nav">
-        <div class="logo"><a href="../../index.html" style="text-decoration: none; color: inherit;">LUDUS</a></div>
-        <div class="controls">
-            <div class="score-display">PTS: <span class="points-display">0</span></div>
-            <div class="difficulty-control">
-                <select id="difficultySelect">
-                    <option value="0">Apprentice</option>
-                    <option value="1">Gambler</option>
-                    <option value="2">Ruthless</option>
-                </select>
-            </div>
-            <div class="font-dropdown">
-                <button id="fontBtn">Font</button>
-                <div class="font-menu">
-                    <button data-font="retro">Retro</button>
-                    <button data-font="cozy">Cozy</button>
-                    <button data-font="poker">Poker</button>
-                    <button data-font="classic">Classic</button>
-                <button data-font="discord">Discord</button>
-            </div>
-                    <div class="style-dropdown">
-            <button id="styleBtn">Style</button>
-            <div class="style-menu">
-                <button data-style="style-classic">Classic</button>
-                <button data-style="style-relaxation">Relaxation</button>
-                <button data-style="style-arcade">Arcade</button>
-                <button data-style="style-casino">Casino</button>
-                <button data-style="style-yacht">Yacht</button>
-            </div>
-        </div>
+<body class="theme-arcade">
 
-        <div class="theme-dropdown">
-<button id="themeBtn">Theme</button>
-            <div class="theme-menu">
-                <button data-theme="theme-dark">Dark</button>
-                <button data-theme="theme-light">Light</button>
-                <button data-theme="theme-holo">Holographic</button>
-                <button data-theme="theme-rainbow">Rainbow</button>
-                <button data-theme="theme-opal-fire">Opal Fire</button>
+    <div class="game-container">
+        <header>
+            <a href="../index.html" class="back-link">← Back to Arcade</a>
+            <h1 class="glow-title" data-text="DINO RUN">DINO RUN</h1>
+            <div class="theme-switch-wrapper">
+                <label class="theme-switch" for="checkbox">
+                    <input type="checkbox" id="checkbox" />
+                    <div class="slider round"></div>
+                </label>
+                <em>Retro Mode</em>
             </div>
-        </div>
-            </div>
-        </div>
-    </header>
+        </header>
 
-    <main class="game-container">
-        <div class="score-hud">Score: <span id="game-score">0</span></div>
-        <canvas id="gameCanvas" width="800" height="300"></canvas>
-        <div class="controls-info">Space or Up Arrow to Jump</div>
-        
-        <div id="gameOver" class="game-over-screen">
-            <h2>GAME OVER</h2>
-            <p>Score: <span id="final-score">0</span></p>
-            <button class="restart-btn" onclick="startGame()">Try Again</button>
-            <br><br>
-            <a href="../index.html" style="color: var(--text-color);">Back to Arcade</a>
-        </div>
-    </main>
+        <main>
+            <div class="game-area">
+                <div class="status-bar">
+                    <span>SCORE: <b id="score">00000</b></span>
+                    <span>HIGH: <b id="high-score">00000</b></span>
+                </div>
+
+                <div class="canvas-wrapper">
+                    <canvas id="gameCanvas" width="800" height="400"></canvas>
+                    <div id="start-screen">
+                        <h2>PRESS SPACE TO JUMP</h2>
+                        <p>Avoid Cacti and Pterodactyls</p>
+                    </div>
+                    <div id="game-over-screen" style="display: none;">
+                        <h2 id="game-over-title" style="color: #ff0055;">EXTINCT</h2>
+                        <p>Score: <span id="final-score">0</span></p>
+                        <button id="restart-btn" class="retro-btn">TRY AGAIN</button>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <div class="difficulty-control">
+                        <span>PERIOD: </span>
+                        <select id="difficulty-select">
+                            <option value="triassic">Triassic (Easy)</option>
+                            <option value="jurassic" selected>Jurassic (Normal)</option>
+                            <option value="cretaceous">Cretaceous (Hard)</option>
+                        </select>
+                    </div>
+                    <button id="pause-btn" class="retro-btn">PAUSE</button>
+                </div>
+                
+                <div class="mobile-controls">
+                    <button id="jump-btn" class="wide-btn">JUMP / START</button>
+                    <button id="duck-btn" class="wide-btn">DUCK</button>
+                </div>
+            </div>
+        </main>
+    </div>
 
     <script src="../../ui.js"></script>
     <script src="../../effects.js"></script>

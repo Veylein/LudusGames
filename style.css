@@ -97,6 +97,23 @@ body::before {
     letter-spacing: 2px;
 }
 
+.back-link {
+    color: var(--primary); /* Assuming primary is defined elsewhere or inherits? */
+    /* Wait, primary is not defined in :root above. It uses --text-color or specific colors. */
+    color: var(--text-color);
+    text-decoration: none;
+    font-size: 0.8em;
+    padding: 5px 10px;
+    border: 1px dashed var(--text-color);
+    margin-right: 20px;
+    display: inline-block;
+}
+
+.back-link:hover {
+    background: var(--text-color);
+    color: #000;
+}
+
 /* CONTROLS AREA */
 
 .controls {
@@ -207,7 +224,7 @@ body::before {
 }
 
 .glow-title::after, .glow-title::before {
-    content: "LUDUS";
+    content: attr(data-text);
     position: absolute;
     top: 0;
     left: 0;

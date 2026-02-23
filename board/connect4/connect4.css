@@ -1,0 +1,274 @@
+body {
+    background: #0d1117;
+    color: #e6edf3;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.game-container {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+h1.glow-title {
+    margin: 0;
+    font-size: 2em;
+    text-align: center;
+    position: relative;
+    /* Base styles from global style.css apply */
+}
+
+/* Status Bar */
+.status-bar {
+    background: #161b22;
+    border: 1px solid #30363d;
+    padding: 10px;
+    text-align: center;
+    border-radius: 6px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #58a6ff;
+    transition: color 0.3s;
+}
+
+/* Board Layers */
+.board-wrapper {
+    position: relative;
+    width: 420px; /* 7 columns * 60px */
+    height: 360px; /* 6 rows * 60px */
+    margin: 20px auto;
+    /* Blue plastic board */
+    background: #004dcf;
+    border-radius: 10px;
+    border-bottom: 20px solid #00338d; /* Bottom stand */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    overflow: hidden; /* Or visible? */
+}
+
+/* The actual "holes" in the front plastic */
+.board-grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: repeat(6, 1fr);
+    pointer-events: none;
+    z-index: 2; /* In front of chips */
+}
+
+/* The mask creates the holes visually 
+   Actually, easiest way: 
+   Use radial-gradient mask or just individual div holes?
+   Individual div holes with transparent centers and blue borders?
+   Or simpler: .hole { background: radial-gradient(transparent 60%, blue 61%); }
+*/
+.hole {
+    width: 100%;
+    height: 100%;
+    /* Creates a transparent circle in the middle */
+    background: radial-gradient(circle at center, transparent 40%, #004dcf 41%);
+    position: relative;
+}
+
+/* Chips Layer (Behind the holes) */
+.chip {
+    position: absolute;
+    width: 50px; /* slightly smaller than 60px cell */
+    height: 50px;
+    top: 0; /* Animated later */
+    left: 0;
+    border-radius: 50%;
+    z-index: 1;
+    /* Start hidden above? */
+    transition: top 0.4s cubic-bezier(0.5, 0, 0.75, 0); 
+}
+
+.chip.red {
+    background: radial-gradient(circle at 30% 30%, #ff6b6b, #c0392b);
+    box-shadow: inset 0 -4px 4px rgba(0,0,0,0.3);
+}
+
+.chip.yellow {
+    background: radial-gradient(circle at 30% 30%, #f1c40f, #f39c12);
+    box-shadow: inset 0 -4px 4px rgba(0,0,0,0.3);
+}
+
+/* Column Click Layer (Invisible controls) */
+.column-click-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    z-index: 10;
+}
+
+.col-trigger {
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.col-trigger:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Hover Marker (Shows where chip will drop) */
+/* Can implement via JS or CSS on col-trigger:hover::before */
+.col-trigger:hover::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0; 
+    height: 0; 
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 10px solid #e74c3c; /* Show red arrow for P1? P2? */
+}
+
+/* Controls */
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 30px;
+    align-items: center;
+}
+
+.difficulty-control {
+    background: #161b22;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #30363d;
+}
+
+.difficulty-control select {
+    background: transparent;
+    color: #58a6ff;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.retro-btn {
+    padding: 10px 20px;
+    background: #238636;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 3px 0 #1a6328;
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.retro-btn:active {
+    transform: translateY(3px);
+    box-shadow: none;
+}
+
+.score-display {
+    display: flex;
+    gap: 20px;
+}
+
+.score-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #161b22;
+    padding: 8px 15px;
+    border-radius: 6px;
+    border: 1px solid #30363d;
+    min-width: 80px;
+}
+
+.chip-icon {
+    width: 16px; 
+    height: 16px; 
+    border-radius: 50%; 
+    margin-bottom: 4px;
+}
+.chip-icon.red { background: #e74c3c; }
+.chip-icon.yellow { background: #f1c40f; }
+
+.score-box span {
+    font-size: 0.7em;
+    opacity: 0.7;
+    margin-bottom: 4px;
+}
+
+.score-box b {
+    font-size: 1.2em;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(13, 17, 23, 0.9);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background: #161b22;
+    padding: 30px;
+    border-radius: 12px;
+    text-align: center;
+    border: 2px solid #30363d;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    max-width: 400px;
+    width: 90%;
+}
+
+.modal h2 {
+    font-size: 2em;
+    margin-bottom: 15px;
+    color: #e6edf3;
+}
+
+.modal p {
+    margin-bottom: 25px;
+    opacity: 0.8;
+}
+
+#modal-restart {
+    background: #1f6feb;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s;
+}
+
+#modal-restart:hover {
+    background: #1a5cbf;
+}
