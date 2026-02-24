@@ -134,37 +134,25 @@ class DinoGame {
              return;
         }
 
-        // Difficulty / Speed Increase
-        this.speed += 0.001;
+        // Difficulty / Speed Increase (Slower ramp up)
+        this.speed += 0.0005;
         
         // Day/Night Cycle
         // Night mode at specific intervals: 500-750, 1500-1750, 2500-2750, etc.
-        const modScore = this.displayScore % 1000;
+        const modScore = Math.floor(this.displayScore) % 1000;
         const isNightTime = modScore >= 500 && modScore < 750;
         
         // Smooth transition
         if (isNightTime) {
-            this.timeOfDay = Math.min(1, this.timeOfDay + 0.05);
+            this.timeOfDay = Math.min(1, this.timeOfDay + 0.02);
         } else {
-            this.timeOfDay = Math.max(0, this.timeOfDay - 0.05);
+            this.timeOfDay = Math.max(0, this.timeOfDay - 0.02);
         }
 
-        // Update Score
-        this.score++;
-        if (this.score % 5 === 0) { // Update visual score slower for "feel"
-             this.displayScore++;
-             this.updateScoreUI();
-        }
-        
-        // Win Condition: 1 Million (Simulated by 10,000 internal steps? Or cheat code)
-        // User asked for 1 million. Let's make display score go up 100x faster to make it reachable in demo?
-        // Or just let it play out. 
-        // Let's stick to true: regular play ~10 points/sec. 1M is impossible without cheats.
-        // Cheat: If user types 'meteor' (not implemented).
-        // Let's set win threshold to 5000 for realistic "Long run" demo, but display it multiplied if needed.
-        // Or just check raw display score 1,000,000.
-        // I'll make the points tick up fast: +10 per frame.
-        this.displayScore += 5; 
+        // Update display score every frame for smooth counter
+        // But internal score controls events
+        this.displayScore += 0.2; // roughly 12 points/sec at 60fps
+        this.updateScoreUI();
         
         if (this.displayScore >= 1000000) {
              this.triggerExtinction();

@@ -139,8 +139,14 @@ class PacmanGame {
         this.powerPellets.forEach(p => p.active = true);
         
         // Reset Player
+        // Spawn at (10, 16) - roughly below ghost house 
+        // Row 16: [1,3,0,0,1,1,0,0,0,0,1,1,0,0,0,0,1,1,0,0,3,1]
+        // index 10 is '1'. Index 11 is '1'. 
+        // Row 12: [1,2,2,2,2,2,0,2,2,1,2,2,1,2,2,0,2,2,2,2,2,1] -> 10 is '2' (Empty)
+        // Let's spawn at 10, 12.
+        
         this.player.x = 10; 
-        this.player.y = 15;
+        this.player.y = 12; // Safe empty spot
         this.player.pixelX = this.player.x * this.tileSize;
         this.player.pixelY = this.player.y * this.tileSize;
         this.player.dx = 0;

@@ -20,9 +20,9 @@ class TetrisGame {
         this.btnDown = document.getElementById('down-btn');
         this.btnDrop = document.getElementById('drop-btn');
         
-        this.cols = 10;
+        this.cols = 12;
         this.rows = 20;
-        this.grid = 24; // 240 / 10 = 24
+        this.grid = 20; // Matches 240x400 canvas perfectly
         
         this.colors = [
             null,

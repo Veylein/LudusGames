@@ -36,20 +36,33 @@ const player = {
     grounded: false
 };
 
-// Platforms
+// Platforms (More levels, zig-zag)
 const platforms = [
-    { x: 0, y: canvas.height - 10, width: canvas.width, height: 10 }, // Floor
-    { x: 0, y: 400, width: 350, height: 10 },
-    { x: 150, y: 300, width: 350, height: 10 },
-    { x: 0, y: 200, width: 350, height: 10 },
-    { x: 150, y: 100, width: 100, height: 10 } // Top goal
+    { x: 0, y: canvas.height - 10, width: canvas.width, height: 10 }, // Floor 1
+    { x: 0, y: canvas.height - 80, width: canvas.width - 60, height: 10 }, // Floor 2 (Left)
+    { x: 60, y: canvas.height - 150, width: canvas.width - 60, height: 10 }, // Floor 3 (Right)
+    { x: 0, y: canvas.height - 220, width: canvas.width - 60, height: 10 }, // Floor 4 (Left)
+    { x: 60, y: canvas.height - 290, width: canvas.width - 60, height: 10 }, // Floor 5 (Right)
+    { x: 0, y: canvas.height - 360, width: canvas.width - 60, height: 10 }, // Floor 6 (Left)
+    { x: 60, y: canvas.height - 430, width: canvas.width - 60, height: 10 }, // Floor 7 (Right)
+    { x: canvas.width/2 - 50, y: 50, width: 100, height: 10 } // Top Goal
 ];
 
 const ladders = [
-    { x: 300, y: 400, height: 90 },
-    { x: 200, y: 300, height: 90 },
-    { x: 300, y: 200, height: 90 }
+    { x: canvas.width - 80, y: canvas.height - 80, height: 70 },
+    { x: 80, y: canvas.height - 150, height: 70 },
+    { x: canvas.width - 80, y: canvas.height - 220, height: 70 },
+    { x: 80, y: canvas.height - 290, height: 70 },
+    { x: canvas.width - 80, y: canvas.height - 360, height: 70 },
+    { x: 80, y: canvas.height - 430, height: 70 },
+    { x: canvas.width/2, y: 50, height: canvas.height - 430 - 50 } // Long climb to top? No, just short.
 ];
+// Fix last ladder
+ladders[6] = { x: canvas.width/2, y: 50, height: (canvas.height - 430) - 50 + 10 }; 
+// Actually top platform y is 50. Floor 7 y is (H-430). 
+// Ladder from Floor 7 to Goal.
+ladders[6] = { x: canvas.width/2, y: 50, height: (canvas.height - 430) - 50 };
+
 
 let barrels = [];
 

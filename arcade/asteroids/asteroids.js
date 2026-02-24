@@ -248,15 +248,20 @@ class AsteroidsGame {
             // Create 2 smaller
             for(let i=0; i<2; i++) {
                  // Push directly
+                 const newR = a.r / 2;
+                 const newVert = Math.floor(Math.random() * 5 + 5);
+                 const newOffs = [];
+                 for(let k=0; k<newVert; k++) newOffs.push(Math.random() * 0.4 * newR + newR * 0.8);
+                 
                  this.asteroids.push({
                     x: a.x,
                     y: a.y,
                     vx: Math.random() * 4 - 2, 
                     vy: Math.random() * 4 - 2,
-                    r: a.r / 2,
+                    r: newR,
                     a: Math.random() * 6.28,
-                    vert: Math.floor(Math.random() * 5 + 5),
-                    offs: []
+                    vert: newVert,
+                    offs: newOffs
                  });
             }
         }

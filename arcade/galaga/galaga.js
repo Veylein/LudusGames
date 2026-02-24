@@ -342,33 +342,43 @@ class GalagaGame {
     }
     
     draw() {
+        // Background
         this.ctx.fillStyle = '#000';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // Stars
+        // Stars (Twinkle)
         this.stars.forEach(s => {
             this.ctx.fillStyle = s.color;
-            this.ctx.globalAlpha = Math.random() * 0.5 + 0.3;
+            this.ctx.globalAlpha = Math.random() * 0.5 + 0.5;
             this.ctx.fillRect(s.x, s.y, s.size, s.size);
         });
         this.ctx.globalAlpha = 1.0;
         
         if(!this.isGameRunning) return;
         
-        // Player (More detailed pixel art)
+        // Player (Retro Fighter)
         if(this.player && !this.player.dead) {
             const x = this.player.x;
             const y = this.player.y;
-            this.ctx.fillStyle = '#eee';
             
-            // Ship Body
-            this.ctx.fillRect(x+13, y+2, 4, 10);
-            this.ctx.fillRect(x+10, y+10, 10, 8);
-            this.ctx.fillStyle = '#f00'; // Red
-            this.ctx.fillRect(x+2, y+14, 8, 12); // Left Engine
-            this.ctx.fillRect(x+20, y+14, 8, 12); // Right Engine
+            // White Body
             this.ctx.fillStyle = '#fff';
-            this.ctx.fillRect(x+12, y+18, 6, 4); // Thruster
+            this.ctx.fillRect(x+13, y, 4, 6); // Nose
+            this.ctx.fillRect(x+11, y+6, 8, 8); // Cockpit base
+            this.ctx.fillRect(x+4, y+14, 22, 4); // Wings Top
+            this.ctx.fillRect(x+2, y+18, 26, 8); // Wings Base
+
+            // Red Detail
+            this.ctx.fillStyle = '#f00'; 
+            this.ctx.fillRect(x+0, y+16, 2, 10); // Left Tip
+            this.ctx.fillRect(x+28, y+16, 2, 10); // Right Tip
+            this.ctx.fillRect(x+13, y+8, 4, 4); // Center stripe
+
+            // Blue Engine Thruster
+            this.ctx.fillStyle = '#0af';
+            if (Date.now() % 200 < 100) {
+                 this.ctx.fillRect(x+11, y+26, 8, 4); 
+            }
         }
         
         // Enemies
@@ -377,38 +387,43 @@ class GalagaGame {
             const y = e.y;
             
             if(e.type === 'bee') {
-                this.ctx.fillStyle = '#ff0'; // Yellow
-                this.ctx.fillRect(x+4, y+4, 16, 16);
-                this.ctx.fillStyle = '#00f'; // Blue Wings
-                // Wing animation
-                if (Math.floor(Date.now() / 200) % 2 === 0) {
-                     this.ctx.fillRect(x-4, y, 8, 12);
-                     this.ctx.fillRect(x+20, y, 8, 12);
-                } else {
-                     this.ctx.fillRect(x-4, y+8, 8, 12);
-                     this.ctx.fillRect(x+20, y+8, 8, 12);
-                }
+                // Yellow Bee
+                this.ctx.fillStyle = '#ff0'; 
+                this.ctx.fillRect(x+6, y+4, 12, 12); // Body
+                this.ctx.fillStyle = '#fff'; 
+                this.ctx.fillRect(x+2, y+2, 4, 8); // L Wing
+                this.ctx.fillRect(x+18, y+2, 4, 8); // R Wing
+                this.ctx.fillStyle = '#f00';
+                this.ctx.fillRect(x+8, y+8, 2, 2); // Eye
+                this.ctx.fillRect(x+14, y+8, 2, 2); // Eye
             } else if(e.type === 'butterfly') {
-                this.ctx.fillStyle = '#f00'; // Red
-                this.ctx.beginPath();
-                this.ctx.moveTo(x+12, y+24);
-                this.ctx.lineTo(x, y);
-                this.ctx.lineTo(x+24, y);
-                this.ctx.fill();
-            } else { // Boss
-                this.ctx.fillStyle = '#0f0'; // Green
-                this.ctx.fillRect(x+4, y+12, 16, 12); // Body
-                this.ctx.fillStyle = '#a0a'; // Purple
-                this.ctx.fillRect(x, y, 8, 16); // Horns
-                this.ctx.fillRect(x+16, y, 8, 16);
+                // Red Butterfly
+                this.ctx.fillStyle = '#f00';
+                this.ctx.fillRect(x+8, y+6, 8, 10); // Body
+                this.ctx.fillStyle = '#0af'; 
+                this.ctx.fillRect(x+2, y+2, 6, 8); // L Wing Top
+                this.ctx.fillRect(x+16, y+2, 6, 8); // R Wing Top
+                this.ctx.fillRect(x+4, y+12, 4, 6); // L Wing Bot
+                this.ctx.fillRect(x+16, y+12, 4, 6); // R Wing Bot
+            } else { // Boss (Green Capturer)
+                this.ctx.fillStyle = '#0f0';
+                this.ctx.fillRect(x+6, y+10, 18, 10); // Body
+                this.ctx.fillRect(x+2, y+14, 4, 8); // L Claw
+                this.ctx.fillRect(x+24, y+14, 4, 8); // R Claw
+                this.ctx.fillStyle = '#a0a';
+                this.ctx.fillRect(x+10, y+4, 10, 6); // Head crest?
             }
         });
         
         // Bullets
-        this.ctx.fillStyle = '#ff0';
-        this.bullets.forEach(b => this.ctx.fillRect(b.x, b.y, b.w, b.h));
+        this.ctx.fillStyle = '#ff4';
+        this.bullets.forEach(b => {
+             this.ctx.fillRect(b.x, b.y, b.w, b.h);
+             this.ctx.fillStyle = '#ff0'; 
+             this.ctx.fillRect(b.x+1, b.y+b.h, b.w-2, 2); // Trail
+        });
         
-        this.ctx.fillStyle = '#f88';
+        this.ctx.fillStyle = '#f44';
         this.enemyBullets.forEach(b => {
             this.ctx.beginPath();
             this.ctx.arc(b.x+2, b.y+4, 3, 0, Math.PI*2);
@@ -419,7 +434,7 @@ class GalagaGame {
         this.particles.forEach(p => {
             this.ctx.fillStyle = p.color;
             this.ctx.globalAlpha = p.life / 20;
-            this.ctx.fillRect(p.x, p.y, 4, 4);
+            this.ctx.fillRect(p.x, p.y, 3, 3);
         });
         this.ctx.globalAlpha = 1.0;
     }
