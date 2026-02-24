@@ -152,14 +152,6 @@
         #333 10px
     );
 }
-    background-image: repeating-linear-gradient(
-        45deg,
-        #222,
-        #222 5px,
-        #333 5px,
-        #333 10px
-    );
-}
 
 .status-badge {
     position: absolute;

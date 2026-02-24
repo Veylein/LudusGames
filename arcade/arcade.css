@@ -73,6 +73,74 @@ button:active {
     box-shadow: 0 0 0 #990000;
 }
 
+
+/* Enhanced Game Links - Original Arcade Style */
+.game-link {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-decoration: none;
+    background: #111;
+    border: 4px solid #555;
+    color: #0f0; /* Retro Green Default */
+    padding: 20px;
+    margin: 10px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 12px;
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.2), inset 0 0 20px rgba(0,0,0,0.8);
+    text-align: center;
+    min-width: 150px;
+    min-height: 60px;
+}
+
+.game-link:hover {
+    transform: scale(1.05);
+    background: #000;
+    border-color: #0f0;
+    color: #fff;
+    box-shadow: 0 0 20px #0f0, inset 0 0 10px #0f0;
+    z-index: 10;
+}
+
+.game-link::before {
+    content: "";
+    position: absolute;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.game-link:hover::before {
+    left: 100%;
+}
+
+.game-link span {
+    position: relative;
+    z-index: 2;
+    text-shadow: 2px 2px 0 #000;
+}
+
+/* Unique Colors per Game (Optional) */
+.game-link[href*="pacman"] { border-color: #ffff00; color: #ffff00; }
+.game-link[href*="pacman"]:hover { box-shadow: 0 0 20px #ffff00; }
+
+.game-link[href*="mario"], .game-link[href*="kong"] { border-color: #ff0000; color: #ff0000; }
+.game-link[href*="mario"]:hover, .game-link[href*="kong"]:hover { box-shadow: 0 0 20px #ff0000; }
+
+.game-link[href*="tetris"] { border-color: #00ffff; color: #00ffff; }
+.game-link[href*="tetris"]:hover { box-shadow: 0 0 20px #00ffff; }
+
+.game-link[href*="invaders"] { border-color: #00ff00; color: #00ff00; }
+.game-link[href*="invaders"]:hover { box-shadow: 0 0 20px #00ff00; }
+
+.game-link[href*="fighting"] { border-color: #ff8800; color: #ff8800; }
+.game-link[href*="fighting"]:hover { box-shadow: 0 0 20px #ff8800; }
+
 /* Scanline Effect */
 .scanlines {
     position: fixed;

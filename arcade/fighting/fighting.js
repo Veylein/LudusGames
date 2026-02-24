@@ -740,6 +740,95 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
+// --- CHARACTER SELECTION ---
+
+let selectedCharID = null;
+
+function initSelection() {
+    const grid = document.getElementById("char-grid");
+    if(!grid) return;
+    grid.innerHTML = "";
+    
+    ALL_CAST.forEach(char => {
+        const btn = document.createElement("div");
+        btn.className = "char-slot";
+        // Create style for char-slot if not exists in CSS, but assume basic div
+        btn.style.cursor = "pointer";
+        btn.style.display = "flex";
+        btn.style.flexDirection = "column";
+        btn.style.alignItems = "center";
+        
+        btn.onclick = () => selectChar(char.id);
+        
+        // Mini Preview
+        const preview = document.createElement("div");
+        preview.style.width = "30px";
+        preview.style.height = "30px";
+        preview.style.backgroundColor = char.color;
+        preview.style.border = "2px solid #fff";
+        btn.appendChild(preview);
+        
+        const name = document.createElement("div");
+        name.innerText = char.name;
+        name.style.fontSize = "6px";
+        name.style.marginTop = "2px";
+        name.style.color = "#fff";
+        name.style.textAlign = "center";
+        btn.appendChild(name);
+        
+        grid.appendChild(btn);
+    });
+}
+
+function selectChar(id) {
+    selectedCharID = id;
+    const char = CHARACTERS[id];
+    
+    // Update Display
+    document.getElementById("p1-select-name").innerText = char.name;
+    const preview = document.getElementById("p1-select-preview");
+    preview.innerHTML = "";
+    
+    // Draw big preview
+    const canvas = document.createElement("canvas");
+    canvas.width = 150;
+    canvas.height = 150;
+    const ctx = canvas.getContext("2d");
+    
+    // Create temp fighter object just for drawing
+    // We mock the draw call by creating a temporary fighter
+    const tempFighter = new Fighter(0, 0, char);
+    // Override position for preview
+    tempFighter.x = 40;
+    tempFighter.y = 20; 
+    // Mock floor for draw
+    const originalFloor = 380; 
+    // We need to adjust the draw method or context to draw at (0,0) of this small canvas
+    // The Fighter.draw uses global FLOOR_Y. We need to handle this.
+    // Actually, Fighter.draw uses this.x, this.y and FLOOR_Y for shadow.
+    // Let's just draw a simple box representation or try to use the draw method with a transform.
+    
+    ctx.fillStyle = char.color;
+    ctx.fillRect(50, 50, 50, 80); // Simple box if complex draw fails or is too dependent on globals
+    
+    // Try to reuse the complex draw if possible
+    // The draw method uses 'FLOOR_Y' constant. 
+    // define a local FLOOR_Y for the preview? No, it's a constant.
+    // We can just draw a rect for now to be safe and ensure it works.
+    
+    preview.appendChild(canvas);
+    
+    // Enable Start
+    document.getElementById("start-btn").disabled = false;
+    document.getElementById("start-btn").style.opacity = 1;
+}
+
+function confirmSelection() {
+    if(!selectedCharID) return;
+    document.getElementById("start-screen").style.display = "none";
+    initGame(selectedCharID);
+}
+
 // Global Event Listeners
 window.addEventListener("keydown", (e) => {
     keys[e.key] = true;
