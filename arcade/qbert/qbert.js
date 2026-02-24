@@ -177,62 +177,126 @@ class QbertGame {
         this.updateQbertPos();
     }
     
-    drawCube(x, y, colorIdx) {
-        const topColor = this.colors[colorIdx];
-        const leftColor = '#777';
-        const rightColor = '#555';
-        
-        // Hexagon: Top face is rhombus
-        // Width 40. Side 20? 
-        // 30 vertical spacing.
-        
-        this.ctx.beginPath();
-        // Top Face
-        this.ctx.moveTo(x, y);
-        this.ctx.lineTo(x + 20, y - 10);
-        this.ctx.lineTo(x, y - 20);
-        this.ctx.lineTo(x - 20, y - 10);
-        this.ctx.closePath();
-        this.ctx.fillStyle = topColor;
-        this.ctx.fill();
-        
-        // Left Face
-        this.ctx.beginPath();
-        this.ctx.moveTo(x, y);
-        this.ctx.lineTo(x - 20, y - 10);
-        this.ctx.lineTo(x - 20, y + 15);
-        this.ctx.lineTo(x, y + 25);
-        this.ctx.closePath();
-        this.ctx.fillStyle = leftColor;
-        this.ctx.fill();
-        
-        // Right Face
-        this.ctx.beginPath();
-        this.ctx.moveTo(x, y);
-        this.ctx.lineTo(x + 20, y - 10);
-        this.ctx.lineTo(x + 20, y + 15);
-        this.ctx.lineTo(x, y + 25);
-        this.ctx.closePath();
-        this.ctx.fillStyle = rightColor;
-        this.ctx.fill();
-    }
+    // Old drawCube replaced
+
     
     draw() {
         this.ctx.fillStyle = '#000';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
         // Draw Cubes
+        // Sort by row/col for proper overlap?
+        // Actually painters algorithm: draw back to front.
+        // Row 0 is top. Row 6 is bottom.
+        // Since y increases with r, default order is fine.
         this.cubes.forEach(c => {
             this.drawCube(c.x, c.y, c.color);
         });
         
         // Draw Qbert
         if (this.isRunning) {
-            this.ctx.fillStyle = '#f0f';
-            this.ctx.beginPath();
-            this.ctx.arc(this.qbert.x, this.qbert.y - 10, 10, 0, Math.PI * 2);
-            this.ctx.fill();
+            this.drawQbert(this.qbert.x, this.qbert.y - 15);
         }
+    }
+    
+    drawCube(x, y, colorState) {
+        // Pseudo-3D Isometric Cube
+        // y is center of top face? No, y in initLevel was calculated roughly.
+        // Let's standardise: x,y is the center of the TOP face.
+        
+        const size = 20; // Half-width
+        const h = 25; // Height of side faces
+        
+        // Palette
+        // State 0: Blue/Teal (Start)
+        // State 1: Yellow (Target)
+        // State 2: Green (Intermediate/Done)
+        
+        let topColor = '#888';
+        if (colorState === 0) topColor = '#55a'; // Blueish
+        else if (colorState === 1) topColor = '#fd0'; // Yellow
+        else if (colorState === 2) topColor = '#0f0'; // Green
+
+        const leftColor = '#555'; // Darker grey
+        const rightColor = '#333'; // Darkest grey
+        
+        // Top Face (Rhombus)
+        this.ctx.beginPath();
+        this.ctx.moveTo(x, y - size); // Top pt
+        this.ctx.lineTo(x + size, y); // Right pt
+        this.ctx.lineTo(x, y + size); // Bottom (center) pt
+        this.ctx.lineTo(x - size, y); // Left pt
+        this.ctx.closePath();
+        this.ctx.fillStyle = topColor;
+        this.ctx.fill();
+        this.ctx.stroke(); // Outline for pop
+        
+        // Left Face
+        this.ctx.beginPath();
+        this.ctx.moveTo(x - size, y);
+        this.ctx.lineTo(x, y + size);
+        this.ctx.lineTo(x, y + size + h);
+        this.ctx.lineTo(x - size, y + h);
+        this.ctx.closePath();
+        this.ctx.fillStyle = leftColor;
+        this.ctx.fill();
+        this.ctx.stroke();
+
+        // Right Face
+        this.ctx.beginPath();
+        this.ctx.moveTo(x + size, y);
+        this.ctx.lineTo(x, y + size);
+        this.ctx.lineTo(x, y + size + h);
+        this.ctx.lineTo(x + size, y + h);
+        this.ctx.closePath();
+        this.ctx.fillStyle = rightColor;
+        this.ctx.fill();
+        this.ctx.stroke();
+    }
+    
+    drawQbert(x, y) {
+        // Draw Q*bert Sprite (Orange blob with nose)
+        const w = 24; 
+        const h = 24;
+        
+        this.ctx.fillStyle = '#ff7b00'; // Orange
+        
+        // Body (Circle-ish)
+        this.ctx.beginPath();
+        this.ctx.arc(x, y, 12, 0, Math.PI*2);
+        this.ctx.fill();
+        
+        // Snoot (Nose) - varies by direction? Let's point down-right
+        this.ctx.beginPath();
+        this.ctx.moveTo(x + 5, y + 5);
+        this.ctx.lineTo(x + 15, y + 15);
+        this.ctx.lineTo(x + 20, y + 25);
+        this.ctx.lineWidth = 6;
+        this.ctx.strokeStyle = '#ff7b00';
+        this.ctx.stroke();
+        this.ctx.lineWidth = 1;
+        
+        // Eyes
+        this.ctx.fillStyle = '#fff';
+        this.ctx.beginPath();
+        this.ctx.arc(x - 4, y - 4, 4, 0, Math.PI*2); // Left Eye
+        this.ctx.fill();
+        
+        this.ctx.beginPath();
+        this.ctx.arc(x + 6, y - 4, 4, 0, Math.PI*2); // Right Eye
+        this.ctx.fill();
+        
+        // Pupils
+        this.ctx.fillStyle = '#000';
+        this.ctx.beginPath();
+        this.ctx.arc(x - 4, y - 4, 1.5, 0, Math.PI*2);
+        this.ctx.arc(x + 6, y - 4, 1.5, 0, Math.PI*2);
+        this.ctx.fill();
+        
+        // Legs (if any)
+        this.ctx.fillStyle = '#ff7b00';
+        this.ctx.fillRect(x - 8, y + 10, 4, 8);
+        this.ctx.fillRect(x + 4, y + 10, 4, 8);
     }
     
     loop() {

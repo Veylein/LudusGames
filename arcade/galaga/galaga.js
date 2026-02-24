@@ -9,618 +9,421 @@ class GalagaGame {
         this.startScreen = document.getElementById('start-screen');
         this.gameOverScreen = document.getElementById('game-over-screen');
         this.finalScoreElement = document.getElementById('final-score');
-        this.finalLevelElement = document.getElementById('final-level');
         this.restartBtn = document.getElementById('restart-btn');
         this.pauseBtn = document.getElementById('pause-btn');
-        this.difficultySelect = document.getElementById('difficulty-select');
         
-        // Mobile Controls
-        this.btnLeft = document.getElementById('left-btn');
-        this.btnRight = document.getElementById('right-btn');
-        this.btnFire = document.getElementById('fire-btn');
+        // Input
+        this.input = { left: false, right: false, fire: false };
+        this.setupControls();
         
-        // State
+        // Game State
         this.isGameRunning = false;
         this.isPaused = false;
-        this.animationId = null;
-        this.score = 0;
-        this.highScore = localStorage.getItem('galagaHighScore') || 0;
         this.level = 1;
-        this.difficulty = 'normal';
+        this.score = 0;
+        this.highScore = parseInt(localStorage.getItem('galagaHighScore') || 0);
         
         // Entities
         this.player = null;
+        this.enemies = [];
         this.bullets = [];
         this.enemyBullets = [];
-        this.enemies = [];
         this.explosions = [];
         this.stars = [];
+        this.particles = [];
         
-        // Timers
         this.waveTimer = 0;
-        this.formationOffset = 0;
-        this.formationDirection = 1;
         
         this.init();
     }
     
     init() {
-        this.highScoreElement.innerText = this.highScore;
+        if(this.highScoreElement) this.highScoreElement.innerText = this.highScore;
         this.createStars();
         
-        // Input
-        this.input = { left: false, right: false, fire: false };
+        if(this.restartBtn) this.restartBtn.addEventListener('click', () => this.startGame());
+        if(this.pauseBtn) this.pauseBtn.addEventListener('click', () => this.togglePause());
         
-        window.addEventListener('keydown', (e) => this.handleKey(e, true));
-        window.addEventListener('keyup', (e) => this.handleKey(e, false));
-        
-        this.restartBtn.addEventListener('click', () => this.resetGame());
-        this.pauseBtn.addEventListener('click', () => this.togglePause());
-
-        // Mobile
-        this.setupMobileControls();
-        
-        this.drawLoop(); // Idle draw for stars
+        requestAnimationFrame(() => this.loop());
     }
     
-    setupMobileControls() {
-        const set = (k, v) => this.input[k] = v;
-        
-        // Touch events
-        ['touchstart', 'mousedown'].forEach(evt => {
-            this.btnLeft.addEventListener(evt, (e) => { e.preventDefault(); set('left', true); });
-            this.btnRight.addEventListener(evt, (e) => { e.preventDefault(); set('right', true); });
-            this.btnFire.addEventListener(evt, (e) => { e.preventDefault(); set('fire', true); });
+    setupControls() {
+        window.addEventListener('keydown', (e) => {
+            if(e.code === 'ArrowLeft') this.input.left = true;
+            if(e.code === 'ArrowRight') this.input.right = true;
+            if(e.code === 'Space') {
+                this.input.fire = true;
+                if(!this.isGameRunning) this.startGame();
+            }
         });
-        
-        ['touchend', 'mouseup', 'mouseleave'].forEach(evt => {
-            this.btnLeft.addEventListener(evt, (e) => { e.preventDefault(); set('left', false); });
-            this.btnRight.addEventListener(evt, (e) => { e.preventDefault(); set('right', false); });
-            this.btnFire.addEventListener(evt, (e) => { e.preventDefault(); set('fire', false); });
+        window.addEventListener('keyup', (e) => {
+            if(e.code === 'ArrowLeft') this.input.left = false;
+            if(e.code === 'ArrowRight') this.input.right = false;
+            if(e.code === 'Space') this.input.fire = false;
         });
-    }
-
-    handleKey(e, isDown) {
-        if (e.code === 'ArrowLeft') this.input.left = isDown;
-        if (e.code === 'ArrowRight') this.input.right = isDown;
-        if (e.code === 'Space' || e.code === 'KeyZ') this.input.fire = isDown;
-        
-        if (isDown && e.code === 'Space' && !this.isGameRunning) {
-             this.startGame();
-        }
     }
     
     createStars() {
-        for(let i=0; i<100; i++) {
+        for(let i=0; i<80; i++) {
             this.stars.push({
                 x: Math.random() * this.canvas.width,
                 y: Math.random() * this.canvas.height,
-                size: Math.random() * 2 + 1,
-                speed: Math.random() * 3 + 0.5
+                size: Math.random() < 0.8 ? 1 : 2,
+                speed: Math.random() * 2 + 0.5,
+                color: Math.random() > 0.8 ? '#555' : '#fff'
             });
         }
     }
     
     startGame() {
-        if (this.isGameRunning) return;
-        
         this.isGameRunning = true;
         this.isPaused = false;
         this.score = 0;
         this.level = 1;
         this.updateScoreUI();
-        this.startScreen.style.display = 'none';
-        this.gameOverScreen.style.display = 'none';
+        if(this.startScreen) this.startScreen.style.display = 'none';
+        if(this.gameOverScreen) this.gameOverScreen.style.display = 'none';
         
         this.player = {
-            x: this.canvas.width / 2,
+            x: this.canvas.width / 2 - 15,
             y: this.canvas.height - 50,
-            width: 30,
-            height: 30,
+            w: 30, h: 30,
             speed: 5,
             cooldown: 0,
-            lives: 3
+            lives: 3,
+            dead: false
         };
         
-        this.bullets = [];
-        this.enemyBullets = [];
-        this.explosions = [];
-        
         this.startLevel();
-        this.loop();
     }
     
     startLevel() {
         this.enemies = [];
         this.bullets = [];
         this.enemyBullets = [];
+        this.waveTimer = 0;
         
-        // Spawn Formation
         const rows = 4;
         const cols = 8;
-        const startX = 60;
-        const startY = 60;
-        const gapX = 45;
-        const gapY = 40;
+        const startX = (this.canvas.width - (cols * 40)) / 2 + 20;
         
-        for (let r=0; r<rows; r++) {
-            for (let c=0; c<cols; c++) {
+        for(let r=0; r<rows; r++) {
+            for(let c=0; c<cols; c++) {
                 let type = 'bee';
-                if (r === 0) type = 'boss';
-                else if (r === 1) type = 'butterfly';
-                
                 let hp = 1;
-                if (type === 'boss') hp = 2;
+                let score = 50;
+                
+                if (r === 0) { type = 'boss'; hp = 2; score=150; }
+                else if (r === 1) { type = 'butterfly'; score=80; hp=1; }
                 
                 this.enemies.push({
-                    x: startX + c * gapX,
-                    y: startY + r * gapY,
-                    homeX: startX + c * gapX,
-                    homeY: startY + r * gapY,
+                    x: startX + c * 40,
+                    y: 50 + r * 35,
+                    homeX: startX + c * 40,
+                    homeY: 50 + r * 35,
+                    vx: 0, vy: 0,
                     type: type,
-                    width: 30,
-                    height: 30,
+                    w: 24, h: 24,
                     hp: hp,
-                    state: 'formation', // formation, diving, returning
-                    diveTimer: Math.random() * 500, // Random delay for diving
-                    angle: 0
+                    scoreVal: score,
+                    state: 'formation',
+                    diveTimer: Math.random() * 600 + 100
                 });
             }
         }
     }
     
-    resetGame() {
-        this.isGameRunning = false;
-        this.startGame();
-    }
-    
     togglePause() {
-        if (!this.isGameRunning) return;
+        if(!this.isGameRunning) return;
         this.isPaused = !this.isPaused;
-        this.pauseBtn.innerText = this.isPaused ? 'RESUME' : 'PAUSE';
+        if(this.pauseBtn) this.pauseBtn.innerText = this.isPaused ? 'RESUME' : 'PAUSE';
     }
     
     loop() {
-        if (!this.isGameRunning) return;
-        
-        if (!this.isPaused) {
+        if(this.isGameRunning && !this.isPaused) {
             this.update();
+        } else {
+            this.updateStars();
         }
-        
         this.draw();
-        this.animationId = requestAnimationFrame(() => this.loop());
-    }
-    
-    drawLoop() {
-        // Idle loop for start screen background
-        if (!this.isGameRunning) {
-             this.updateStars();
-             this.draw();
-             requestAnimationFrame(() => this.drawLoop());
-        }
+        requestAnimationFrame(() => this.loop());
     }
     
     update() {
         this.updateStars();
-        this.updatePlayer();
-        this.updateBullets();
-        this.updateEnemies();
-        this.updateExplosions();
+        this.waveTimer += 0.05;
         
-        // Level Clear
-        if (this.enemies.length === 0) {
+        // Player
+        if(this.player && !this.player.dead) {
+            if(this.input.left && this.player.x > 0) this.player.x -= this.player.speed;
+            if(this.input.right && this.player.x < this.canvas.width - this.player.w) this.player.x += this.player.speed;
+            
+            if(this.input.fire && this.player.cooldown <= 0) {
+                this.bullets.push({ x: this.player.x + 13, y: this.player.y, w: 4, h: 10, speed: 8 });
+                this.player.cooldown = 15;
+            }
+            if(this.player.cooldown > 0) this.player.cooldown--;
+        }
+        
+        // Bullets
+        for(let i=this.bullets.length-1; i>=0; i--) {
+            let b = this.bullets[i];
+            b.y -= b.speed;
+            if(b.y < -10) this.bullets.splice(i, 1);
+        }
+        
+        // E-Bullets
+        for(let i=this.enemyBullets.length-1; i>=0; i--) {
+            let b = this.enemyBullets[i];
+            b.y += b.speed;
+            if(b.y > this.canvas.height) { this.enemyBullets.splice(i, 1); continue; }
+            
+            if(this.player && !this.player.dead && this.rectIntersect(b, this.player)) {
+                 this.handlePlayerHit();
+                 this.enemyBullets.splice(i, 1);
+            }
+        }
+        
+        // Enemies
+        const formationX = Math.sin(this.waveTimer) * 20;
+        const diveChance = 0.002 + (this.level * 0.001);
+
+        for(let i=this.enemies.length-1; i>=0; i--) {
+            let e = this.enemies[i];
+            
+            // Movement State
+            if(e.state === 'formation') {
+                e.x = e.homeX + formationX;
+                e.y = e.homeY;
+                
+                if(Math.random() < diveChance && e.diveTimer <= 0) {
+                    e.state = 'diving';
+                    // Aim Vector
+                    let tx = this.player ? this.player.x : this.canvas.width/2;
+                    let ty = this.player ? this.player.y : this.canvas.height;
+                    let dx = tx - e.x;
+                    let dy = ty - e.y;
+                    let dist = Math.sqrt(dx*dx + dy*dy);
+                    e.vx = (dx/dist) * 3;
+                    e.vy = 3 + (this.level * 0.2);
+                }
+                if(e.diveTimer > 0) e.diveTimer--;
+                
+            } else if(e.state === 'diving') {
+                e.x += e.vx;
+                e.x += Math.sin(e.y * 0.1) * 2; // Wiggle
+                e.y += e.vy;
+                
+                // Shoot
+                if(Math.random() < 0.02) {
+                    this.enemyBullets.push({ x: e.x + 10, y: e.y+20, w: 4, h: 8, speed: 4 });
+                }
+                
+                if(e.y > this.canvas.height + 20) {
+                    e.state = 'returning';
+                    e.y = -20;
+                }
+                
+                // Crash into player
+                if(this.player && !this.player.dead && this.rectIntersect(e, this.player)) {
+                    this.handlePlayerHit();
+                    this.createExplosion(e.x, e.y, e.type);
+                    this.enemies.splice(i, 1);
+                    continue;
+                }
+                
+            } else if(e.state === 'returning') {
+                let tx = e.homeX + formationX;
+                let ty = e.homeY;
+                e.x += (tx - e.x) * 0.05;
+                e.y += (ty - e.y) * 0.05;
+                
+                if(Math.abs(e.x - tx) < 5 && Math.abs(e.y - ty) < 5) {
+                    e.state = 'formation';
+                    e.diveTimer = Math.random() * 600 + 200;
+                }
+            }
+            
+            // Bullet Collisions
+            for(let b=this.bullets.length-1; b>=0; b--) {
+                if(this.rectIntersect(this.bullets[b], e)) {
+                    this.bullets.splice(b, 1);
+                    e.hp--;
+                    if(e.hp <= 0) {
+                        this.score += e.scoreVal;
+                        this.updateScoreUI();
+                        this.createExplosion(e.x, e.y, e.type);
+                        this.enemies.splice(i, 1);
+                    } else {
+                        // Flash or particle
+                    }
+                    break;
+                }
+            }
+        }
+        
+        if(this.enemies.length === 0) {
             this.level++;
-            // Bonus points?
             this.startLevel();
+        }
+        
+        // Particles
+        for(let i=this.particles.length-1; i>=0; i--) {
+            let p = this.particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.life--;
+            if(p.life <= 0) this.particles.splice(i, 1);
         }
     }
     
     updateStars() {
-        const speedMult = this.level * 0.5 + 1;
+        const speed = this.isGameRunning ? (1 + this.level * 0.5) : 0.5;
         this.stars.forEach(s => {
-            s.y += s.speed * (this.isGameRunning ? speedMult : 1);
-            if (s.y > this.canvas.height) {
+            s.y += s.speed * speed;
+            if(s.y > this.canvas.height) {
                 s.y = 0;
                 s.x = Math.random() * this.canvas.width;
             }
         });
     }
     
-    updatePlayer() {
-        if (!this.player) return;
+    handlePlayerHit() {
+        if(!this.player || this.player.dead) return;
+        this.createExplosion(this.player.x, this.player.y, 'player');
+        this.player.dead = true;
+        this.player.lives--;
         
-        if (this.input.left && this.player.x > 0) this.player.x -= this.player.speed;
-        if (this.input.right && this.player.x + this.player.width < this.canvas.width) this.player.x += this.player.speed;
-        
-        if (this.input.fire && this.player.cooldown <= 0) {
-            this.fireBullet();
-            this.player.cooldown = 15;
-        }
-        
-        if (this.player.cooldown > 0) this.player.cooldown--;
-    }
-    
-    fireBullet() {
-        // Limit total bullets
-        if (this.bullets.length < 2) {
-            this.bullets.push({
-                x: this.player.x + this.player.width / 2 - 2,
-                y: this.player.y,
-                width: 4,
-                height: 10,
-                speed: 10
-            });
-            // Sound effect?
-        }
-    }
-    
-    updateBullets() {
-        // Player Bullets
-        for (let i = this.bullets.length - 1; i >= 0; i--) {
-            let b = this.bullets[i];
-            b.y -= b.speed;
-            if (b.y < 0) this.bullets.splice(i, 1);
-        }
-        
-        // Enemy Bullets
-        for (let i = this.enemyBullets.length - 1; i >= 0; i--) {
-            let b = this.enemyBullets[i];
-            b.y += b.speed;
-            
-            // Player Collision (Simple Rect)
-            if (this.player && this.rectIntersect(b.x, b.y, b.width, b.height, 
-                                   this.player.x + 5, this.player.y + 5, this.player.width - 10, this.player.height - 10)) {
-                
-                this.handlePlayerDeath();
-                this.enemyBullets.splice(i, 1);
-            }
-            
-            if (b.y > this.canvas.height) this.enemyBullets.splice(i, 1);
-        }
-    }
-    
-    updateEnemies() {
-        // Formation Breathing Movement
-        this.waveTimer += 0.05;
-        this.formationOffset = Math.sin(this.waveTimer) * 20;
-
-        // Dive Logic Chance
-        const diveChance = 0.005 + (this.level * 0.002);
-        
-        this.enemies.forEach((e, index) => {
-            // State Machine
-            if (e.state === 'formation') {
-                e.x = e.homeX + this.formationOffset;
-                // Random Dive
-                if (Math.random() < diveChance && e.diveTimer <= 0) {
-                    e.state = 'diving';
-                    // Calculate dive vectors - aim at player??
-                    // Simple curve: down and towards player
-                    e.diveVx = (Math.random() - 0.5) * 4;
-                    e.diveVy = 3 + (this.level * 0.5);
-                }
-                if (e.diveTimer > 0) e.diveTimer--;
-                
-            } else if (e.state === 'diving') {
-                e.y += e.diveVy;
-                e.x += Math.sin(e.y * 0.05) * 3; // Wiggle
-                
-                // Shoot Chance
-                 if (Math.random() < 0.02) {
-                     this.enemyBullets.push({
-                         x: e.x + e.width/2,
-                         y: e.y + e.height,
-                         width: 4, height: 8, speed: 4
-                     });
-                 }
-
-                if (e.y > this.canvas.height) {
-                    e.y = 0;
-                    e.state = 'returning'; // Wrap around top -> return to formation
-                }
-                
-                // Collision with Player
-                if (this.player && this.rectIntersect(e.x, e.y, e.width, e.height, 
-                                        this.player.x, this.player.y, this.player.width, this.player.height)) {
-                     this.handlePlayerDeath();
-                     // Kill Enemy too
-                     this.createExplosion(e.x, e.y, e.type);
-                     this.enemies.splice(index, 1);
-                     return;
-                }
-                
-            } else if (e.state === 'returning') {
-                // Lerp back to home
-                const targetX = e.homeX + this.formationOffset;
-                const targetY = e.homeY;
-                e.x += (targetX - e.x) * 0.05;
-                e.y += (targetY - e.y) * 0.05;
-                
-                if (Math.abs(e.x - targetX) < 5 && Math.abs(e.y - targetY) < 5) {
-                    e.state = 'formation';
-                    e.diveTimer = Math.random() * 500;
+        setTimeout(() => {
+            if(this.player.lives > 0) {
+                this.player.dead = false;
+                this.player.x = this.canvas.width / 2 - 15;
+                this.bullets = [];
+                this.enemyBullets = [];
+            } else {
+                this.isGameRunning = false;
+                if(this.gameOverScreen) this.gameOverScreen.style.display = 'flex';
+                if(this.finalScoreElement) this.finalScoreElement.innerText = this.score;
+                if(this.score > this.highScore) {
+                    this.highScore = this.score;
+                    localStorage.setItem('galagaHighScore', this.score);
                 }
             }
-            
-            // Check Hit by Player Bullet
-            for (let bIndex = this.bullets.length - 1; bIndex >= 0; bIndex--) {
-                let b = this.bullets[bIndex];
-                if (this.rectIntersect(b.x, b.y, b.width, b.height, e.x, e.y, e.width, e.height)) {
-                    // Hit!
-                    this.bullets.splice(bIndex, 1);
-                    e.hp--;
-                    if (e.hp <= 0) {
-                        // Dead
-                        this.score += (e.type === 'boss' ? 150 : (e.type === 'butterfly' ? 80 : 50));
-                        this.updateScoreUI();
-                        this.createExplosion(e.x, e.y, e.type);
-                        this.enemies.splice(index, 1); // Mutating while iterating is risky?
-                         // Use filter later? No, standard loop right to left is safer, wait.. forEach doesn't nice with splice.
-                         // Fix loop!
-                    } else {
-                        // Hit Sound / Flash
-                        e.hitFlash = 5;
-                    }
-                    return; // Bullet used
-                }
-            }
-        });
-        
-        // Cleanup Dead Enemies (Filter out undefined if splic didn't work well in forEach? 
-        // Better to use reverse for loop for safe deletion)
-        // I used forEach which is BAD for splice. 
-        // Let's re-filter
-        // Actually, let's correct the loop now.
-        // It WAS risky.
+        }, 1000);
     }
     
-    // Corrected updateEnemies inside update() calls? 
-    // I'll rewrite the loop structure in actual updateEnemies
-    
-    updateExplosions() {
-         for(let i=this.explosions.length-1; i>=0; i--) {
-             this.explosions[i].timer--;
-             if (this.explosions[i].timer <= 0) this.explosions.splice(i, 1);
-         }
-    }
-
     createExplosion(x, y, type) {
-        let color = '#ff0000';
-        if (type === 'boss') color = '#00ff00';
-        if (type === 'bee') color = '#ffff00';
+        let color = '#fff';
+        if(type === 'boss') color = '#0f0';
+        if(type === 'butterfly') color = '#f00';
+        if(type === 'bee') color = '#ff0';
+        if(type === 'player') color = '#fff';
         
-        this.explosions.push({
-            x: x, y: y, color: color, timer: 15, maxTimer: 15
-        });
-    }
-
-    handlePlayerDeath() {
-        if (this.player.lives > 0) {
-            this.player.lives--;
-            this.createExplosion(this.player.x, this.player.y, 'player');
-            // Respawn
-            this.player.x = this.canvas.width / 2;
-             // Shield?
-        } else {
-            this.gameOver();
+        for(let i=0; i<10; i++) {
+            this.particles.push({
+                x: x + 10, y: y + 10,
+                vx: (Math.random() - 0.5) * 5,
+                vy: (Math.random() - 0.5) * 5,
+                color: color,
+                life: 20
+            });
         }
     }
     
-    gameOver() {
-        this.isGameRunning = false;
-        this.finalScoreElement.innerText = this.score;
-        this.finalLevelElement.innerText = this.level;
-        this.gameOverScreen.style.display = 'flex';
-        
-        if (this.score > this.highScore) {
-            this.highScore = this.score;
-            localStorage.setItem('galagaHighScore', this.score);
-        }
+    rectIntersect(r1, r2) {
+        return !(r2.x > r1.x + r1.w || 
+                 r2.x + r2.w < r1.x || 
+                 r2.y > r1.y + r1.h || 
+                 r2.y + r2.h < r1.y);
     }
-
-    rectIntersect(x1, y1, w1, h1, x2, y2, w2, h2) {
-        return x2 < x1 + w1 && x2 + w2 > x1 && y2 < y1 + h1 && y2 + h2 > y1;
+    
+    updateScoreUI() {
+        if(this.scoreElement) this.scoreElement.innerText = this.score;
     }
     
     draw() {
-        // Clear
         this.ctx.fillStyle = '#000';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
         // Stars
-        this.ctx.fillStyle = '#fff';
         this.stars.forEach(s => {
-            this.ctx.globalAlpha = Math.random() * 0.5 + 0.5;
-            this.ctx.beginPath();
-            this.ctx.arc(s.x, s.y, s.size, 0, Math.PI*2);
-            this.ctx.fill();
+            this.ctx.fillStyle = s.color;
+            this.ctx.globalAlpha = Math.random() * 0.5 + 0.3;
+            this.ctx.fillRect(s.x, s.y, s.size, s.size);
         });
         this.ctx.globalAlpha = 1.0;
         
-        if (!this.isGameRunning) return;
+        if(!this.isGameRunning) return;
         
-        // Player
-        if (this.player) {
+        // Player (More detailed pixel art)
+        if(this.player && !this.player.dead) {
+            const x = this.player.x;
+            const y = this.player.y;
+            this.ctx.fillStyle = '#eee';
+            
+            // Ship Body
+            this.ctx.fillRect(x+13, y+2, 4, 10);
+            this.ctx.fillRect(x+10, y+10, 10, 8);
+            this.ctx.fillStyle = '#f00'; // Red
+            this.ctx.fillRect(x+2, y+14, 8, 12); // Left Engine
+            this.ctx.fillRect(x+20, y+14, 8, 12); // Right Engine
             this.ctx.fillStyle = '#fff';
-            // Draw Ship
-            const px = this.player.x;
-            const py = this.player.y;
-            const pw = this.player.width;
-            
-            this.ctx.beginPath();
-            this.ctx.moveTo(px + pw/2, py);
-            this.ctx.lineTo(px + pw, py + pw);
-            this.ctx.lineTo(px + pw/2, py + pw - 5);
-            this.ctx.lineTo(px, py + pw);
-            this.ctx.fill();
-            
-            // Red Engine
-            this.ctx.fillStyle = '#ff0000';
-            this.ctx.fillRect(px + pw/2 - 2, py + pw - 3, 4, 4);
-            
-            // Lives
-            // Draw tiny ships at bottom left?
+            this.ctx.fillRect(x+12, y+18, 6, 4); // Thruster
         }
         
         // Enemies
         this.enemies.forEach(e => {
-            let color = '#fff';
-            // Galaga Palette
-            if (e.type === 'boss') color = '#55ff55'; // Green
-            if (e.type === 'butterfly') color = '#ff5555'; // Red
-            if (e.type === 'bee') color = '#5555ff'; // Blue
-             
-             if (e.hitFlash && e.hitFlash > 0) {
-                 color = '#fff';
-                 e.hitFlash--;
-             }
-
-            this.ctx.fillStyle = color;
+            const x = e.x;
+            const y = e.y;
             
-            // Check 'state' for rotation?
-            
-            const ex = e.x;
-            const ey = e.y;
-            const ew = e.width;
-            
-            // Sprite Logic (Simplified Geometry)
-            if (e.type === 'bee') {
-                 this.ctx.fillRect(ex + 5, ey + 5, ew - 10, ew - 10);
-                 // Wings
-                 if (Math.floor(Date.now() / 100) % 2 === 0) {
-                     this.ctx.fillRect(ex, ey, 5, ew);
-                     this.ctx.fillRect(ex + ew - 5, ey, 5, ew);
-                 } else {
-                     this.ctx.fillRect(ex - 2, ey + 5, 5, ew - 10);
-                     this.ctx.fillRect(ex + ew - 3, ey + 5, 5, ew - 10);
-                 }
-            } else if (e.type === 'butterfly') {
-                 this.ctx.beginPath();
-                 this.ctx.moveTo(ex, ey);
-                 this.ctx.lineTo(ex + ew, ey);
-                 this.ctx.lineTo(ex + ew/2, ey + ew);
-                 this.ctx.fill();
-            } else {
-                 // Boss
-                 this.ctx.beginPath();
-                 this.ctx.moveTo(ex, ey + ew/2);
-                 this.ctx.lineTo(ex + ew/2, ey);
-                 this.ctx.lineTo(ex + ew, ey + ew/2);
-                 this.ctx.lineTo(ex + ew/2, ey + ew);
-                 this.ctx.fill();
+            if(e.type === 'bee') {
+                this.ctx.fillStyle = '#ff0'; // Yellow
+                this.ctx.fillRect(x+4, y+4, 16, 16);
+                this.ctx.fillStyle = '#00f'; // Blue Wings
+                // Wing animation
+                if (Math.floor(Date.now() / 200) % 2 === 0) {
+                     this.ctx.fillRect(x-4, y, 8, 12);
+                     this.ctx.fillRect(x+20, y, 8, 12);
+                } else {
+                     this.ctx.fillRect(x-4, y+8, 8, 12);
+                     this.ctx.fillRect(x+20, y+8, 8, 12);
+                }
+            } else if(e.type === 'butterfly') {
+                this.ctx.fillStyle = '#f00'; // Red
+                this.ctx.beginPath();
+                this.ctx.moveTo(x+12, y+24);
+                this.ctx.lineTo(x, y);
+                this.ctx.lineTo(x+24, y);
+                this.ctx.fill();
+            } else { // Boss
+                this.ctx.fillStyle = '#0f0'; // Green
+                this.ctx.fillRect(x+4, y+12, 16, 12); // Body
+                this.ctx.fillStyle = '#a0a'; // Purple
+                this.ctx.fillRect(x, y, 8, 16); // Horns
+                this.ctx.fillRect(x+16, y, 8, 16);
             }
         });
         
         // Bullets
-        this.ctx.fillStyle = '#ffaa00';
-        this.bullets.forEach(b => {
-            this.ctx.fillRect(b.x, b.y, b.width, b.height);
-        });
+        this.ctx.fillStyle = '#ff0';
+        this.bullets.forEach(b => this.ctx.fillRect(b.x, b.y, b.w, b.h));
         
-        this.ctx.fillStyle = '#ff0000';
+        this.ctx.fillStyle = '#f88';
         this.enemyBullets.forEach(b => {
             this.ctx.beginPath();
-            this.ctx.arc(b.x, b.y, 4, 0, Math.PI*2);
+            this.ctx.arc(b.x+2, b.y+4, 3, 0, Math.PI*2);
             this.ctx.fill();
         });
         
-        // Explosions
-        this.explosions.forEach(x => {
-            this.ctx.fillStyle = x.color;
-            this.ctx.globalAlpha = x.timer / x.maxTimer;
-            this.ctx.beginPath();
-            this.ctx.arc(x.x + 15, x.y + 15, (15 - x.timer) * 3, 0, Math.PI*2);
-            this.ctx.fill();
-            this.ctx.globalAlpha = 1.0;
+        // Particles
+        this.particles.forEach(p => {
+            this.ctx.fillStyle = p.color;
+            this.ctx.globalAlpha = p.life / 20;
+            this.ctx.fillRect(p.x, p.y, 4, 4);
         });
-    }
-
-    updateScoreUI() {
-        this.scoreElement.innerText = this.score;
-        this.highScoreElement.innerText = this.highScore;
+        this.ctx.globalAlpha = 1.0;
     }
 }
-
-// Fix the forEach/Splice loop issue safely
-GalagaGame.prototype.updateEnemies = function() {
-    this.waveTimer += 0.05;
-    this.formationOffset = Math.sin(this.waveTimer) * 20;
-    
-    // Reverse Loop for safe removal
-    for (let i = this.enemies.length - 1; i >= 0; i--) {
-        let e = this.enemies[i];
-        
-        // --- LOGIC SAME AS ABOVE ---
-        // State Machine
-            if (e.state === 'formation') {
-                e.x = e.homeX + this.formationOffset;
-                // Random Dive Chance
-                if (Math.random() < (0.001 + this.level * 0.0005) && e.diveTimer <= 0) {
-                    e.state = 'diving';
-                    e.diveVx = (Math.random() - 0.5) * 4;
-                    e.diveVy = 3 + (this.level * 0.5);
-                }
-                if (e.diveTimer > 0) e.diveTimer--;
-                
-            } else if (e.state === 'diving') {
-                e.y += e.diveVy;
-                e.x += Math.sin(e.y * 0.05) * 3; 
-
-                // Shoot Chance
-                 if (Math.random() < 0.02) {
-                     this.enemyBullets.push({
-                         x: e.x + e.width/2,
-                         y: e.y + e.height,
-                         width: 4, height: 8, speed: 4
-                     });
-                 }
-
-                if (e.y > this.canvas.height) {
-                    e.y = -50;
-                    e.state = 'returning';
-                }
-                
-                // Collision with Player
-                if (this.player && this.rectIntersect(e.x, e.y, e.width, e.height, 
-                                        this.player.x, this.player.y, this.player.width, this.player.height)) {
-                     this.handlePlayerDeath();
-                     this.createExplosion(e.x, e.y, e.type);
-                     this.enemies.splice(i, 1);
-                     continue;
-                }
-                
-            } else if (e.state === 'returning') {
-                const targetX = e.homeX + this.formationOffset;
-                const targetY = e.homeY;
-                e.x += (targetX - e.x) * 0.05;
-                e.y += (targetY - e.y) * 0.05;
-                
-                if (Math.abs(e.x - targetX) < 5 && Math.abs(e.y - targetY) < 5) {
-                    e.state = 'formation';
-                    e.diveTimer = Math.random() * 500 + 200;
-                }
-            }
-            
-            // Bullet Hit Check
-            let hit = false;
-            for (let bIndex = this.bullets.length - 1; bIndex >= 0; bIndex--) {
-                let b = this.bullets[bIndex];
-                if (this.rectIntersect(b.x, b.y, b.width, b.height, e.x, e.y, e.width, e.height)) {
-                    this.bullets.splice(bIndex, 1);
-                    e.hp--;
-                    e.hitFlash = 5;
-                    hit = true;
-                    if (e.hp <= 0) {
-                        this.score += (e.type === 'boss' ? 150 : (e.type === 'butterfly' ? 80 : 50));
-                        this.updateScoreUI();
-                        this.createExplosion(e.x, e.y, e.type);
-                        this.enemies.splice(i, 1);
-                    }
-                    break; // Only one bullet hits one enemy per frame
-                }
-            }
-    }
-};
 
 window.onload = () => {
     new GalagaGame();

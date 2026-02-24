@@ -107,17 +107,22 @@ class AsteroidsGame {
     
     newAsteroid(x, y, r) {
         const lvlMult = 1 + 0.1 * this.level;
-        return {
+        const asteroid = {
             x: x,
             y: y,
             vx: Math.random() * 2 * lvlMult - lvlMult,
             vy: Math.random() * 2 * lvlMult - lvlMult,
             r: r,
             a: Math.random() * Math.PI * 2,
-            vert: Math.floor(Math.random() * 10 + 5), // Vertices for polygon shape
-            offs: [] // Offsets for jaggy shape
+            vert: Math.floor(Math.random() * 10 + 7), // Vertices
+            offs: [] // Offsets
         };
         // Generate offsets
+        for(let i=0; i<asteroid.vert; i++) {
+            asteroid.offs.push(Math.random() * 0.4 * r + r * 0.8); // Random radius between 0.8r and 1.2r
+        }
+        return asteroid;
+    }
         // ...
     }
     
@@ -138,17 +143,16 @@ class AsteroidsGame {
 
     keyDown(e) {
         if(this.ship.dead) return;
-        if ((e.code === 'ArrowLeft') || (e.code === 'KeyA')) this.ship.rot = 0.1; // Rotate Left
-        else if ((e.code === 'ArrowRight') || (e.code === 'KeyD')) this.ship.rot = -0.1; // Rotate Right
+        if ((e.code === 'ArrowLeft') || (e.code === 'KeyA')) this.ship.rot = -0.1; // Rotate Left (CCW)
+        else if ((e.code === 'ArrowRight') || (e.code === 'KeyD')) this.ship.rot = 0.1; // Rotate Right (CW)
         else if ((e.code === 'ArrowUp') || (e.code === 'KeyW')) this.ship.thrusting = true;
-        else if ((e.code === 'Space') || (e.code === 'KeyK')) this.shoot();
+        else if ((e.code === 'Space') || (e.code === 'KeyK') || (e.code === 'Enter')) this.shoot();
         else if (e.code === 'Enter' && !this.isRunning) this.startGame();
     }
     
     keyUp(e) {
-        if ((e.code === 'ArrowLeft') || (e.code === 'KeyA')) this.ship.rot = 0;
-        else if ((e.code === 'ArrowRight') || (e.code === 'KeyD')) this.ship.rot = 0;
-        else if ((e.code === 'ArrowUp') || (e.code === 'KeyW')) this.ship.thrusting = false;
+        if ((e.code === 'ArrowLeft') || (e.code === 'KeyA') || (e.code === 'ArrowRight') || (e.code === 'KeyD')) this.ship.rot = 0;
+        if ((e.code === 'ArrowUp') || (e.code === 'KeyW')) this.ship.thrusting = false;
     }
     
     update() {
@@ -156,12 +160,7 @@ class AsteroidsGame {
         
         // Ship
         if(!this.ship.dead) {
-            this.ship.a += this.ship.rot; // Correction: usually CCW is positive angle in math
-            // Wait, canvas y is down. 0 is right.
-            // If angle increases, cos goes down, sin goes up (down screen). This is clockwise.
-            // So +rot is clockwise (Right), -rot is CCW (Left). 
-            // My keydown logic sets Left -> 0.1? No, usually Left -> -0.1.
-            // Let's swap the keydown values.
+            this.ship.a += this.ship.rot;
             
             if(this.ship.thrusting) {
                 this.ship.vx += 0.1 * Math.cos(this.ship.a);
@@ -186,7 +185,7 @@ class AsteroidsGame {
             a.x += a.vx;
             a.y += a.vy;
             
-             if(a.x < 0 - a.r) a.x = this.canvas.width + a.r;
+            if(a.x < 0 - a.r) a.x = this.canvas.width + a.r;
             else if(a.x > this.canvas.width + a.r) a.x = 0 - a.r;
             if(a.y < 0 - a.r) a.y = this.canvas.height + a.r;
             else if(a.y > this.canvas.height + a.r) a.y = 0 - a.r;
@@ -199,7 +198,12 @@ class AsteroidsGame {
             b.y += b.vy;
             b.ttl--;
             
-            if(b.x < 0 || b.x > this.canvas.width || b.y < 0 || b.y > this.canvas.height) b.ttl = 0;
+            // Screen wrap for bullets? Classic Asteroids bullets expire but don't wrap usually, or do they?
+            // Usually they travel across screen.
+            if(b.x < 0) b.x = this.canvas.width;
+            if(b.x > this.canvas.width) b.x = 0;
+            if(b.y < 0) b.y = this.canvas.height;
+            if(b.y > this.canvas.height) b.y = 0;
             
             if(b.ttl <= 0) {
                 this.bullets.splice(i, 1);
@@ -219,15 +223,16 @@ class AsteroidsGame {
         }
         
         // Ship vs Asteroids
-        if(!this.ship.dead && this.ship.blinkNum == 0) { // Invulnerability?
+        if(!this.ship.dead) {
             for(let i=0; i<this.asteroids.length; i++) {
                 if(this.dist(this.ship.x, this.ship.y, this.asteroids[i].x, this.asteroids[i].y) < this.ship.r + this.asteroids[i].r) {
                     this.explodeShip();
+                    break; 
                 }
             }
         }
         
-        if (this.asteroids.length === 0) {
+        if (this.asteroids.length === 0 && this.lives > 0) {
             this.newLevel();
         }
     }
@@ -239,14 +244,20 @@ class AsteroidsGame {
         this.updateScore();
         
         // Split
-        if(a.r > 20) {
+        if(a.r > 15) { // Threshold
             // Create 2 smaller
-            let num = 2; //a.r > 40 ? 3 : 2;
-            for(let i=0; i<num; i++) {
-                 let na = this.newAsteroid(a.x, a.y, a.r / 2);
-                 na.vx = Math.random() * 5 - 2.5; 
-                 na.vy = Math.random() * 5 - 2.5;
-                 this.asteroids.push(na);
+            for(let i=0; i<2; i++) {
+                 // Push directly
+                 this.asteroids.push({
+                    x: a.x,
+                    y: a.y,
+                    vx: Math.random() * 4 - 2, 
+                    vy: Math.random() * 4 - 2,
+                    r: a.r / 2,
+                    a: Math.random() * 6.28,
+                    vert: Math.floor(Math.random() * 5 + 5),
+                    offs: []
+                 });
             }
         }
     }
@@ -332,25 +343,46 @@ class AsteroidsGame {
         }
         
         // Asteroids
-        this.ctx.strokeStyle = '#aaa';
+        this.ctx.strokeStyle = '#fff';
+        this.ctx.lineWidth = 1.5;
         this.asteroids.forEach(a => {
             this.ctx.beginPath();
-            this.ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2); 
-            // Better: jagged polygon
+            const angleStep = (Math.PI * 2) / a.vert;
+            for(let j=0; j<a.vert; j++) {
+                const angle = a.a + j * angleStep;
+                const r = a.offs[j] || a.r; // Use offset radius
+                const x = a.x + r * Math.cos(angle);
+                const y = a.y + r * Math.sin(angle);
+                if(j===0) this.ctx.moveTo(x, y);
+                else this.ctx.lineTo(x, y);
+            }
+            this.ctx.closePath();
             this.ctx.stroke();
         });
         
         // Bullets
         this.ctx.fillStyle = '#fff';
         this.bullets.forEach(b => {
-             this.ctx.fillRect(b.x-1, b.y-1, 2, 2);
+             this.ctx.beginPath();
+             this.ctx.arc(b.x, b.y, 2, 0, Math.PI*2);
+             this.ctx.fill();
         });
+        
+        // UI
+        if(this.lives <= 0) {
+             this.ctx.fillStyle = '#fff';
+             this.ctx.font = '40px Courier New';
+             this.ctx.textAlign = 'center';
+             this.ctx.fillText("GAME OVER", this.canvas.width/2, this.canvas.height/2);
+             this.ctx.font = '20px Courier New';
+             this.ctx.fillText("Press Enter to Restart", this.canvas.width/2, this.canvas.height/2 + 40);
+        }
     }
     
     loop() {
         this.update();
         this.draw();
-        requestAnimationFrame(() => this.loop());
+        this.animationId = requestAnimationFrame(() => this.loop());
     }
 }
 

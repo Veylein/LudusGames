@@ -137,14 +137,17 @@ class DinoGame {
         // Difficulty / Speed Increase
         this.speed += 0.001;
         
-        // Day/Night Cycle (Change every ~2000 points)
-        // Lerp timeOfDay based on score
-        // Full cycle 0 -> 1 -> 0 every 2000 points
-        const cycleLength = 2000;
-        const cyclePos = (this.displayScore % cycleLength) / cycleLength;
-        // 0 -> 0.5 (Night) -> 1 (Day)
-        // Actually, let's map: 0=Day, 0.5=Night, 1=Day
-        this.timeOfDay = 0.5 - 0.5 * Math.cos(cyclePos * Math.PI * 2); 
+        // Day/Night Cycle
+        // Night mode at specific intervals: 500-750, 1500-1750, 2500-2750, etc.
+        const modScore = this.displayScore % 1000;
+        const isNightTime = modScore >= 500 && modScore < 750;
+        
+        // Smooth transition
+        if (isNightTime) {
+            this.timeOfDay = Math.min(1, this.timeOfDay + 0.05);
+        } else {
+            this.timeOfDay = Math.max(0, this.timeOfDay - 0.05);
+        }
 
         // Update Score
         this.score++;
