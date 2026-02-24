@@ -1,5 +1,5 @@
 body {
-    background-color: #0d1117;
+    background-color: #000;
     color: #e6edf3;
     font-family: 'Press Start 2P', monospace;
     display: flex;
@@ -8,6 +8,8 @@ body {
     min-height: 100vh;
     margin: 0;
     overflow: hidden;
+    /* Cabinet Bezel */
+    box-shadow: inset 0 0 100px #000;
 }
 
 .game-container {
@@ -17,6 +19,13 @@ body {
     width: 100%;
     max-width: 800px;
     padding: 20px;
+    border: 4px solid #111;
+    border-radius: 20px;
+    background: #050505;
+    box-shadow: 
+        0 0 0 10px #111,
+        0 0 0 15px #222,
+        0 0 50px rgba(255, 255, 0, 0.1);
 }
 
 header {
@@ -25,24 +34,43 @@ header {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    border-bottom: 2px dashed #333;
+    padding-bottom: 15px;
+}
+
+h1 {
+    color: #ffff00;
+    text-shadow: 4px 4px 0 #cc0000;
+    letter-spacing: 2px;
+    font-size: 2rem;
+    margin: 0;
 }
 
 .back-link {
-    color: #58a6ff;
+    color: #00ffff;
     text-decoration: none;
     font-size: 0.8rem;
-    transition: color 0.3s;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+    padding: 5px 10px;
 }
 
 .back-link:hover {
-    color: #1f6feb;
+    color: #fff;
+    border-color: #00ffff;
+    background: rgba(0, 255, 255, 0.1);
+    box-shadow: 0 0 10px #00ffff;
     text-shadow: 0 0 5px rgba(88, 166, 255, 0.5);
+    transform: scale(1.1);
 }
 
-/* Theme Switcher Toggle */
+/* Theme Switcher Toggle - Retro Style */
 .theme-switch-wrapper {
   display: flex;
   align-items: center;
+  border: 2px solid #333;
+  padding: 5px;
+  border-radius: 4px;
 }
 .theme-switch-wrapper em {
   margin-left: 10px;
