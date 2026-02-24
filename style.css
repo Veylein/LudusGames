@@ -475,34 +475,148 @@ button:active, .retro-btn:active {
 
 
 
-/* MAP NAVIGATION (LOBBY) */
-.map-container {
-    position: relative;
-    width: 90%;
-    max-width: 1400px;
-    margin: 40px auto;
-    border: 8px solid #fff;
-    box-shadow: 
-        0 0 30px rgba(0,0,0,0.8),
-        0 0 50px rgba(255,0,255,0.2);
-    background: #000;
-    overflow: hidden;
-    /* Aspect Ratio Box Trick to keep map scaled */
-    aspect-ratio: 1536 / 1024; 
-}
 
-.map-image {
+/* LOBBY / HOME SPECIFIC */
+
+html, body {
+    margin: 0;
+    padding: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    display: block;
-    image-rendering: pixelated; /* If pixel art */
-    opacity: 0.8;
-    transition: opacity 0.3s;
+    overflow: hidden; /* Prevent scrolling on the dashboard/map */
 }
 
-.map-container:hover .map-image {
-    opacity: 0.5; /* Dim background on hover to make zones pop */
+/* Background Wrapper */
+.lobby-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1; /* Behind nav */
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* The Image creates the ratio */
+.lobby-wrapper::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: url('https://media.discordapp.net/attachments/1441089574255460363/1475994705530720400/content.png?ex=699f82b0&is=699e3130&hm=2b05f96948b2729e192af8f903c8ebcef6496827150c53ee164d8b46f05c6142&=&format=webp&quality=lossless&width=1223&height=815');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.8; 
+    /* Use 'contain' if you want full image visible always, 'cover' if you want full screen filled. 
+       User asked for 'ENTIRE background', usually implies cover. 
+       However, button positions are % based. If we use cover, the visible area changes ratio.
+       We MUST use a container that fits the image ratio to keep buttons aligned, OR use object-fit logic.
+       
+       Let's use the aspect-ratio container trick centered on screen.
+    */
+    display: none; /* Logic moved to child img or div */
+}
+
+
+/* REVISED APPROACH: Centered container that maintains aspect ratio */
+.lobby-wrapper {
+    background: #050510;
+}
+
+.lobby-wrapper {
+    /* Create a box that is always 1536/1024 ratio */
+    /* And fits within the viewport */
+    --img-w: 1536;
+    --img-h: 1024;
+    
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    
+    /* Calculate size to fit viewport while maintaining ratio - roughly */
+    width: 100vw;
+    height: 100vh;
+    
+    background-image: url('https://media.discordapp.net/attachments/1441089574255460363/1475994705530720400/content.png?ex=699f82b0&is=699e3130&hm=2b05f96948b2729e192af8f903c8ebcef6496827150c53ee164d8b46f05c6142&=&format=webp&quality=lossless&width=1223&height=815');
+    background-size: 100% 100%; /* Stretch to fill this wrapper */
+    background-repeat: no-repeat;
+    
+    /* We need to constrain THIS wrapper to the aspect ratio */
+    /* This is hard in pure CSS without aspect-ratio property on a responsive div that fits BOTH width/height */
+    
+    /* Better approach: Use background-size: contain on body? */
+}
+
+
+.lobby-wrapper {
+  /* Establish aspect ratio */
+  /* If viewport is WIDER than image (e.g. 21:9 ultra wide), constrain by HEIGHT. 
+     If viewport is TALLER than image (e.g. portrait phone), constrain by WIDTH. */
+     
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  
+  /* Original Image Size: 1536 x 1024 (aspect ratio 1.5) */
+  aspect-ratio: 1536 / 1024;
+  
+  width: 100vw;   /* Attempt to fit width first */
+  height: auto;
+  max-height: 100vh; /* Don't exceed screen height */
+  
+  /* If after setting width:100vw, the calculated height > 100vh, we need to flip logic. */
+  /* Use object-fit equivalent for a DIV via min/max */
+  
+  background-image: url('https://media.discordapp.net/attachments/1441089574255460363/1475994705530720400/content.png?ex=699f82b0&is=699e3130&hm=2b05f96948b2729e192af8f903c8ebcef6496827150c53ee164d8b46f05c6142&=&format=webp&quality=lossless&width=1223&height=815');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  
+  box-shadow: 0 0 100px #000 inset; /* Vignette edges */
+}
+
+/* Logic flip for wide screens */
+/* @media (min-aspect-ratio: 1536/1024) {  <-- standard syntax */
+@media screen and (min-aspect-ratio: 3/2) {
+    .lobby-wrapper {
+        height: 100vh;
+        width: auto; /* Width will be calculated by aspect-ratio */
+    }
+}
+
+/* Nav needs to be on top */
+.home-nav {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 100;
+    border-bottom: none;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
+    box-shadow: none;
+    pointer-events: none; /* Let clicks pass through empty areas */
+}
+.home-nav * {
+    pointer-events: auto;
+}
+
+.lobby-title {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 50;
+    text-align: center;
+    pointer-events: none;
+}
+
+
+/* MAP NAVIGATION (LOBBY) */
+.map-container {
+    display: none; /* OLD CONTAINER - HIDE */
 }
 
 /* Clickable Zones */
