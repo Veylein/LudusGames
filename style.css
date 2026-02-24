@@ -552,41 +552,25 @@ html, body {
 }
 
 
+
 .lobby-wrapper {
-  /* Establish aspect ratio */
-  /* If viewport is WIDER than image (e.g. 21:9 ultra wide), constrain by HEIGHT. 
-     If viewport is TALLER than image (e.g. portrait phone), constrain by WIDTH. */
-     
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  
-  /* Original Image Size: 1536 x 1024 (aspect ratio 1.5) */
-  aspect-ratio: 1536 / 1024;
-  
-  width: 100vw;   /* Attempt to fit width first */
-  height: auto;
-  max-height: 100vh; /* Don't exceed screen height */
-  
-  /* If after setting width:100vw, the calculated height > 100vh, we need to flip logic. */
-  /* Use object-fit equivalent for a DIV via min/max */
-  
-  background-image: url('https://media.discordapp.net/attachments/1441089574255460363/1475994705530720400/content.png?ex=699f82b0&is=699e3130&hm=2b05f96948b2729e192af8f903c8ebcef6496827150c53ee164d8b46f05c6142&=&format=webp&quality=lossless&width=1223&height=815');
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-  
-  box-shadow: 0 0 100px #000 inset; /* Vignette edges */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    
+    /* STRETCH to fill screen completely (distorts image slightly but ensures full coverage) */
+    background-image: url('https://media.discordapp.net/attachments/1441089574255460363/1475994705530720400/content.png?ex=699f82b0&is=699e3130&hm=2b05f96948b2729e192af8f903c8ebcef6496827150c53ee164d8b46f05c6142&=&format=webp&quality=lossless&width=1223&height=815');
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    
+    z-index: 1;
 }
 
-/* Logic flip for wide screens */
-/* @media (min-aspect-ratio: 1536/1024) {  <-- standard syntax */
-@media screen and (min-aspect-ratio: 3/2) {
-    .lobby-wrapper {
-        height: 100vh;
-        width: auto; /* Width will be calculated by aspect-ratio */
-    }
-}
+/* Hide the aspect ratio media query stuff since we are brute-force stretching now */
+/* @media screen and (min-aspect-ratio: 3/2) ... removed */
 
 /* Nav needs to be on top */
 .home-nav {
