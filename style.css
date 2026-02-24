@@ -475,9 +475,102 @@ button:active, .retro-btn:active {
 
 
 
-/* HUB NAVIGATION */
+/* MAP NAVIGATION (LOBBY) */
+.map-container {
+    position: relative;
+    width: 90%;
+    max-width: 1400px;
+    margin: 40px auto;
+    border: 8px solid #fff;
+    box-shadow: 
+        0 0 30px rgba(0,0,0,0.8),
+        0 0 50px rgba(255,0,255,0.2);
+    background: #000;
+    overflow: hidden;
+    /* Aspect Ratio Box Trick to keep map scaled */
+    aspect-ratio: 1536 / 1024; 
+}
+
+.map-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    image-rendering: pixelated; /* If pixel art */
+    opacity: 0.8;
+    transition: opacity 0.3s;
+}
+
+.map-container:hover .map-image {
+    opacity: 0.5; /* Dim background on hover to make zones pop */
+}
+
+/* Clickable Zones */
+.map-zone {
+    position: absolute;
+    display: block;
+    text-decoration: none;
+    z-index: 10;
+    border: 2px solid transparent; 
+    transition: all 0.2s ease;
+    
+    /* Debugging/Development: set to rgba(255,0,0,0.2) to see zones */
+    background: rgba(255, 255, 255, 0); 
+}
+
+.map-zone:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid var(--secondary-color);
+    box-shadow: 
+        0 0 20px var(--secondary-color),
+        inset 0 0 20px var(--secondary-color);
+    cursor: pointer;
+    z-index: 20;
+}
+
+/* Zone Labels */
+.zone-hover {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    text-align: center;
+    opacity: 0;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: none;
+    width: 100%;
+}
+
+.map-zone:hover .zone-hover {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.zone-label {
+    display: block;
+    font-size: 1.5vw; /* Responsive font size */
+    color: #fff;
+    text-shadow: 4px 4px 0 #000;
+    font-weight: bold;
+    background: rgba(0,0,0,0.8);
+    padding: 5px 10px;
+    border: 2px solid #fff;
+    box-shadow: 4px 4px 0 var(--accent-color);
+    margin-bottom: 5px;
+}
+
+.zone-sub {
+    font-size: 0.8vw;
+    color: var(--secondary-color);
+    text-shadow: 2px 2px 0 #000;
+    background: rgba(0,0,0,0.8);
+    padding: 2px 5px;
+}
+
+
+/* CARD STYLES DEPRECATED BUT KEPT FOR REFERENCE BELOW */
 .hub-grid {
-    display: flex;
+    display: none; /* Hidden used to be flex */
     justify-content: center;
     flex-wrap: wrap;
     gap: 30px;
@@ -485,7 +578,7 @@ button:active, .retro-btn:active {
     margin: 40px auto;
     padding: 0 20px;
 }
-
+  
 .hub-card {
     flex: 1;
     min-width: 250px;
