@@ -62,9 +62,12 @@ class PacmanGame {
         this.dots = [];
         this.powerPellets = [];
         this.ghosts = [];
+        
+        // Spawn Point Safety Check: Reverting to a known open row
+        // Row 5 is fully open [1,0,0...0,1]
         this.player = {
-            x: 1, y: 1, // Grid coords
-            pixelX: 20, pixelY: 20, // Pixel coords (for smooth movement)
+            x: 10, y: 5, 
+            pixelX: 200, pixelY: 100, // 10*20, 5*20
             dx: 0, dy: 0, 
             nextDx: 0, nextDy: 0, 
             speed: 0.1, // Base Speed

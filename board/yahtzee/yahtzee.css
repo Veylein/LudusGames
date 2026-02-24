@@ -52,9 +52,9 @@ body {
     transition: transform 0.1s, background-color 0.2s;
 }
 
-.die.detailed {
-    /* Using CSS grid to draw dice dots if we want to get fancy later */
-}
+/* .die.detailed {
+    Using CSS grid to draw dice dots if we want to get fancy later
+} */
 
 /* Selected state - "kept" dice */
 .die.selected {

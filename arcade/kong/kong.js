@@ -36,7 +36,8 @@ const player = {
     dx: 0,
     dy: 0,
     speed: 3,
-    jumpForce: 7, // Reduced from 10 to prevent skipping levels
+    jumpForce: 7 // Reduced from 10 to prevent skipping levels
+};
 
 // Platforms (More levels, zig-zag)
 const platforms = [

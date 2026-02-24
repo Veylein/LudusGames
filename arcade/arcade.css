@@ -91,6 +91,8 @@ button:active {
     pointer-events: none;
     z-index: 999;
 }
+
+canvas {
     background: #000;
     margin: 20px auto;
     display: block;

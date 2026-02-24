@@ -22,6 +22,64 @@ function checkDevice() {
     return true;
 }
 
+// --- START GAME ---
+window.initGame = function(charID) {
+    if (gameRunning) return;
+    
+    document.querySelector('.character-select').style.display = 'none';
+    document.getElementById('canvas').style.display = 'block';
+    
+    // Default P2 for now (random or fixed)
+    const p2ID = ALL_CAST[Math.floor(Math.random() * ALL_CAST.length)].id;
+    
+    startGame(charID, p2ID);
+};
+
+function startGame(p1ID, p2ID) {
+    if (!CHARACTERS[p1ID]) { console.error("Invalid Char ID:", p1ID); return; }
+    
+    p1 = new Fighter(p1ID, 100, FLOOR_Y, 'right');
+    p2 = new Fighter(p2ID, 700, FLOOR_Y, 'left');
+    
+    // Reset Health
+    p1.health = 100;
+    p2.health = 100;
+    updateHealthUI();
+    
+    // Reset Timer
+    roundTime = 99;
+    if(timerDiv) timerDiv.innerText = roundTime;
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        if (!isPaused && gameRunning) {
+            roundTime--;
+            if(timerDiv) timerDiv.innerText = roundTime;
+            if (roundTime <= 0) endGame('TIME UP');
+        }
+    }, 1000);
+    
+    gameRunning = true;
+    isPaused = false;
+    msg("FIGHT!");
+    
+    // Start Loop
+    loop();
+}
+
+function msg(text) {
+    if(!messageOverlay) return;
+    messageOverlay.innerText = text;
+    messageOverlay.style.opacity = 1;
+    setTimeout(() => messageOverlay.style.opacity = 0, 1000);
+}
+
+function loop() {
+    if(gameRunning) {
+        gameLoop();
+        requestAnimationFrame(loop);
+    }
+}
+
 if (!checkDevice()) throw new Error("Mobile device detected. Game blocked.");
 
 // --- CONSTANTS ---

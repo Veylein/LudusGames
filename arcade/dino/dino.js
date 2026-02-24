@@ -62,22 +62,47 @@
     }
     
     draw(ctx, isRetro) {
-        ctx.fillStyle = isRetro ? '#53d769' : '#555';
-        if (this.isCheering) ctx.fillStyle = '#ff0055'; // Red celebratory
+        // Monochrome Style
+        ctx.fillStyle = '#000'; // Black Dino
         
         const y = this.y - this.h;
         
-        // Simple Dino Shape
-        ctx.fillRect(this.x + 10, y, 20, 20); // Head
-        ctx.fillRect(this.x, y + 20, 30, 15); // Body
-        ctx.fillRect(this.x + 5, y + 35, 5, 8); // Leg L
-        ctx.fillRect(this.x + 20, y + 35, 5, 8); // Leg R
-        // Tail
-        ctx.fillRect(this.x - 5, y + 22, 5, 5);
-        
-        // Eye
-        ctx.fillStyle = isRetro ? '#0f380f' : '#fff';
-        ctx.fillRect(this.x + 20, y + 5, 4, 4);
+        if (this.isCheering) {
+            // Jumping pose
+            ctx.fillRect(this.x + 10, y - 5, 20, 20); // Head higher
+            ctx.fillRect(this.x, y + 20, 30, 15); 
+        } else if (this.isDucking) {
+            // Ducking
+            ctx.fillRect(this.x, y, 55, 25);
+            // Eye (White)
+            ctx.clearRect(this.x + 40, y + 5, 4, 4);
+        } else {
+            // Standing
+            // Head
+            ctx.fillRect(this.x + 20, y, 24, 25);
+            // Eye
+            ctx.clearRect(this.x + 30, y + 5, 5, 5);
+            // Body
+            ctx.fillRect(this.x, y + 20, 30, 20); 
+            // Tail
+            ctx.fillRect(this.x - 5, y + 22, 5, 5);
+
+            // Legs
+            if (this.isGrounded) {
+                // Run anim
+                if (Math.floor(Date.now() / 100) % 2 === 0) {
+                     ctx.fillRect(this.x + 5, y + 40, 5, 5); // L
+                     ctx.fillRect(this.x + 25, y + 38, 5, 2); // R up
+                } else {
+                     ctx.fillRect(this.x + 5, y + 38, 5, 2); // L up
+                     ctx.fillRect(this.x + 25, y + 40, 5, 5); // R
+                }
+            } else {
+                // Jump legs
+                ctx.fillRect(this.x + 5, y + 35, 5, 5);
+                ctx.fillRect(this.x + 25, y + 35, 5, 5);
+            }
+        }
     }
 }
 
@@ -139,20 +164,29 @@ class ObstacleManager {
     }
     
     draw(ctx, isRetro) {
-        ctx.fillStyle = isRetro ? '#53d769' : '#555';
+        // Monochrome Obstacles
+        ctx.fillStyle = '#000';
         
         this.obstacles.forEach(o => {
             if (o.type === 'cactus') {
+                // Cactus Group
+                const w = o.w / (o.w >= 40 ? 2 : 1); // rough guess on group size logic 
+                // Just draw blocks for now
                 ctx.fillRect(o.x, o.y, o.w, o.h);
-                // Detail
-                ctx.clearRect(o.x + 5, o.y, 2, 10);
+                
+                // Texture (White Lines)
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(o.x + 2, o.y + 2, 2, o.h - 4);
+                ctx.fillStyle = '#000';
             } else {
                 // Bird
-                ctx.fillRect(o.x, o.y, o.w, o.h);
-                // Wings
-                if (Math.floor(Date.now() / 200) % 2 === 0) {
-                     ctx.clearRect(o.x+10, o.y, 10, 5); // Flap
-                }
+                const wingY = (Math.floor(Date.now() / 150) % 2 === 0) ? o.y : o.y + 10;
+                
+                ctx.fillRect(o.x, o.y + 10, o.w, 10); // Body
+                ctx.fillRect(o.x + 10, wingY, 10, 10); // Wing
+                
+                // Beak
+                ctx.fillRect(o.x - 5, o.y + 12, 5, 4);
             }
         });
     }
@@ -214,33 +248,24 @@ class Environment {
     }
     
     draw(ctx, timeOfDay, isRetro) {
-        // Stars (Night)
-        if (timeOfDay > 0.2) {
-             ctx.fillStyle = `rgba(255,255,255,${timeOfDay})`;
-             this.stars.forEach(s => ctx.fillRect(s.x, s.y, s.s, s.s));
-        }
+        // Stars
+        ctx.fillStyle = '#000'; 
+        this.stars.forEach(s => ctx.fillRect(s.x, s.y, s.s, s.s));
         
-        // Clouds
-        ctx.fillStyle = isRetro ? '#306230' : `rgba(240,240,240,${1 - timeOfDay * 0.5})`;
+        // Clouds (Outline style)
+        ctx.fillStyle = '#000';
         this.clouds.forEach(c => {
              ctx.fillRect(c.x, c.y, c.w, 20);
-             ctx.fillRect(c.x + 10, c.y - 10, c.w - 20, 20);
         });
-        
-        // Asteroid (if active, handled by game loop logic mainly, but drawn here)
-        if (this.asteroidY > -400) {
-             ctx.fillStyle = '#ff4400';
-             ctx.beginPath();
-             ctx.arc(this.asteroidX, this.asteroidY, 40, 0, Math.PI*2);
-             ctx.fill();
-             // Trail
-             ctx.fillStyle = 'rgba(255, 100, 0, 0.5)';
-             ctx.beginPath();
-             ctx.moveTo(this.asteroidX + 40, this.asteroidY - 20);
-             ctx.lineTo(this.asteroidX + 200, this.asteroidY - 200); // Trail tail
-             ctx.lineTo(this.asteroidX + 20, this.asteroidY - 40);
-             ctx.fill();
-        }
+        // Inner cloud
+        ctx.fillStyle = '#fff';
+        this.clouds.forEach(c => {
+            ctx.fillRect(c.x + 2, c.y + 2, c.w - 4, 16);
+       });
+
+        // Ground
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, this.height - 30, this.width, 2);
     }
 }
 
@@ -446,46 +471,23 @@ class DinoGame {
     }
 
     draw() {
-        const isRetro = this.themeToggle.checked;
-        
-        // Clear & Background
-        let skyColor;
-        if (this.extinctionEvent) {
-             skyColor = '#3a0000'; // Doom Red
-        } else if (isRetro) {
-             skyColor = '#0d1117'; // Always dark in retro mode? Or green tint?
-        } else {
-             // Interpolate Day (#87CEEB) to Night (#0b1026)
-             // Using simple RGB lerp
-             const r = Math.floor(135 * (1 - this.timeOfDay) + 11 * this.timeOfDay);
-             const g = Math.floor(206 * (1 - this.timeOfDay) + 16 * this.timeOfDay);
-             const b = Math.floor(235 * (1 - this.timeOfDay) + 38 * this.timeOfDay);
-             skyColor = `rgb(${r},${g},${b})`;
-        }
-        
-        this.ctx.fillStyle = skyColor;
+        // Clear
+        const bgColor = '#fff'; // Always white background for classic look
+        this.ctx.fillStyle = bgColor;
         this.ctx.fillRect(0, 0, this.width, this.height);
         
-        // Environment (Clouds, Stars, Moon/Sun, Asteroid)
-        this.environment.draw(this.ctx, this.timeOfDay, isRetro);
-        
-        // Ground
-        this.drawGround();
+        // Environment (Draws stars/clouds/ground)
+        this.environment.draw(this.ctx, 0, false);
         
         // Obstacles
-        this.obstacleManager.draw(this.ctx, isRetro);
+        this.obstacleManager.draw(this.ctx, false);
         
         // Dino
-        this.dino.draw(this.ctx, isRetro);
+        this.dino.draw(this.ctx, false);
         
-        // Extinction Flash
-        if (this.extinctionEvent && this.environment.asteroidY > this.groundY - 50) {
-             // Bright flash before end
-             this.ctx.fillStyle = `rgba(255, 255, 255, ${Math.random()})`;
-             this.ctx.fillRect(0, 0, this.width, this.height);
+        if (this.extinctionEvent) {
+             // Shake logic handled in update really
         }
-        
-        if (this.extinctionEvent) this.ctx.restore(); // Restore shake
     }
 
     drawGround() {
