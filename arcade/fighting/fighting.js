@@ -31,8 +31,22 @@ const WIDTH = 800;
 const HEIGHT = 480;
 
 let gameRunning = false;
+let isPaused = false;
 let roundTime = 99;
 let timerInterval;
+
+// Pause
+const pauseBtn = document.getElementById('pause-btn');
+if(pauseBtn) {
+    pauseBtn.addEventListener('click', togglePause);
+}
+
+function togglePause() {
+    if (!gameRunning) return; // Only pause if match assumes running
+    isPaused = !isPaused;
+    if(pauseBtn) pauseBtn.innerText = isPaused ? "RESUME" : "PAUSE";
+}
+
 
 // --- CHARACTERS ---
 // Detailed Data for Procedural Painter
@@ -633,7 +647,7 @@ function gameLoop() {
     drawStage(ctx);
     
     // Game Logic
-    if (gameRunning) {
+    if (gameRunning && !isPaused) {
         // Reset player velocity frame-to-frame for tighter control
         if (player1.state === "move" || player1.state === "idle") {
             player1.vx = 0;

@@ -7,6 +7,38 @@ const finalScoreEl = document.getElementById('final-score');
 let score = 0;
 let frames = 0;
 let isGameOver = false;
+let isPaused = false;
+let animationId;
+
+// Pause
+const pauseBtn = document.getElementById('pause-btn');
+if(pauseBtn) {
+    pauseBtn.addEventListener('click', togglePause);
+}
+
+function togglePause() {
+    if (isGameOver) return;
+    isPaused = !isPaused;
+    if(pauseBtn) pauseBtn.innerText = isPaused ? "RESUME" : "PAUSE";
+    if (!isPaused) loop();
+}
+
+let isPaused = false;
+let animationId;
+
+// Pause UI
+const pauseBtn = document.getElementById('pause-btn');
+if(pauseBtn) {
+    pauseBtn.addEventListener('click', togglePause);
+}
+
+function togglePause() {
+    if (isGameOver) return;
+    isPaused = !isPaused;
+    if(pauseBtn) pauseBtn.innerText = isPaused ? "RESUME" : "PAUSE";
+    if (!isPaused) loop();
+}
+
 
 const bird = {
     x: 50,
@@ -152,6 +184,9 @@ const pipes = {
 
 function startGame() {
     isGameOver = false;
+    isPaused = false;
+    if(pauseBtn) pauseBtn.innerText = "PAUSE";
+    
     score = 0;
     frames = 0;
     bird.y = 150;
@@ -171,6 +206,7 @@ function startGame() {
 
 function loop() {
     if (isGameOver) return;
+    if (isPaused) return;
     
     ctx.fillStyle = '#70c5ce'; // Sky blue
     ctx.fillRect(0, 0, canvas.width, canvas.height);

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pong - Ludus Arcade</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="../../themes.css">
+    <link rel="stylesheet" href="../arcade.css">
+    <style>
+        .pong-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #gameCanvas {
+            border: 4px solid #fff;
+            background: #000;
+        }
+    </style>
+</head>
+<body class="theme-arcade">
+
+    <div class="game-container">
+        <header>
+            <a href="../index.html" class="back-link">← Back to Arcade</a>
+            <h1 class="glow-title" data-text="PONG">PONG</h1>
+        </header>
+
+        <main>
+            <div class="pong-container">
+                <div class="hud">
+                    <span>PLAYER: <span id="player-score">0</span></span>
+                    <span>CPU: <span id="cpu-score">0</span></span>
+                </div>
+                
+                <div class="canvas-wrapper">
+                    <canvas id="gameCanvas" width="600" height="400"></canvas>
+                    
+                    <div id="start-screen" class="overlay">
+                        <h2>PONG</h2>
+                        <p>PRESS SPACE TO START</p>
+                    </div>
+                </div>
+                
+                <div class="controls-info">
+                    <p>UP/DOWN ARROWS or W/S to move</p>
+                </div>
+            </div>
+            
+             <div class="mobile-controls">
+                <div class="row">
+                    <button id="up-btn">▲</button>
+                    <button id="down-btn">▼</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="pong.js"></script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Asteroids - Ludus Arcade</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="../../themes.css">
+    <link rel="stylesheet" href="../arcade.css">
+    <style>
+        .asteroids-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #gameCanvas {
+            border: 4px solid #fff;
+            background: #000;
+        }
+    </style>
+</head>
+<body class="theme-arcade">
+
+    <div class="game-container">
+        <header>
+            <a href="../index.html" class="back-link">← Back to Arcade</a>
+            <h1 class="glow-title" data-text="ASTEROIDS">ASTEROIDS</h1>
+        </header>
+
+        <main>
+            <div class="asteroids-container">
+                <div class="hud">
+                    <span>SCORE: <span id="score">0</span></span>
+                    <span>LIVES: <span id="lives">3</span></span>
+                </div>
+                
+                <div class="canvas-wrapper">
+                    <canvas id="gameCanvas" width="600" height="400"></canvas>
+                    
+                    <div id="start-screen" class="overlay">
+                        <h2>ASTEROIDS</h2>
+                        <p>PRESS SPACE TO START</p>
+                    </div>
+                    
+                    <div id="game-over-screen" class="overlay" style="display: none;">
+                        <h2 style="color: #ff0055;">GAME OVER</h2>
+                        <p>SCORE: <span id="final-score">0</span></p>
+                        <button id="restart-btn" class="retro-btn">TRY AGAIN</button>
+                    </div>
+                </div>
+
+                <div class="controls-info">
+                    <p>UP: Thrust | LEFT/RIGHT: Rotate | SPACE: Shoot</p>
+                </div>
+            </div>
+            
+            <div class="mobile-controls">
+                <button id="up-btn">▲</button>
+                <div class="row">
+                    <button id="left-btn">◀</button>
+                    <button id="fire-btn" class="fire-btn">●</button>
+                    <button id="right-btn">▶</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="asteroids.js"></script>
+</body>
+</html>

@@ -6,8 +6,22 @@ const finalScoreEl = document.getElementById('final-score');
 
 let score = 0;
 let isGameOver = false;
+let isPaused = false;
 let animationId;
 let difficulty = 1;
+
+// Pause UI
+const pauseBtn = document.getElementById('pause-btn');
+if(pauseBtn) {
+    pauseBtn.addEventListener('click', togglePause);
+}
+
+function togglePause() {
+    if (isGameOver) return;
+    isPaused = !isPaused;
+    if(pauseBtn) pauseBtn.innerText = isPaused ? "RESUME" : "PAUSE";
+    if (!isPaused) loop();
+}
 
 // Player
 const player = {
@@ -42,6 +56,9 @@ let barrels = [];
 function startGame() {
     score = 0;
     isGameOver = false;
+    isPaused = false;
+    if(pauseBtn) pauseBtn.innerText = "PAUSE";
+
     player.x = 50;
     player.y = canvas.height - 40;
     player.dx = 0;
@@ -73,6 +90,8 @@ function spawnBarrel() {
 
 function loop() {
     if (isGameOver) return;
+    if (isPaused) return;
+
     update();
     draw();
     animationId = requestAnimationFrame(loop);

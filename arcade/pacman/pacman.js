@@ -192,11 +192,18 @@ class PacmanGame {
         if (!this.isGameRunning) return;
         this.isPaused = !this.isPaused;
         this.pauseBtn.innerText = this.isPaused ? 'RESUME' : 'PAUSE';
-        if (!this.isPaused) this.loop();
+        
+        if (this.isPaused) {
+            if (this.animationId) cancelAnimationFrame(this.animationId);
+            this.animationId = null;
+        } else {
+            this.loop();
+        }
     }
 
     loop() {
-        if (!this.isGameRunning || this.isPaused) return;
+        if (!this.isGameRunning) return;
+        if (this.isPaused) return;
 
         this.update();
         this.draw();
@@ -524,6 +531,11 @@ class PacmanGame {
             if (e.code === 'Space' || e.code.startsWith('Arrow')) {
                 this.startGame();
             }
+            return;
+        }
+
+        if (this.isPaused) {
+            if (e.code === 'Space') this.togglePause();
             return;
         }
 

@@ -2,58 +2,54 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>Frogger - Ludus Arcade</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crossy Road - Ludus Arcade</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../../style.css">
     <link rel="stylesheet" href="../../themes.css">
-    <link rel="stylesheet" href="crossy.css">
+    <link rel="stylesheet" href="../arcade.css">
 </head>
 <body class="theme-arcade">
 
     <div class="game-container">
         <header>
             <a href="../index.html" class="back-link">← Back to Arcade</a>
-            <h1 class="glow-title" data-text="CROSSY">CROSSY</h1>
-            <div class="theme-switch-wrapper">
-                <label class="theme-switch" for="checkbox">
-                    <input type="checkbox" id="checkbox" />
-                    <div class="slider round"></div>
-                </label>
-                <em>Retro Mode</em>
-            </div>
+            <h1 class="glow-title" data-text="FROGGER">FROGGER</h1>
         </header>
 
         <main>
             <div class="game-area">
-                <div class="status-bar">
-                    <span>SCORE: <b id="score">0</b></span>
-                    <span>HIGH SCORE: <b id="high-score">0</b></span>
+                <div class="hud">
+                    <span>SCORE: <span id="score">0</span></span>
+                    <span>HIGH: <span id="high-score">0</span></span>
                 </div>
-
+                
                 <div class="canvas-wrapper">
-                    <canvas id="gameCanvas" width="600" height="500"></canvas>
-                    <div id="start-screen">
-                        <h2>PRESS SPACE TO START</h2>
-                        <p>Use Arrow Keys to Move</p>
+                    <canvas id="gameCanvas" width="448" height="480"></canvas>
+                    
+                    <div id="start-screen" class="overlay">
+                        <h2>FROGGER</h2>
+                        <p>PRESS SPACE/TAP TO START</p>
                     </div>
-                    <div id="game-over-screen" style="display: none;">
-                        <h2 style="color: #ff0055;">SPLAT!</h2>
-                        <p>Score: <span id="final-score">0</span></p>
+                    
+                    <div id="game-over-screen" class="overlay" style="display: none;">
+                        <h2 style="color: #ff0055;">GAME OVER</h2>
+                        <p>FINAL SCORE: <span id="final-score">0</span></p>
                         <button id="restart-btn" class="retro-btn">TRY AGAIN</button>
                     </div>
                 </div>
 
                 <div class="controls">
                     <div class="difficulty-control">
-                        <span>TRAFFIC: </span>
+                        <span>DIFFICULTY: </span>
                         <select id="difficulty-select">
-                            <option value="easy">Sunday Driver (Slow)</option>
-                            <option value="medium" selected>Rush Hour (Normal)</option>
-                            <option value="hard">Highway (Fast)</option>
+                            <option value="easy">Tadpole</option>
+                            <option value="normal" selected>Frog</option>
+                            <option value="hard">Toad</option>
                         </select>
                     </div>
                     <button id="pause-btn" class="retro-btn">PAUSE</button>
+                    <div class="lives-display">LIVES: <span id="lives">3</span></div>
                 </div>
                 
                 <div class="mobile-controls">
@@ -70,6 +66,6 @@
 
     <script src="../../ui.js"></script>
     <script src="../../effects.js"></script>
-    <script src="crossy.js"></script>
+    <script src="frogger.js"></script>
 </body>
 </html>
