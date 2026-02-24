@@ -42,6 +42,10 @@ class AsteroidsGame {
     }
     
     init() {
+        // Set canvas size
+        this.canvas.width = 800;
+        this.canvas.height = 600;
+        
         window.addEventListener('keydown', (e) => this.keyDown(e));
         window.addEventListener('keyup', (e) => this.keyUp(e));
         

@@ -139,14 +139,13 @@ class PacmanGame {
         this.powerPellets.forEach(p => p.active = true);
         
         // Reset Player
-        // Spawn at (10, 16) - roughly below ghost house 
-        // Row 16: [1,3,0,0,1,1,0,0,0,0,1,1,0,0,0,0,1,1,0,0,3,1]
-        // index 10 is '1'. Index 11 is '1'. 
-        // Row 12: [1,2,2,2,2,2,0,2,2,1,2,2,1,2,2,0,2,2,2,2,2,1] -> 10 is '2' (Empty)
-        // Let's spawn at 10, 12.
+        // Start in standard Pacman safe spot (Row 15, Col 10 - below Ghost House)
+        // Row 15: [1,0,1,1,1,1,0,1,1,1,1,1,1,1,1,0,1,1,1,1,0,1]
+        // This index 10 is '1' (Wall). Index 6 is '0' (Dot).
+        // Let's use Top Left (1,1) to be absolutely safe
         
-        this.player.x = 10; 
-        this.player.y = 12; // Safe empty spot
+        this.player.x = 1; 
+        this.player.y = 1; 
         this.player.pixelX = this.player.x * this.tileSize;
         this.player.pixelY = this.player.y * this.tileSize;
         this.player.dx = 0;
@@ -401,42 +400,41 @@ class PacmanGame {
     draw() {
         const isRetro = this.themeToggle.checked;
         
-        // Clear
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        // Clear & Background
         this.ctx.fillStyle = '#000';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // Draw Walls
-        this.ctx.fillStyle = isRetro ? '#1f6feb' : '#1f6feb33'; // Solid blue vs transparent blue
-        this.ctx.strokeStyle = '#1f6feb';
+        // Wall Color
+        this.ctx.strokeStyle = '#2121ff'; // Classic Arcade Blue
         this.ctx.lineWidth = 2;
-        
-        if (!isRetro) {
-             this.ctx.shadowBlur = 10;
-             this.ctx.shadowColor = '#1f6feb';
-        } else {
-             this.ctx.shadowBlur = 0;
-        }
+        this.ctx.lineCap = 'round';
 
-        // Draw Walls from map
-        // Optimization: Draw static image or batch? For now, redraw rects (fast enough for simple collision)
+        // Draw Walls (Double Line style)
+        // For simplicity in this engine, we draw hollow rounded rects
         this.walls.forEach(w => {
-            this.ctx.fillRect(w.x * this.tileSize, w.y * this.tileSize, this.tileSize, this.tileSize);
-            this.ctx.strokeRect(w.x * this.tileSize, w.y * this.tileSize, this.tileSize, this.tileSize);
+            const x = w.x * this.tileSize;
+            const y = w.y * this.tileSize;
+            const s = this.tileSize;
+            
+            // Outer box
+            this.ctx.strokeRect(x + 4, y + 4, s - 8, s - 8);
+            
+            // Connection logic would be better but expensive to calc every frame
+            // Minimalist retro look: small blue squares
+            // this.ctx.strokeRect(x + 6, y + 6, s - 12, s - 12);
         });
-        this.ctx.shadowBlur = 0;
 
-        // Draw Dots
-        this.ctx.fillStyle = isRetro ? '#f1e05a' : '#fff';
+        // Draw Dots (Square Pixels)
+        this.ctx.fillStyle = '#ffb8ae'; // Salmon-ish dot color
         this.dots.forEach(d => {
             if (d.active) {
                 this.ctx.fillRect(d.x * this.tileSize + 8, d.y * this.tileSize + 8, 4, 4);
             }
         });
 
-        // Power Pellets
-        if (Math.floor(Date.now() / 200) % 2 === 0) { // Blink
-            this.ctx.fillStyle = isRetro ? '#f1e05a' : '#ff0055';
+        // Power Pellets (Bliinking Circle)
+        if (Math.floor(Date.now() / 200) % 2 === 0) { 
+            this.ctx.fillStyle = '#ffb8ae';
             this.powerPellets.forEach(p => {
                 if (p.active) {
                     this.ctx.beginPath();
@@ -446,61 +444,87 @@ class PacmanGame {
             });
         }
         
-        // Draw Ghosts
+        // Draw Ghosts (Pixel Art)
         this.ghosts.forEach(g => {
-            if (g.scared) {
-                 this.ctx.fillStyle = '#2ea043'; // Green (Scared) - GH Style
-            } else {
-                 this.ctx.fillStyle = g.color;
-            }
+            let color = g.color;
+            if (g.scared) color = '#0000ff'; // Blue
+            if (g.dead) color = null; // Eyes only
             
-            // Draw Ghost Body (Dome + Skirt)
-            const gx = g.pixelX + 10;
-            const gy = g.pixelY + 10;
-            const radius = 9;
-            
-            this.ctx.beginPath();
-            this.ctx.arc(gx, gy - 2, radius, Math.PI, 2 * Math.PI); // Top Dome (Left to Right)
-            this.ctx.lineTo(gx + radius, gy + radius); // Right bottom
-            // Little feet
-            this.ctx.lineTo(gx + radius/3, gy + radius - 3);
-            this.ctx.lineTo(gx - radius/3, gy + radius);
-            this.ctx.lineTo(gx - radius, gy + radius - 3);
-            this.ctx.lineTo(gx - radius, gy - 2);
-            this.ctx.fill();
-            
-            // Eyes
-            this.ctx.fillStyle = '#fff';
-            this.ctx.beginPath();
-            this.ctx.arc(gx - 4, gy - 4, 3, 0, Math.PI * 2);
-            this.ctx.arc(gx + 4, gy - 4, 3, 0, Math.PI * 2);
-            this.ctx.fill();
-            
-            this.ctx.fillStyle = '#000';
-             this.ctx.beginPath();
-            this.ctx.arc(gx - 4 + g.dx*2, gy - 4 + g.dy*2, 1.5, 0, Math.PI * 2);
-            this.ctx.arc(gx + 4 + g.dx*2, gy - 4 + g.dy*2, 1.5, 0, Math.PI * 2);
-            this.ctx.fill();
+            this.drawGhostSprite(g.pixelX + 1, g.pixelY + 1, color, g.dx, g.dy, g.scared);
         });
 
         // Draw Pacman
-        this.ctx.fillStyle = isRetro ? '#f1e05a' : '#ffea7f';
-        if (!isRetro) {
-            this.ctx.shadowBlur = 10;
-            this.ctx.shadowColor = '#f1e05a';
+        this.drawPacmanSprite(this.player.pixelX + 1, this.player.pixelY + 1, this.player.angle, this.player.mouthOpen);
+    }
+    
+    drawGhostSprite(x, y, color, dx, dy, scared) {
+        const ctx = this.ctx;
+        const s = 1.3; // Scale
+        
+        if (color) {
+            ctx.fillStyle = color;
+            // Head
+            ctx.fillRect(x + 4*s, y, 6*s, 1*s);
+            ctx.fillRect(x + 2*s, y + 1*s, 10*s, 1*s);
+            ctx.fillRect(x + 1*s, y + 6*s, 12*s, 1*s); // Body Width
+            ctx.fillRect(x, y + 7*s, 14*s, 7*s); // Body
+            
+            // Feet (Wiggle)
+            if (Math.floor(Date.now() / 200) % 2 === 0) {
+                 ctx.clearRect(x, y + 13*s, 2*s, 1*s);
+                 ctx.clearRect(x + 4*s, y + 13*s, 2*s, 1*s);
+                 ctx.clearRect(x + 12*s, y + 13*s, 2*s, 1*s);
+            } else {
+                 ctx.clearRect(x + 2*s, y + 13*s, 2*s, 1*s);
+                 ctx.clearRect(x + 6*s, y + 13*s, 2*s, 1*s);
+                 ctx.clearRect(x + 10*s, y + 13*s, 2*s, 1*s);
+            }
         }
         
-        const px = this.player.pixelX + 10;
-        const py = this.player.pixelY + 10;
+        // Eyes
+        if (!scared || !color) {
+            ctx.fillStyle = '#fff';
+            // Look direction
+            let ox = dx * 2;
+            let oy = dy * 2;
+            
+            ctx.fillRect(x + 3*s + ox, y + 4*s + oy, 4*s, 4*s); // Left Eye White
+            ctx.fillRect(x + 9*s + ox, y + 4*s + oy, 4*s, 4*s); // Right Eye White
+            
+            ctx.fillStyle = '#00f'; // Pupil
+            ctx.fillRect(x + 5*s + ox, y + 6*s + oy, 2*s, 2*s);
+            ctx.fillRect(x + 11*s + ox, y + 6*s + oy, 2*s, 2*s);
+        } else {
+            // Scared Face
+            ctx.fillStyle = '#ffb8ae'; // Buff color mouth/eyes
+            ctx.fillRect(x + 4*s, y + 6*s, 2*s, 2*s); // Eye L
+            ctx.fillRect(x + 10*s, y + 6*s, 2*s, 2*s); // Eye R
+            
+            // Wavy Mouth
+            ctx.fillRect(x + 2*s, y + 10*s, 2*s, 1*s);
+            ctx.fillRect(x + 6*s, y + 10*s, 2*s, 1*s);
+            ctx.fillRect(x + 10*s, y + 10*s, 2*s, 1*s);
+            ctx.fillRect(x + 4*s, y + 9*s, 2*s, 1*s);
+            ctx.fillRect(x + 8*s, y + 9*s, 2*s, 1*s);
+        }
+    }
+    
+    drawPacmanSprite(x, y, angle, mouthOpen) {
+        // Pixel Art imitation is hard for rotation without canvas rotate
+        // So we use standard arc but with no anti-aliasing color
+        this.ctx.fillStyle = '#ffff00';
+        
+        const cx = x + 9;
+        const cy = y + 9;
+        const radius = 9;
+        
+        // Mouth
+        const mouthWidth = 0.25 * Math.PI * (0.5 + 0.5 * Math.sin(mouthOpen * Math.PI));
         
         this.ctx.beginPath();
-        // Packman mouth logic
-        const mouthWidth = 0.2 * Math.PI * (0.5 + 0.5 * Math.sin(this.player.mouthOpen * Math.PI));
-        
-        this.ctx.arc(px, py, 9, this.player.angle + mouthWidth, this.player.angle + 2 * Math.PI - mouthWidth);
-        this.ctx.lineTo(px, py);
+        this.ctx.moveTo(cx, cy);
+        this.ctx.arc(cx, cy, radius, angle + mouthWidth, angle + 2*Math.PI - mouthWidth);
         this.ctx.fill();
-        this.ctx.shadowBlur = 0;
     }
 
     updateScore() {

@@ -188,7 +188,7 @@ window.addEventListener('load', () => {
         // Difficulty
         const diff = parseInt(localStorage.getItem("difficulty") || "0");
         if (diff === 0) { pipes.gap = 140; pipes.dx = 2; }
-        else if (difficulty === 1) { pipes.gap = 120; pipes.dx = 3; }
+        else if (diff === 1) { pipes.gap = 120; pipes.dx = 3; }
         else { pipes.gap = 100; pipes.dx = 3.5; }
 
         if (animationId) cancelAnimationFrame(animationId);

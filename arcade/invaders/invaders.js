@@ -158,63 +158,122 @@ function draw() {
     ctx.fillStyle = 'black';
     ctx.fillRect(0, 0, canvas.width, canvas.height); // Clear screen
 
-    // Draw Player (retro spaceship)
+    // Alien Sprites (Binary Maps)
+    // 0 = Empty, 1 = Fill
+    const sprites = {
+        squid: [ // 8x8
+            [0,0,0,1,1,0,0,0],
+            [0,0,1,1,1,1,0,0],
+            [0,1,1,1,1,1,1,0],
+            [1,1,0,1,1,0,1,1],
+            [1,1,1,1,1,1,1,1],
+            [0,0,1,0,0,1,0,0],
+            [0,1,0,1,1,0,1,0],
+            [1,0,1,0,0,1,0,1] 
+        ],
+        squid_b: [
+            [0,0,0,1,1,0,0,0],
+            [0,0,1,1,1,1,0,0],
+            [0,1,1,1,1,1,1,0],
+            [1,1,0,1,1,0,1,1],
+            [1,1,1,1,1,1,1,1],
+            [0,0,1,0,0,1,0,0],
+            [0,1,0,0,0,0,1,0],
+            [0,0,1,0,0,1,0,0]
+        ],
+        crab: [ // 11x8
+            [0,0,1,0,0,0,0,0,1,0,0],
+            [0,0,0,1,0,0,0,1,0,0,0],
+            [0,0,1,1,1,1,1,1,1,0,0],
+            [0,1,1,0,1,1,1,0,1,1,0],
+            [1,1,1,1,1,1,1,1,1,1,1],
+            [1,0,1,1,1,1,1,1,1,0,1],
+            [1,0,1,0,0,0,0,0,1,0,1],
+            [0,0,0,1,1,0,1,1,0,0,0]
+        ],
+        crab_b: [
+            [0,0,1,0,0,0,0,0,1,0,0],
+            [1,0,0,1,0,0,0,1,0,0,1],
+            [1,0,1,1,1,1,1,1,1,0,1],
+            [1,1,1,0,1,1,1,0,1,1,1],
+            [1,1,1,1,1,1,1,1,1,1,1],
+            [0,1,1,1,1,1,1,1,1,1,0],
+            [0,0,1,0,0,0,0,0,1,0,0],
+            [0,1,0,0,0,0,0,0,0,1,0]
+        ],
+        octopus: [ // 12x8
+            [0,0,0,0,1,1,1,1,0,0,0,0],
+            [0,1,1,1,1,1,1,1,1,1,1,0],
+            [1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,1,1,0,0,1,1,0,0,1,1,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1],
+            [0,0,0,1,1,0,0,1,1,0,0,0],
+            [0,0,1,1,0,1,1,0,1,1,0,0],
+            [1,1,0,0,0,0,0,0,0,0,1,1]
+        ],
+        octopus_b: [
+            [0,0,0,0,1,1,1,1,0,0,0,0],
+            [0,1,1,1,1,1,1,1,1,1,1,0],
+            [1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,1,1,0,0,1,1,0,0,1,1,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1],
+            [0,0,0,1,1,0,0,1,1,0,0,0],
+            [0,0,1,1,0,1,1,0,1,1,0,0],
+            [0,0,1,0,0,0,0,0,0,1,0,0]
+        ]
+    };
+
+    // Draw Player (Green Cannon)
     ctx.fillStyle = '#00ff00';
+    const px = player.x;
+    const py = player.y;
     // Base
-    ctx.fillRect(player.x, player.y + 12, player.width, 8);
+    ctx.fillRect(px, py + 12, 30, 8);
     // Mid
-    ctx.fillRect(player.x + 4, player.y + 6, player.width - 8, 6);
-    // Tip
-    ctx.fillRect(player.x + 12, player.y, 6, 6);
+    ctx.fillRect(px + 2, py + 8, 26, 4);
+    ctx.fillRect(px + 4, py + 4, 22, 4);
+    // Turret
+    ctx.fillRect(px + 12, py, 6, 4);
+
+    // Animation Frame (based on milliseconds)
+    // Slower animation: toggle every 500ms
+    const frame = Math.floor(Date.now() / 500) % 2 === 0 ? 'a' : 'b';
 
     // Draw Aliens
-    let time = Date.now();
     aliens.forEach((a, index) => {
         if (!a.active) return;
         
-        let ax = a.x;
-        let ay = a.y;
+        // Determine type based on row
+        // cols = 8.
+        const row = Math.floor(index / 8); 
+        let type = 'squid';
+        let color = '#fff';
         
-        // Color based on row
-        let row = Math.floor(index / 8); 
-        // 8 is cols 
-        // But index keeps increasing.
-        // Wait, index is global index in flat list.
-        // Aliens were pushed row by row (0..rows, 0..cols).
-        // Since cols=8, this works.
+        if (row === 0) { type = 'squid'; color = '#ffffff'; } // Top
+        else if (row === 1 || row === 2) { type = 'crab'; color = '#00ffff'; } // Middle
+        else { type = 'octopus'; color = '#ff00ff'; } // Bottom
         
-        if (row === 0) ctx.fillStyle = '#ff00ff';
-        else if (row === 1) ctx.fillStyle = '#00ffff';
-        else ctx.fillStyle = '#ffff00';
+        const map = (frame === 'a') ? sprites[type] : sprites[type + '_b'];
         
-        // Animation Toggle
-        let frame = Math.floor(time / 500) % 2;
-
-        if (frame === 0) {
-            // Pose A (Arms Down)
-            ctx.fillRect(ax + 4, ay, 22, 14); // Body
-            ctx.clearRect(ax + 8, ay + 4, 4, 4); // Eye L
-            ctx.clearRect(ax + 18, ay + 4, 4, 4); // Eye R
-            ctx.fillRect(ax, ay + 8, 4, 8); // Arm L
-            ctx.fillRect(ax + 26, ay + 8, 4, 8); // Arm R
-            ctx.fillRect(ax + 4, ay + 14, 4, 4); // Leg L
-            ctx.fillRect(ax + 22, ay + 14, 4, 4); // Leg R
-        } else {
-            // Pose B (Arms Up)
-            ctx.fillRect(ax + 4, ay, 22, 14); // Body
-            ctx.clearRect(ax + 8, ay + 4, 4, 4); // Eye L
-            ctx.clearRect(ax + 18, ay + 4, 4, 4); // Eye R
-            ctx.fillRect(ax, ay, 4, 8); // Arm L
-            ctx.fillRect(ax + 26, ay, 4, 8); // Arm R
-            ctx.fillRect(ax + 8, ay + 14, 4, 4); // Leg L
-            ctx.fillRect(ax + 18, ay + 14, 4, 4); // Leg R
-        }
+        ctx.fillStyle = color;
+        // Draw Sprite
+        // Scale factor: 2x or 3x? Alien width is 30.
+        // Squid is 8px wide. 30/8 ~ 3.75. Let's use scale 3.
+        const scale = 3; 
+        
+        map.forEach((rowArr, r) => {
+            rowArr.forEach((pixel, c) => {
+                if (pixel === 1) {
+                    ctx.fillRect(a.x + c * scale, a.y + r * scale, scale, scale);
+                }
+            });
+        });
     });
 
-    // Draw Bullets
+    // Draw Bullets (Simple thin line)
     ctx.fillStyle = '#ffffff';
     player.bullets.forEach(b => {
-        ctx.fillRect(b.x, b.y, b.width, b.height);
+        ctx.fillRect(b.x, b.y, 2, 8);
     });
 }
 

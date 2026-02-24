@@ -2,6 +2,9 @@ class GalagaGame {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
+        // Set proper size for vertical shooter
+        this.canvas.width = 600;
+        this.canvas.height = 800;
         
         // UI
         this.scoreElement = document.getElementById('score');

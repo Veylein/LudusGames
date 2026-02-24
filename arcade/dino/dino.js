@@ -1,3 +1,249 @@
+﻿class Dino {
+    constructor(startX, groundY) {
+        this.startX = startX;
+        this.x = startX;
+        this.y = groundY;
+        this.w = 40;
+        this.h = 43;
+        this.dy = 0;
+        this.jumpForce = 12;
+        this.gravity = 0.6;
+        this.groundY = groundY;
+        this.isGrounded = true;
+        this.isDucking = false;
+        this.isCheering = false;
+        
+        // Sprites handled by simple drawing for now
+    }
+    
+    reset(groundY) {
+        this.y = groundY;
+        this.dy = 0;
+        this.isGrounded = true;
+        this.isDucking = false;
+        this.isCheering = false;
+    }
+    
+    update(input, groundY) {
+        if (this.isCheering) return; // Cutscene freeze
+        
+        // Jump
+        if (input.jump && this.isGrounded) {
+            this.dy = -this.jumpForce;
+            this.isGrounded = false;
+        }
+        
+        // Duck
+        this.isDucking = input.duck;
+        if (this.isDucking) {
+            this.h = 25;
+            this.y = groundY + (43 - 25); // Push down
+        } else {
+            this.h = 43;
+        }
+        
+        // Physics
+        if (!this.isGrounded) {
+             this.dy += this.gravity;
+             this.y += this.dy;
+        } else {
+             this.dy = 0;
+             this.y = groundY;
+             if (this.isDucking) this.y = groundY + (43 - 25);
+        }
+        
+        // Ground Collision
+        const floor = this.isDucking ? groundY + (43-25) : groundY;
+        if (this.y > floor) {
+            this.y = floor;
+            this.dy = 0;
+            this.isGrounded = true;
+        }
+    }
+    
+    draw(ctx, isRetro) {
+        ctx.fillStyle = isRetro ? '#53d769' : '#555';
+        if (this.isCheering) ctx.fillStyle = '#ff0055'; // Red celebratory
+        
+        const y = this.y - this.h;
+        
+        // Simple Dino Shape
+        ctx.fillRect(this.x + 10, y, 20, 20); // Head
+        ctx.fillRect(this.x, y + 20, 30, 15); // Body
+        ctx.fillRect(this.x + 5, y + 35, 5, 8); // Leg L
+        ctx.fillRect(this.x + 20, y + 35, 5, 8); // Leg R
+        // Tail
+        ctx.fillRect(this.x - 5, y + 22, 5, 5);
+        
+        // Eye
+        ctx.fillStyle = isRetro ? '#0f380f' : '#fff';
+        ctx.fillRect(this.x + 20, y + 5, 4, 4);
+    }
+}
+
+class ObstacleManager {
+    constructor(width, groundY) {
+        this.width = width;
+        this.groundY = groundY;
+        this.obstacles = [];
+        this.timer = 0;
+    }
+    
+    reset() {
+        this.obstacles = [];
+        this.timer = 0;
+    }
+    
+    update(speed, score) {
+        this.timer++;
+        const spawnRate = Math.max(50, 100 - speed * 5);
+        
+        if (this.timer > spawnRate + Math.random() * 50) {
+            this.spawn(score);
+            this.timer = 0;
+        }
+        
+        for (let i = this.obstacles.length - 1; i >= 0; i--) {
+            let o = this.obstacles[i];
+            o.x -= speed;
+            if (o.x < -o.w) this.obstacles.splice(i, 1);
+        }
+    }
+    
+    spawn(score) {
+        const type = Math.random() < 0.2 && score > 500 ? 'bird' : 'cactus';
+        
+        if (type === 'cactus') {
+            const count = Math.floor(Math.random() * 3) + 1;
+            this.obstacles.push({
+                type: 'cactus',
+                x: this.width,
+                y: this.groundY - 30,
+                w: 20 * count,
+                h: 30,
+                hitbox: { x:0, y:0, w: 20*count, h: 30 }
+            });
+        } else {
+            // Bird
+            const height = [20, 50, 70];
+            const yOffset = height[Math.floor(Math.random() * height.length)];
+            this.obstacles.push({
+                type: 'bird',
+                x: this.width,
+                y: this.groundY - yOffset,
+                w: 30,
+                h: 20,
+                hitbox: { x:0, y:0, w:30, h:15 }
+            });
+        }
+    }
+    
+    draw(ctx, isRetro) {
+        ctx.fillStyle = isRetro ? '#53d769' : '#555';
+        
+        this.obstacles.forEach(o => {
+            if (o.type === 'cactus') {
+                ctx.fillRect(o.x, o.y, o.w, o.h);
+                // Detail
+                ctx.clearRect(o.x + 5, o.y, 2, 10);
+            } else {
+                // Bird
+                ctx.fillRect(o.x, o.y, o.w, o.h);
+                // Wings
+                if (Math.floor(Date.now() / 200) % 2 === 0) {
+                     ctx.clearRect(o.x+10, o.y, 10, 5); // Flap
+                }
+            }
+        });
+    }
+    
+    checkCollision(dino) {
+        for(let o of this.obstacles) {
+            // Simple AABB
+            // Dino Y is foot position. Rect is (x, y-h, w, h)
+            const dx = dino.x;
+            const dy = dino.y - dino.h;
+            const dw = dino.w;
+            const dh = dino.h;
+            
+            const ox = o.x;
+            const oy = o.y; // Top left of obstacle for drawing
+            const ow = o.w;
+            const oh = o.h;
+            
+            if (dx < ox + ow &&
+                dx + dw > ox &&
+                dy < oy + oh &&
+                dy + dh > oy) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
+class Environment {
+    constructor(width, height) {
+        this.width = width;
+        this.height = height;
+        this.clouds = [];
+        this.stars = [];
+        this.asteroidX = width;
+        this.asteroidY = -500; // Far up
+        
+        // Init stars
+        for(let i=0; i<50; i++) {
+             this.stars.push({x: Math.random()*width, y: Math.random()*height/2, s: Math.random()*2});
+        }
+    }
+    
+    reset() {
+        this.clouds = [];
+        this.asteroidX = this.width;
+        this.asteroidY = -500;
+    }
+    
+    update(speed) {
+        // Clouds
+        if (Math.random() < 0.01) {
+             this.clouds.push({x: this.width, y: Math.random() * 100 + 20, w: 40 + Math.random()*30});
+        }
+        
+        this.clouds.forEach(c => c.x -= speed * 0.5);
+        this.clouds = this.clouds.filter(c => c.x > -100);
+    }
+    
+    draw(ctx, timeOfDay, isRetro) {
+        // Stars (Night)
+        if (timeOfDay > 0.2) {
+             ctx.fillStyle = `rgba(255,255,255,${timeOfDay})`;
+             this.stars.forEach(s => ctx.fillRect(s.x, s.y, s.s, s.s));
+        }
+        
+        // Clouds
+        ctx.fillStyle = isRetro ? '#306230' : `rgba(240,240,240,${1 - timeOfDay * 0.5})`;
+        this.clouds.forEach(c => {
+             ctx.fillRect(c.x, c.y, c.w, 20);
+             ctx.fillRect(c.x + 10, c.y - 10, c.w - 20, 20);
+        });
+        
+        // Asteroid (if active, handled by game loop logic mainly, but drawn here)
+        if (this.asteroidY > -400) {
+             ctx.fillStyle = '#ff4400';
+             ctx.beginPath();
+             ctx.arc(this.asteroidX, this.asteroidY, 40, 0, Math.PI*2);
+             ctx.fill();
+             // Trail
+             ctx.fillStyle = 'rgba(255, 100, 0, 0.5)';
+             ctx.beginPath();
+             ctx.moveTo(this.asteroidX + 40, this.asteroidY - 20);
+             ctx.lineTo(this.asteroidX + 200, this.asteroidY - 200); // Trail tail
+             ctx.lineTo(this.asteroidX + 20, this.asteroidY - 40);
+             ctx.fill();
+        }
+    }
+}
+
 class DinoGame {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
@@ -306,362 +552,5 @@ class DinoGame {
     }
 }
 
-class Dino {
-    constructor(x, groundY) {
-        this.x = x;
-        this.groundY = groundY;
-        this.y = groundY;
-        this.baseWidth = 44;
-        this.baseHeight = 47;
-        this.width = 44;
-        this.height = 47;
-        
-        // Physics
-        this.dy = 0;
-        this.jumpForce = 12; // Initial impulse
-        this.gravity = 0.6;
-        this.grounded = true;
-        this.isDucking = false;
-        
-        // Animation
-        this.timer = 0;
-        this.frame = 0; // 0 or 1 (running legs)
-    }
-    
-    reset(groundY) {
-        this.y = groundY;
-        this.dy = 0;
-        this.grounded = true;
-        this.isDucking = false;
-        this.width = this.baseWidth;
-        this.height = this.baseHeight;
-    }
-    
-    update(input, groundY) {
-        this.timer++;
-        if (this.timer > 10) {
-            this.frame = (this.frame + 1) % 2;
-            this.timer = 0;
-        }
 
-        // Jump
-        if (input.jump && this.grounded) {
-            this.dy = -this.jumpForce;
-            this.grounded = false;
-        }
-        
-        // Duck
-        if (input.duck) {
-            this.isDucking = true;
-            this.width = 55; // Wider
-            this.height = 25; // Shorter
-            if (!this.grounded) this.dy += 0.5; // Fast fall
-        } else {
-            this.isDucking = false;
-            this.width = this.baseWidth;
-            this.height = this.baseHeight;
-        }
-
-        // Physics
-        this.dy += this.gravity;
-        this.y += this.dy;
-
-        // Ground Collision
-        if (this.y > groundY) {
-            this.y = groundY;
-            this.dy = 0;
-            this.grounded = true;
-        } else {
-            this.grounded = false;
-        }
-    }
-    
-    draw(ctx, isRetro) {
-        ctx.fillStyle = isRetro ? '#53d769' : '#e6edf3';
-        
-        // Simple procedural pixel art logic
-        const x = this.x;
-        const y = this.y - this.height; // Bottom-left origin adjust
-        
-        if (this.isDucking) {
-            ctx.fillRect(x, y, this.width, this.height);
-            // Duck Eye
-            ctx.fillStyle = '#000';
-            ctx.fillRect(x + 40, y + 5, 4, 4);
-        } else {
-            ctx.fillRect(x, y, this.width, this.height);
-            // Standing Eye
-            ctx.fillStyle = '#000';
-            ctx.fillRect(x + 30, y + 5, 4, 4);
-            
-            // Legs
-            ctx.fillStyle = isRetro ? '#53d769' : '#e6edf3';
-            if (this.grounded) {
-                if (this.frame === 0) {
-                     ctx.clearRect(x + 5, y + this.height - 5, 10, 5); // Lift left leg
-                } else {
-                     ctx.clearRect(x + 25, y + this.height - 5, 10, 5); // Lift right leg
-                }
-            }
-        }
-    }
-}
-
-class ObstacleManager {
-    constructor(width, groundY) {
-        this.gameWidth = width;
-        this.groundY = groundY;
-        this.obstacles = [];
-        this.timer = 0;
-    }
-    
-    reset() {
-        this.obstacles = [];
-        this.timer = 0;
-    }
-    
-    update(speed, score) {
-        this.timer++;
-        // Spawn rate depends on speed
-        const spawnRate = Math.max(60, 150 - speed * 5); // Gets faster
-        
-        if (this.timer > spawnRate + Math.random() * 50) {
-            this.timer = 0;
-            this.spawnObstacle(score);
-        }
-        
-        // Move & Cull
-        for (let i = this.obstacles.length - 1; i >= 0; i--) {
-            let obs = this.obstacles[i];
-            obs.x -= speed;
-            
-            // Animation for bird
-            if (obs.type === 'bird') {
-                 obs.frameTimer++;
-                 if (obs.frameTimer > 15) {
-                     obs.frame = (obs.frame + 1) % 2;
-                     obs.frameTimer = 0;
-                 }
-            }
-            
-            if (obs.x + obs.width < 0) {
-                this.obstacles.splice(i, 1);
-            }
-        }
-    }
-    
-    spawnObstacle(score) {
-        const typeRoll = Math.random();
-        // Cacti are standard. Birds appear after 500 score.
-        
-        if (score > 500 && typeRoll > 0.7) {
-            // Bird
-            const heightLevel = Math.floor(Math.random() * 3); // 0 = low, 1 = mid, 2 = high
-            let yOffset = 20;
-            if (heightLevel === 1) yOffset = 50;
-            if (heightLevel === 2) yOffset = 80;
-            
-            this.obstacles.push({
-                type: 'bird',
-                x: this.gameWidth,
-                y: this.groundY - yOffset,
-                width: 40,
-                height: 30,
-                frame: 0,
-                frameTimer: 0
-            });
-        } else {
-            // Cactus
-            const large = Math.random() > 0.5;
-            this.obstacles.push({
-                type: 'cactus',
-                x: this.gameWidth,
-                y: this.groundY,
-                width: large ? 30 : 20,
-                height: large ? 50 : 35,
-                groupSize: Math.floor(Math.random() * 3) + 1
-            });
-        }
-    }
-    
-    draw(ctx, isRetro) {
-        this.obstacles.forEach(obs => {
-            const y = obs.y - obs.height; // Bottom Origin
-            
-            if (obs.type === 'cactus') {
-                ctx.fillStyle = isRetro ? '#53d769' : '#53d769';
-                // Draw group
-                for(let i=0; i<obs.groupSize; i++) {
-                    const ox = obs.x + i * (obs.width + 5);
-                    this.drawCactus(ctx, ox, y, obs.width, obs.height);
-                }
-            } else if (obs.type === 'bird') {
-                ctx.fillStyle = isRetro ? '#53d769' : '#000'; // Silhouette logic for bird? Or standard
-                if (!isRetro) ctx.fillStyle = '#ff7b72'; // Reddish bird
-                
-                // Wing flap logic (Swap Y pos of wings)
-                const wy = obs.frame === 0 ? y : y + 10;
-                ctx.fillRect(obs.x, y + 10, obs.width, 10); // Body
-                ctx.fillRect(obs.x + 10, wy, 10, 20); // Wings
-                ctx.fillRect(obs.x - 5, y + 12, 10, 5); // Head
-            }
-        });
-    }
-    
-    drawCactus(ctx, x, y, w, h) {
-        ctx.fillRect(x + w/3, y, w/3, h); // Trunk
-        ctx.fillRect(x, y + h/3, w, h/5); // Arms
-        ctx.fillRect(x, y + h/6, w/3, h/3); // Left Up
-        ctx.fillRect(x + w*2/3, y + h/4, w/3, h/4); // Right Up
-    }
-
-    checkCollision(dino) {
-        // Simple AABB
-        for (let obs of this.obstacles) {
-            let width = obs.width;
-            if (obs.type === 'cactus') width = obs.width + (obs.groupSize-1)*(obs.width+5);
-            
-            // Hitbox adjustment (make slightly smaller than sprite)
-            const padding = 5;
-            
-            // Obstacle Y is Bottom-Left origin in logic, but top-left in drawing?
-            // Wait, spawn logic uses: obs.y = groundY (bottom)
-            // Drawing uses: y = obs.y - obs.height (top-left)
-            // Collision logic needs Top-Left
-            
-            const obsTop = obs.y - obs.height;
-            const obsBottom = obs.y;
-            const obsLeft = obs.x;
-            const obsRight = obs.x + width;
-            
-            const dinoTop = dino.y - dino.height;
-            const dinoBottom = dino.y;
-            const dinoLeft = dino.x;
-            const dinoRight = dino.x + dino.width;
-            
-            if (
-                dinoRight > obsLeft + padding &&
-                dinoLeft < obsRight - padding &&
-                dinoBottom > obsTop + padding && // Feet below top of cactus
-                dinoTop < obsBottom - padding   // Head above bottom of cactus
-            ) {
-                return true;
-            }
-        }
-        return false;
-    }
-}
-
-class Environment {
-    constructor(width, height) {
-        this.width = width;
-        this.height = height;
-        this.clouds = [];
-        this.stars = [];
-        this.timer = 0;
-        
-        // Extinction Assets
-        this.asteroidX = width;
-        this.asteroidY = -100;
-        
-        // Generate stars
-        for(let i=0; i<50; i++) {
-             this.stars.push({
-                 x: Math.random() * width,
-                 y: Math.random() * (height/2),
-                 size: Math.random() * 2
-             });
-        }
-    }
-    
-    reset() {
-        this.clouds = [];
-        this.timer = 0;
-        this.asteroidX = this.width;
-        this.asteroidY = -100;
-    }
-    
-    update(speed) {
-        // Clouds
-        this.timer++;
-        if (this.timer > 200) {
-            this.timer = 0;
-            this.clouds.push({
-                x: this.width,
-                y: Math.random() * 100 + 20,
-                width: Math.random() * 40 + 40,
-                speed: Math.random() * 0.5 + 0.1
-            });
-        }
-        
-        this.clouds.forEach(c => c.x -= c.speed);
-        this.clouds = this.clouds.filter(c => c.x + c.width > 0);
-    }
-    
-    draw(ctx, timeOfDay, isRetro) {
-        // Stars (Only at night: timeOfDay > 0.3)
-        if (!isRetro && timeOfDay > 0.3) {
-             ctx.fillStyle = `rgba(255, 255, 255, ${(timeOfDay-0.3)*2})`; // Fade in
-             this.stars.forEach(s => {
-                 ctx.fillRect(s.x, s.y, s.size, s.size);
-             });
-        }
-        
-        // Celestial Bodies (Sun / Moon)
-        if (!isRetro) {
-             // Sun (Day)
-             if (timeOfDay < 0.6) {
-                 const sunX = this.width * 0.8;
-                 const sunY = 50 + timeOfDay * 100; // Sets as day progresses
-                 ctx.fillStyle = '#FFD700'; 
-                 ctx.beginPath();
-                 ctx.arc(sunX, sunY, 30, 0, Math.PI * 2);
-                 ctx.fill();
-             }
-             
-             // Moon (Night)
-             if (timeOfDay > 0.4) {
-                  const moonX = this.width * 0.2;
-                  const moonY = 150 - (timeOfDay-0.4) * 100; // Rises
-                  ctx.fillStyle = '#FEFCD7';
-                  ctx.beginPath();
-                  ctx.arc(moonX, moonY, 20, 0, Math.PI * 2);
-                  ctx.fill();
-                  // Crater
-                  ctx.fillStyle = '#E0DCC5';
-                  ctx.beginPath();
-                  ctx.arc(moonX + 5, moonY - 2, 5, 0, Math.PI*2);
-                  ctx.fill();
-             }
-        }
-        
-        // Clouds
-        ctx.fillStyle = isRetro ? '#53d769' : (timeOfDay > 0.5 ? '#444' : '#fff'); // Dark clouds at night
-        this.clouds.forEach(c => {
-            ctx.fillRect(c.x, c.y, c.width, 10);
-            ctx.fillRect(c.x + 10, c.y - 10, c.width - 20, 10);
-        });
-        
-        // Draw Asteroid (if near active)
-        if (this.asteroidY > -50) {
-             // Trail
-             ctx.fillStyle = '#FFA500';
-             ctx.beginPath();
-             ctx.moveTo(this.asteroidX + 20, this.asteroidY + 20);
-             ctx.lineTo(this.asteroidX + 100, this.asteroidY - 100);
-             ctx.lineTo(this.asteroidX + 120, this.asteroidY - 80);
-             ctx.fill();
-             
-             // Rock
-             ctx.fillStyle = '#8B0000';
-             ctx.beginPath();
-             ctx.arc(this.asteroidX, this.asteroidY, 40, 0, Math.PI * 2);
-             ctx.fill();
-        }
-    }
-}
-
-// Start
-window.onload = () => {
-    new DinoGame();
-};
+window.onload = () => { new DinoGame(); };

@@ -203,79 +203,103 @@ function draw() {
     ctx.fillStyle = '#000'; // Black background
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Draw Mushrooms
+    // Draw Mushrooms (Pixel Art Style)
     mushrooms.forEach(m => {
-        let mx = m.x;
-        let my = m.y;
-        let size = m.width;
+        let x = m.x;
+        let y = m.y;
+        // 20x20 Block
         
-        ctx.fillStyle = (m.health > 2) ? '#ff4500' : ((m.health > 1) ? '#ff6347' : '#cd5c5c');
+        // Colors
+        let mainColor = '#ff0000'; // Red
+        let spotColor = '#ffffff'; // White
+        let stemColor = '#ff69b4'; // HotPink (closer to arcade palette)
         
-        // Cap
-        ctx.beginPath();
-        ctx.arc(mx + size/2, my + size/2, size/2 - 1, Math.PI, 0); 
-        ctx.lineTo(mx + size - 2, my + size - 2); 
-        ctx.lineTo(mx + 2, my + size - 2); 
-        ctx.fill();
-        
+        if (m.health === 2) {
+             mainColor = '#b22222'; // Damaged
+             stemColor = '#c71585';
+        } else if (m.health === 1) {
+             mainColor = '#800000'; // Very Damaged
+             stemColor = '#8b008b';
+        }
+
         // Stem
-        ctx.fillStyle = '#f5deb3';
-        ctx.fillRect(mx + size/3, my + size/2, size/3, size/2 - 2);
+        ctx.fillStyle = stemColor;
+        ctx.fillRect(x + 6, y + 10, 8, 10);
+        
+        // Cap (Pixelated Dome)
+        ctx.fillStyle = mainColor;
+        ctx.fillRect(x + 2, y + 4, 16, 12); // Main body
+        ctx.fillRect(x + 4, y + 2, 12, 2);  // Top
+        ctx.fillRect(x, y + 6, 2, 8);       // Left Edge
+        ctx.fillRect(x + 18, y + 6, 2, 8);  // Right Edge
         
         // Spots
-        ctx.fillStyle = '#fff';
-        if (m.health > 0) {
-            ctx.beginPath(); ctx.arc(mx + size/3, my + size/4, 2, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(mx + 2*size/3, my + size/4, 2, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = spotColor;
+        if (m.health === 3) {
+            ctx.fillRect(x + 6, y + 6, 2, 2);
+            ctx.fillRect(x + 12, y + 6, 2, 2);
+            ctx.fillRect(x + 9, y + 10, 2, 2);
         }
     });
 
     // Draw Centipede
     centipede.forEach((seg, index) => {
-        let cx = seg.x;
-        let cy = seg.y;
+        let x = seg.x;
+        let y = seg.y;
         
-        ctx.fillStyle = '#32cd32'; // Lime Green
-        ctx.beginPath();
-        ctx.arc(cx + SEGMENT_SIZE/2, cy + SEGMENT_SIZE/2, SEGMENT_SIZE/2, 0, Math.PI*2);
-        ctx.fill();
+        // Head vs Body Color
+        let isHead = (index === 0); // Start of array is tail? No, usually head leads. 
+        // Logic: head is the one moving forward leading the group. 
+        // But here it's an array. Let's assume index 0 is tail or head depending on push/pop. 
+        // We'll treat all as body segments for now, or check generic 'head' property if we had one.
+        // Let's just alternate colors or make head different if we can detect it.
+        // Actually each segment moves independently in this simple implementation.
+        // We can just assume any segment checks 'player collision' so they are all dangerous.
         
-        // Eyes
+        ctx.fillStyle = isHead ? '#32cd32' : '#00fa9a'; // LimeGreen vs MediumSpringGreen
+        
+        // Round Body (Pixel Circle)
+        ctx.fillRect(x + 4, y, 12, 20); // V-Rect
+        ctx.fillRect(x, y + 4, 20, 12); // H-Rect
+        ctx.fillRect(x + 2, y + 2, 16, 16); // Filler
+        
+        // Eyes (Red)
         ctx.fillStyle = '#ff0000';
-        ctx.beginPath(); ctx.arc(cx + SEGMENT_SIZE/3, cy + SEGMENT_SIZE/3, 2, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(cx + 2*SEGMENT_SIZE/3, cy + SEGMENT_SIZE/3, 2, 0, Math.PI*2); ctx.fill();
+        ctx.fillRect(x + 6, y + 6, 2, 2);
+        ctx.fillRect(x + 12, y + 6, 2, 2);
         
-        // Legs (animated)
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 1;
-        let time = Date.now();
-        let legOffset = Math.sin((time / 100) + index) * 5;
-        
-        ctx.beginPath();
-        ctx.moveTo(cx + SEGMENT_SIZE/2, cy + SEGMENT_SIZE/2);
-        ctx.lineTo(cx + SEGMENT_SIZE/2 - 6, cy + SEGMENT_SIZE + legOffset);
-        ctx.stroke();
-        
-        ctx.beginPath();
-        ctx.moveTo(cx + SEGMENT_SIZE/2, cy + SEGMENT_SIZE/2);
-        ctx.lineTo(cx + SEGMENT_SIZE/2 + 6, cy + SEGMENT_SIZE - legOffset);
-        ctx.stroke();
+        // Legs (Animated)
+        const time = Date.now();
+        const legFrame = Math.floor(time / 100) % 2;
+        ctx.fillStyle = '#ffffff';
+        if (legFrame === 0) {
+            ctx.fillRect(x - 2, y + 14, 4, 2); // Left Back
+            ctx.fillRect(x + 18, y + 14, 4, 2); // Right Back
+        } else {
+            ctx.fillRect(x - 2, y + 4, 4, 2); // Left Front
+            ctx.fillRect(x + 18, y + 4, 4, 2); // Right Front
+        }
     });
 
     // Draw Player (Shooter)
+    // Small Spaceship / Dart
     ctx.fillStyle = '#ffffff';
-    // Body
-    ctx.beginPath();
-    ctx.moveTo(player.x + player.width/2, player.y); // Top Tip
-    ctx.lineTo(player.x + player.width, player.y + player.height); // Bottom Right
-    ctx.lineTo(player.x + player.width/2, player.y + player.height - 5); // Bottom Indent
-    ctx.lineTo(player.x, player.y + player.height); // Bottom Left
-    ctx.fill();
+    let px = player.x;
+    let py = player.y;
+    
+    // Main Body
+    ctx.fillRect(px + 8, py, 4, 16);
+    ctx.fillRect(px + 4, py + 8, 12, 8);
+    ctx.fillRect(px, py + 12, 20, 4);
+    
+    // Engine Color
+    ctx.fillStyle = '#00ffff';
+    ctx.fillRect(px + 8, py + 12, 4, 2); 
     
     // Draw Bullets
     ctx.fillStyle = '#ff00ff'; // Magenta Laser
     player.bullets.forEach(b => {
-        ctx.fillRect(b.x, b.y, b.width, b.height);
+        ctx.fillRect(b.x, b.y, 4, 10);
     });
 }
 

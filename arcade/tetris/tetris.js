@@ -5,6 +5,14 @@ class TetrisGame {
         this.nextCanvas = document.getElementById('nextCanvas');
         this.nextCtx = this.nextCanvas.getContext('2d');
         
+        // Ensure proper dimensions to prevent "invisible floor"
+        this.cols = 12;
+        this.rows = 20;
+        this.grid = 20;
+        
+        this.canvas.width = this.cols * this.grid;
+        this.canvas.height = this.rows * this.grid;
+        
         this.scoreElement = document.getElementById('score');
         this.levelElement = document.getElementById('level');
         this.linesElement = document.getElementById('lines');

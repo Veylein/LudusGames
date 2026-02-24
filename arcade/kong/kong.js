@@ -1,5 +1,9 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+// Explicit size for consistent levels
+canvas.width = 600; 
+canvas.height = 600; // Taller for more floors
+
 const scoreEl = document.getElementById('game-score');
 const gameOverScreen = document.getElementById('gameOver');
 const finalScoreEl = document.getElementById('final-score');
@@ -32,9 +36,7 @@ const player = {
     dx: 0,
     dy: 0,
     speed: 3,
-    jumpForce: 10,
-    grounded: false
-};
+    jumpForce: 7, // Reduced from 10 to prevent skipping levels
 
 // Platforms (More levels, zig-zag)
 const platforms = [
@@ -186,81 +188,149 @@ function draw() {
     ctx.fillRect(0, 0, canvas.width, canvas.height); // Background
 
     // Draw Ladders
-    ctx.fillStyle = '#00BFFF'; // Deep Sky Blue
+    ctx.fillStyle = '#00bcd4'; // Cyan
     ladders.forEach(l => {
-        // Vertical Rails
-        ctx.fillRect(l.x, l.y, 4, l.height);
-        ctx.fillRect(l.x + 16, l.y, 4, l.height);
-        // Rungs
-        for(let yh = l.y; yh < l.y + l.height; yh += 10) {
-            ctx.fillRect(l.x, yh, 20, 2);
+        for(let yh = l.y; yh < l.y + l.height; yh += 4) {
+            ctx.fillRect(l.x, yh, 4, 2); // Left rail
+            ctx.fillRect(l.x + 16, yh, 4, 2); // Right rail
+            if ((yh - l.y) % 8 === 0) ctx.fillRect(l.x, yh, 20, 2); // Rung
         }
     });
 
     // Draw Platforms (Girders)
     platforms.forEach(p => {
-        ctx.fillStyle = '#b22222'; // Red Girder
+        ctx.fillStyle = '#d32f2f'; // Red Girder
         ctx.fillRect(p.x, p.y, p.width, p.height);
         
-        // Girder details (X pattern)
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        for(let i = 0; i < p.width - 10; i+=20) {
-            ctx.moveTo(p.x + i, p.y + 1);
-            ctx.lineTo(p.x + i + 10, p.y + p.height - 1);
-            ctx.moveTo(p.x + i + 10, p.y + 1);
-            ctx.lineTo(p.x + i, p.y + p.height - 1);
+        ctx.fillStyle = '#000';
+        // Girder Holes (Pixel pattern)
+        for(let i = 2; i < p.width - 2; i+=8) {
+            ctx.fillRect(p.x + i, p.y + 2, 4, p.height - 4);
         }
-        ctx.stroke();
+        
+        ctx.strokeStyle = '#d32f2f';
+        ctx.strokeRect(p.x, p.y, p.width, p.height);
     });
 
-    // Draw Kong (Top Left/Center decor)
-    // Assuming Kong is near the top platform
-    let kongX = 50; 
-    let kongY = 80;
-    ctx.fillStyle = '#8B4513'; // Brown Ape
-    ctx.fillRect(kongX, kongY, 40, 40); // Body
-    ctx.fillRect(kongX + 10, kongY - 10, 20, 10); // Head
-    ctx.fillStyle = '#ffcc99'; // Face
-    ctx.fillRect(kongX + 15, kongY - 5, 10, 5);
-    // Arms
-    ctx.fillStyle = '#8B4513';
-    if (Math.floor(Date.now() / 500) % 2 === 0) {
-        ctx.fillRect(kongX - 10, kongY, 10, 30); // Left Arm Down
-        ctx.fillRect(kongX + 40, kongY - 20, 10, 30); // Right Arm Up (Throwing)
-    } else {
-        ctx.fillRect(kongX - 10, kongY - 20, 10, 30); // Left Arm Up
-        ctx.fillRect(kongX + 40, kongY, 10, 30); // Right Arm Down
-    }
-
-    // Draw Player (Jumpman/Mario-ish)
-    ctx.fillStyle = '#f00'; // Red shirt
-    ctx.fillRect(player.x + 4, player.y + 10, 12, 10);
-    ctx.fillStyle = '#00f'; // Blue overalls
-    ctx.fillRect(player.x + 4, player.y + 20, 12, 10);
-    ctx.fillStyle = '#ffcc99'; // Skin
-    ctx.fillRect(player.x + 6, player.y + 2, 8, 8); // Head
-    ctx.fillStyle = '#f00'; // Hat
-    ctx.fillRect(player.x + 4, player.y, 14, 4);
+    // Draw Kong (Pixel Art)
+    let kx = 50; 
+    let ky = 70;
     
-    // Draw Barrels
-    ctx.fillStyle = '#8B4513'; // Wood Brown
-    ctx.strokeStyle = '#000'; 
+    // Body Brown
+    ctx.fillStyle = '#5d4037'; 
+    ctx.fillRect(kx, ky, 50, 50);
+    // Chest
+    ctx.fillStyle = '#ffa000'; 
+    ctx.fillRect(kx+10, ky+10, 30, 20);
+    // Face
+    ctx.fillStyle = '#ffa000'; 
+    ctx.fillRect(kx+15, ky-10, 20, 15); // Head
+    ctx.fillStyle = '#000'; // Eyes
+    ctx.fillRect(kx+18, ky-6, 4, 2);
+    ctx.fillRect(kx+28, ky-6, 4, 2);
+    // Mouth (Teeth)
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(kx+18, ky-2, 14, 4);
+
+    // Arms
+    ctx.fillStyle = '#5d4037';
+    if (Math.floor(Date.now() / 500) % 2 === 0) {
+        // Chest Pound
+        ctx.fillRect(kx-10, ky+5, 15, 30); // L
+        ctx.fillRect(kx+45, ky+5, 15, 30); // R
+    } else {
+        // Arms Up
+        ctx.fillRect(kx-10, ky-15, 15, 30); 
+        ctx.fillRect(kx+45, ky-15, 15, 30);
+    }
+    
+    // Draw Princess (Pink)
+    ctx.fillStyle = '#ff80ab';
+    let px = 20, py = 40; // Top platform usually
+    ctx.fillRect(px, py, 10, 20); // Dress
+    ctx.fillStyle = '#ffcc80'; // Skin
+    ctx.fillRect(px+2, py-6, 6, 6); // Head
+    ctx.fillStyle = '#ffd700'; // Hair
+    ctx.fillRect(px, py-6, 10, 4);
+
+    // Draw Player (Mario Sprite)
+    // Running Animation Frames
+    const runFrame = Math.floor(Date.now() / 100) % 2;
+    const pxScale = 2;
+    const mx = player.x;
+    const my = player.y;
+    
+    // Jumpman Colors
+    const mRed = '#d50000';
+    const mBlue = '#2962ff';
+    const mSkin = '#ffcc80';
+    
+    // Hat
+    ctx.fillStyle = mRed;
+    ctx.fillRect(mx + 2, my, 12, 4);
+    // Head
+    ctx.fillStyle = mSkin;
+    ctx.fillRect(mx + 4, my + 4, 10, 6);
+    // Eye/Stache
+    ctx.fillStyle = '#000';
+    ctx.fillRect(mx + 10, my + 5, 2, 2); // Eye
+    ctx.fillRect(mx + 8, my + 8, 8, 2); // Stache
+    
+    // Body (Overalls Blue, Shirt Red)
+    // Shirt
+    ctx.fillStyle = mBlue;
+    ctx.fillRect(mx + 4, my + 10, 8, 10); // Body
+    // Arms (Red)
+    ctx.fillStyle = mRed;
+    if (runFrame === 0 || !player.dx) {
+         ctx.fillRect(mx, my + 12, 4, 4); // L
+         ctx.fillRect(mx + 12, my + 12, 4, 4); // R
+    } else {
+         ctx.fillRect(mx - 2, my + 10, 4, 4); // L Swing
+         ctx.fillRect(mx + 14, my + 10, 4, 4); // R Swing
+    }
+    
+    // Legs (Blue)
+    ctx.fillStyle = mBlue;
+    if (player.grounded) {
+        if (runFrame === 0 || Math.abs(player.dx) < 0.1) {
+            ctx.fillRect(mx + 4, my + 20, 4, 4);
+            ctx.fillRect(mx + 10, my + 20, 4, 4);
+        } else {
+            ctx.fillRect(mx + 2, my + 18, 4, 4); // Run stride
+            ctx.fillRect(mx + 12, my + 18, 4, 4);
+        }
+    } else {
+        // Jump pose
+        ctx.fillRect(mx, my + 18, 6, 4);
+        ctx.fillRect(mx + 12, my + 16, 6, 4);
+    }
+    
+    // Draw Barrels (Rolling Sprite)
+    // Brown cylinder with hoops
+    const bColor = '#795548';
+    const hoopColor = '#000';
+    
     barrels.forEach(b => {
         ctx.save();
         ctx.translate(b.x, b.y);
-        // Rotate based on x position to simulate rolling
-        ctx.rotate(b.x / 10); 
+        ctx.rotate(b.x / 15);
         
+        ctx.fillStyle = bColor;
         ctx.beginPath();
         ctx.arc(0, 0, b.r, 0, Math.PI * 2);
         ctx.fill();
-        ctx.stroke();
         
-        // Barrel Detail (Hoops)
-        ctx.fillStyle = '#000';
-        ctx.fillRect(-b.r, -2, b.r*2, 4);
+        // Hoops
+        ctx.fillStyle = hoopColor;
+        // Draw centered rects for hoops, rotated
+        ctx.fillRect(-b.r, -4, b.r*2, 2);
+        ctx.fillRect(-b.r, 2, b.r*2, 2);
+        
+        // Rolling detail "L" or skull?
+        ctx.fillStyle = '#fff';
+        ctx.font = '10px Arial';
+        ctx.fillText("XX", -6, 2);
         
         ctx.restore();
     });

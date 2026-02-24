@@ -59,7 +59,7 @@ class SnakeGame {
         this.setupMobileControls();
 
         // Initial Draw
-        this.clearCanvas();
+        this.draw();
         // this.drawStartScreen(); // Not needed as HTML overlay handles it
     }
     
@@ -205,115 +205,97 @@ class SnakeGame {
     }
 
     draw() {
-        this.clearCanvas();
+        // Arcade Background
+        this.ctx.fillStyle = '#000';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Subtle Grid
+        this.ctx.strokeStyle = '#111';
+        this.ctx.lineWidth = 1;
+        this.ctx.beginPath();
+        for (let x = 0; x <= this.canvas.width; x += this.gridSize) {
+            this.ctx.moveTo(x, 0);
+            this.ctx.lineTo(x, this.canvas.height);
+        }
+        for (let y = 0; y <= this.canvas.height; y += this.gridSize) {
+            this.ctx.moveTo(0, y);
+            this.ctx.lineTo(this.canvas.width, y);
+        }
+        this.ctx.stroke();
+
         this.drawFood();
         this.drawSnake();
     }
 
-    clearCanvas() {
-        // Theme-based background
-        if (this.themeToggle.checked) {
-             // Retro Mode: Dark Green background
-             this.ctx.fillStyle = '#0f380f';
-             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-             // Draw Grid for retro feel
-             this.ctx.strokeStyle = '#306230';
-             this.ctx.lineWidth = 0.5;
-             for (let i = 0; i < this.canvas.width; i += this.gridSize) {
-                 this.ctx.beginPath();
-                 this.ctx.moveTo(i, 0);
-                 this.ctx.lineTo(i, this.canvas.height);
-                 this.ctx.stroke();
-             }
-             for (let i = 0; i < this.canvas.height; i += this.gridSize) {
-                 this.ctx.beginPath();
-                 this.ctx.moveTo(0, i);
-                 this.ctx.lineTo(this.canvas.width, i);
-                 this.ctx.stroke();
-             }
-        } else {
-             // Modern Mode: Black background
-             this.ctx.fillStyle = '#000000';
-             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        }
-    }
-
     drawSnake() {
-        const isRetro = this.themeToggle.checked;
-        
-        for (let i = 0; i < this.snake.length; i++) {
-            const segment = this.snake[i];
+        this.snake.forEach((segment, i) => {
+            const x = segment.x * this.gridSize;
+            const y = segment.y * this.gridSize;
+            const s = this.gridSize;
             
-            // Choose color based on theme
-            if (isRetro) {
-                // Retro Mode: Light Green
-                this.ctx.fillStyle = '#8bac0f';
-                this.ctx.strokeStyle = '#0f380f';
-            } else {
-                // Modern Mode: Neon Green
-                // Head is different color
-                this.ctx.fillStyle = (i === 0) ? '#00ff9d' : '#00cc7a';
-                this.ctx.shadowBlur = (i === 0) ? 15 : 5;
-                this.ctx.shadowColor = '#00ff9d';
-            }
-
-            this.ctx.fillRect(segment.x * this.gridSize, segment.y * this.gridSize, this.gridSize - 2, this.gridSize - 2);
-            
-            // Draw eyes on head in Modern Mode
-            if (i === 0 && !isRetro) {
-                this.ctx.shadowBlur = 0;
+            // Head vs Body
+            if (i === 0) {
+                // Head Sprite (Green)
+                this.ctx.fillStyle = '#00ff00';
+                this.ctx.fillRect(x, y, s, s);
+                
+                // Eyes (Pixelated)
                 this.ctx.fillStyle = '#000';
+                let lx = 4, ly = 4, rx = 12, ry = 4; // Default Up
                 
-                const eyeSize = 4;
-                const eyeOffset = 6;
-                let leftEyeX, leftEyeY, rightEyeX, rightEyeY;
-                
-                // Position eyes based on direction
-                if (this.dx === 1) { // Moving Right
-                    leftEyeX = segment.x * this.gridSize + 12; leftEyeY = segment.y * this.gridSize + 5;
-                    rightEyeX = segment.x * this.gridSize + 12; rightEyeY = segment.y * this.gridSize + 15;
-                } else if (this.dx === -1) { // Moving Left
-                    leftEyeX = segment.x * this.gridSize + 8; leftEyeY = segment.y * this.gridSize + 5;
-                    rightEyeX = segment.x * this.gridSize + 8; rightEyeY = segment.y * this.gridSize + 15;
-                } else if (this.dy === -1) { // Moving Up
-                    leftEyeX = segment.x * this.gridSize + 5; leftEyeY = segment.y * this.gridSize + 8;
-                    rightEyeX = segment.x * this.gridSize + 15; rightEyeY = segment.y * this.gridSize + 8;
-                } else { // Moving Down (or stationary)
-                    leftEyeX = segment.x * this.gridSize + 5; leftEyeY = segment.y * this.gridSize + 12;
-                    rightEyeX = segment.x * this.gridSize + 15; rightEyeY = segment.y * this.gridSize + 12;
+                // Adjust eye pos based on direction
+                if(this.dx === 1) { // Right
+                   lx = 10; ly = 4; rx = 10; ry = 12;
+                } else if(this.dx === -1) { // Left
+                   lx = 4; ly = 4; rx = 4; ry = 12;
+                } else if(this.dy === 1) { // Down
+                   lx = 4; ly = 10; rx = 12; ry = 10;
                 }
                 
-                this.ctx.fillRect(leftEyeX, leftEyeY, eyeSize, eyeSize);
-                this.ctx.fillRect(rightEyeX, rightEyeY, eyeSize, eyeSize);
+                this.ctx.fillRect(x + lx, y + ly, 4, 4);
+                this.ctx.fillRect(x + rx, y + ry, 4, 4);
+                
+                // Tongue (Red pixel)
+                if (Math.floor(Date.now() / 150) % 2 === 0) {
+                    this.ctx.fillStyle = '#ff0000';
+                    let tx = 8, ty = -4; // Up
+                    if(this.dx === 1) { tx = 20; ty = 8; }
+                    else if(this.dx === -1) { tx = -4; ty = 8; }
+                    else if(this.dy === 1) { tx = 8; ty = 20; }
+                    
+                    if (this.dx !== 0) this.ctx.fillRect(x + tx, y + ty, 4, 4);
+                    else this.ctx.fillRect(x + tx, y + ty, 4, 4);
+                }
+                
+            } else {
+                // Body Segment (Alternating or scaled)
+                // Arcade style: slightly smaller box inside to show segmentation
+                this.ctx.fillStyle = '#00cc00';
+                this.ctx.fillRect(x, y, s, s);
+                
+                // Highlight/Shine
+                this.ctx.fillStyle = '#66ff66';
+                this.ctx.fillRect(x + 2, y + 2, 4, 4);
             }
-        }
-        
-        // Reset Shadow
-        this.ctx.shadowBlur = 0;
+        });
     }
     
     drawFood() {
-        if (this.themeToggle.checked) {
-            // Retro Mode: Blocky Food
-            this.ctx.fillStyle = '#8bac0f';
-            this.ctx.fillRect(this.food.x * this.gridSize, this.food.y * this.gridSize, this.gridSize - 2, this.gridSize - 2);
-        } else {
-            // Modern Mode: Red Apple/Circle
-            this.ctx.fillStyle = '#ff0055';
-            this.ctx.shadowBlur = 15;
-            this.ctx.shadowColor = '#ff0055';
-            
-            this.ctx.beginPath();
-            this.ctx.arc(
-                this.food.x * this.gridSize + this.gridSize / 2, 
-                this.food.y * this.gridSize + this.gridSize / 2, 
-                this.gridSize / 2 - 2, 
-                0, Math.PI * 2
-            );
-            this.ctx.fill();
-            this.ctx.shadowBlur = 0;
-        }
+        const x = this.food.x * this.gridSize;
+        const y = this.food.y * this.gridSize;
+        const s = this.gridSize;
+        
+        // Apple Sprite (Pixel Art 20x20 scale)
+        // Red Body
+        this.ctx.fillStyle = '#ff0000';
+        // Cross shape rounded
+        this.ctx.fillRect(x + 4, y, s - 8, s); // V
+        this.ctx.fillRect(x, y + 4, s, s - 8); // H
+        this.ctx.fillRect(x + 2, y + 2, s - 4, s - 4); // Center fill
+        
+        // Stem (Brown/Green)
+        this.ctx.fillStyle = '#00ff00';
+        this.ctx.fillRect(x + 8, y - 4, 4, 4); // Stem top
     }
 
     spawnFood() {

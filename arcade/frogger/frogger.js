@@ -375,79 +375,206 @@ class FroggerGame {
     }
 
     draw() {
-        // Clear
-        this.ctx.fillStyle = '#111';
+        const grid = this.grid;
+        // Background Fill - Water for top half, Road for bottom
+        this.ctx.fillStyle = '#191970'; 
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // 1. Water (Rows 1-5)
+        this.ctx.fillStyle = '#000047'; 
+        this.ctx.fillRect(0, grid, this.canvas.width, 5 * grid);
         
-        // 1. Water (Rows 1-5) -> Y=32 to 5*32+32=192
-        this.ctx.fillStyle = '#000066';
-        this.ctx.fillRect(0, this.grid, this.canvas.width, 5 * this.grid);
+        // 2. Median (Row 6)
+        this.ctx.fillStyle = '#800080';
+        this.ctx.fillRect(0, 6 * grid, this.canvas.width, grid);
         
-        // 2. Road (Rows 7-11) -> Y=224 to 384
-        this.ctx.fillStyle = '#222';
-        this.ctx.fillRect(0, 7 * this.grid, this.canvas.width, 5 * this.grid);
+        // 3. Road (Rows 7-11)
+        this.ctx.fillStyle = '#000000';
+        this.ctx.fillRect(0, 7 * grid, this.canvas.width, 5 * grid);
         
-        // 3. Medians (Row 6 and 12-13)
-        this.ctx.fillStyle = '#4B0082'; // Purple Sidewalk
-        this.ctx.fillRect(0, 6 * this.grid, this.canvas.width, this.grid);
-        this.ctx.fillRect(0, 12 * this.grid, this.canvas.width, 2 * this.grid);
+        // 4. Start Bank (Rows 12-13)
+        this.ctx.fillStyle = '#800080';
+        this.ctx.fillRect(0, 12 * grid, this.canvas.width, 2 * grid);
         
-        // 4. Homes Area (Row 0)
-        this.ctx.fillStyle = '#004400';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.grid);
+        // 5. Header / Homes (Row 0)
+        this.ctx.fillStyle = '#006400'; // Green Hedge
+        this.ctx.fillRect(0, 0, this.canvas.width, grid);
+
+        // Draw Blue Water Bays in Header
+        // Home Centers (approx): 1.5, 4.5, 7.5, 10.5, 13.5 grid units
+        // 48, 144, 240, 336, 432 pixels
+        const homeCenters = [48, 144, 240, 336, 432];
         
-        // Draw filled homes
-        const homeCenters = [1, 4, 7, 10, 13];
-        homeCenters.forEach((c, i) => {
-            const x = c * 32;
-            if (this.homesFilled[i]) {
-                // Draw Frog in Home
-                this.ctx.fillStyle = '#00FF00';
-                this.ctx.fillRect(x + 4, 4, 24, 24);
-            } else {
-                // Draw Empty Home Bay
-                this.ctx.fillStyle = '#002200';
-                this.ctx.fillRect(x, 0, 32, 32);
-            }
+        this.ctx.fillStyle = '#000047'; 
+        homeCenters.forEach((cx, i) => {
+             // Bay is ~30px wide
+             this.ctx.fillRect(cx - 15, 0, 30, grid);
+             
+             // If filled, draw frog
+             if (this.homesFilled[i]) {
+                 this.drawFrogSprite(cx - 12, 4, 'down'); 
+             }
         });
         
-        // 5. Objects
+        // Draw Objects (Logs, Turtles, Cars)
         this.lanes.forEach(lane => {
              lane.objects.forEach(obj => {
-                 this.ctx.fillStyle = obj.color;
-                 // Draw slightly rounded rect? Standard rect for now
-                 this.ctx.fillRect(obj.x, obj.y, obj.w, obj.h);
-                 
-                 // Detail?
-                 if (obj.type === 'turtle') {
-                     // Draw shell pattern
-                     this.ctx.fillStyle = '#a00';
-                     this.ctx.fillRect(obj.x + 4, obj.y+4, obj.w-8, obj.h-8);
-                 }
+                 this.drawObject(obj, lane);
              });
         });
 
-        // 6. Frog
-        if (!this.frog.dead) {
-            this.ctx.fillStyle = '#00FF00';
-            this.ctx.save();
-            this.ctx.translate(this.frog.x + 12, this.frog.y + 12);
-            // Default facing Up (0 deg)
-            // If we tracked facing logic... we should
-            // Simple green square for now
-            this.ctx.fillRect(-12, -12, 24, 24);
-            // Eyes
-            this.ctx.fillStyle = '#000';
-            this.ctx.fillRect(-8, -8, 6, 6);
-            this.ctx.fillRect(2, -8, 6, 6);
-            this.ctx.restore();
+        // Draw Player Frog
+        if (!this.frog.dead) { 
+            this.drawFrogSprite(this.frog.x, this.frog.y, 'up'); 
         }
         
-        // 7. Time Bar
-        this.ctx.fillStyle = '#00FF00';
-        if (this.time < 600) this.ctx.fillStyle = '#FF0000';
-        const barW = (this.time / 3600) * this.canvas.width;
-        this.ctx.fillRect(0, this.canvas.height - 4, barW, 4); 
+        // Draw Lives (Bottom Left Corner)
+        for(let i=0; i<this.lives; i++) {
+            // Draw mini frogs at bottom left
+            this.drawFrogSprite(10 + (i*24), this.canvas.height - 24, 'up', 0.6); 
+        }
+
+        // Time Bar (Bottom Right)
+        this.ctx.fillStyle = '#fff';
+        this.ctx.font = '10px "Press Start 2P"';
+        this.ctx.fillText("TIME", this.canvas.width - 120, this.canvas.height - 10);
+        
+        this.ctx.fillStyle = '#00ff00';
+        if (this.time < 600) this.ctx.fillStyle = '#ff0000';
+        const barW = (this.time / 3600) * 100;
+        this.ctx.fillRect(this.canvas.width - 120, this.canvas.height - 8, barW, 6); 
+    }
+
+    drawObject(obj, lane) {
+        this.ctx.save();
+        this.ctx.translate(obj.x, obj.y);
+        
+        if (obj.type.startsWith('log')) {
+             // LOG: Red/Brown with wood grain
+             this.ctx.fillStyle = '#8B4513'; // SaddleBrown
+             this.ctx.fillRect(0, 0, obj.w, obj.h);
+             // Details
+             this.ctx.fillStyle = '#A0522D'; // Sienna
+             this.ctx.fillRect(4, 4, obj.w-8, 4);
+             this.ctx.fillRect(4, obj.h - 8, obj.w-8, 4);
+             // Rounded Ends
+             this.ctx.beginPath();
+             this.ctx.arc(0, obj.h/2, 12, 0, Math.PI*2);
+             this.ctx.arc(obj.w, obj.h/2, 12, 0, Math.PI*2);
+             this.ctx.fill();
+        } 
+        else if (obj.type === 'turtle') {
+             // TURTLE: Red circle
+             this.ctx.fillStyle = '#FF4500'; // OrangeRed
+             this.ctx.beginPath();
+             this.ctx.arc(16, 16, 13, 0, Math.PI*2);
+             this.ctx.fill();
+             // Shell
+             this.ctx.fillStyle = '#8B0000'; // DarkRed
+             this.ctx.beginPath();
+             this.ctx.arc(16, 16, 8, 0, Math.PI*2);
+             this.ctx.fill();
+             // Legs
+             this.ctx.fillStyle = '#FF4500';
+             this.ctx.fillRect(0, 4, 6, 6);
+             this.ctx.fillRect(26, 4, 6, 6);
+             this.ctx.fillRect(0, 22, 6, 6);
+             this.ctx.fillRect(26, 22, 6, 6);
+        }
+        else if (obj.type === 'truck') {
+             // TRUCK: Elongated
+             this.ctx.fillStyle = '#CCCCCC';
+             this.ctx.fillRect(0, 4, obj.w, obj.h-8);
+             // Cab
+             this.ctx.fillStyle = '#FFFFFF';
+             if (lane.speed < 0) this.ctx.fillRect(0, 2, 20, obj.h-4);
+             else this.ctx.fillRect(obj.w-20, 2, 20, obj.h-4);
+             // Wheels
+             this.ctx.fillStyle = '#333';
+             this.ctx.fillRect(8, -2, 8, 4);
+             this.ctx.fillRect(obj.w-16, -2, 8, 4);
+             this.ctx.fillRect(8, obj.h-2, 8, 4);
+             this.ctx.fillRect(obj.w-16, obj.h-2, 8, 4);
+        }
+        else if (obj.type === 'car-race') {
+             // RACE CAR: sleek
+             this.ctx.fillStyle = '#FFD700'; // Gold
+             this.ctx.beginPath();
+             this.ctx.moveTo(4, obj.h-4);
+             this.ctx.lineTo(8, 4);
+             this.ctx.lineTo(obj.w - 8, 4);
+             this.ctx.lineTo(obj.w-4, obj.h-4);
+             this.ctx.fill();
+             // Stripe
+             this.ctx.fillStyle = '#FF0000';
+             this.ctx.fillRect(0, 10, obj.w, 8);
+        }
+        else if (obj.type === 'car-sedan') {
+             // SEDAN: Boxy Pink
+             this.ctx.fillStyle = '#FF69B4'; // HotPink
+             this.ctx.fillRect(2, 6, obj.w-4, obj.h-12);
+             // Roof
+             this.ctx.fillStyle = '#FFC0CB';
+             this.ctx.fillRect(6, 4, obj.w-12, obj.h-8);
+        }
+        else if (obj.type === 'bulldozer') {
+             // BULLDOZER/TRACTOR
+             this.ctx.fillStyle = '#00BFFF'; // DeepSkyBlue
+             this.ctx.fillRect(4, 4, obj.w-8, obj.h-8);
+             // Blade
+             this.ctx.fillStyle = '#00008B';
+             if (lane.speed > 0) this.ctx.fillRect(obj.w-6, 2, 6, obj.h-4);
+             else this.ctx.fillRect(0, 2, 6, obj.h-4);
+        }
+        
+        this.ctx.restore();
+    }
+    
+    drawFrogSprite(x, y, dir, scale=1) {
+        this.ctx.save();
+        this.ctx.translate(x, y);
+        this.ctx.scale(scale, scale);
+        
+        // Authentic Frog Shape (Green with Yellow/Green stripes if possible, but basic is fine)
+        this.ctx.fillStyle = '#32CD32'; // LimeGreen
+        
+        // Body (Simple)
+        this.ctx.fillRect(8, 8, 16, 14);
+        
+        // Head
+        this.ctx.fillRect(8, 2, 16, 8);
+        
+        // Legs (Splayed)
+        // Back L
+        this.ctx.beginPath();
+        this.ctx.moveTo(8, 22);
+        this.ctx.lineTo(0, 26);
+        this.ctx.lineTo(0, 18);
+        this.ctx.fill();
+        // Back R
+        this.ctx.beginPath();
+        this.ctx.moveTo(24, 22);
+        this.ctx.lineTo(32, 26);
+        this.ctx.lineTo(32, 18);
+        this.ctx.fill();
+        // Front L
+        this.ctx.fillRect(0, 6, 8, 6);
+        // Front R
+        this.ctx.fillRect(24, 6, 8, 6);
+        
+        // Eyes
+        this.ctx.fillStyle = '#FFFF00';
+        this.ctx.fillRect(8, 0, 6, 4);
+        this.ctx.fillRect(18, 0, 6, 4);
+        this.ctx.fillStyle = '#000';
+        this.ctx.fillRect(10, 0, 2, 2);
+        this.ctx.fillRect(20, 0, 2, 2);
+        
+        // Back Pattern
+        this.ctx.fillStyle = '#006400';
+        this.ctx.fillRect(14, 10, 4, 8);
+        
+        this.ctx.restore();
     }
 }
 
