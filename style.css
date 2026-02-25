@@ -339,334 +339,7 @@ button:active, .retro-btn:active {
     justify-content: center;
     flex-wrap: wrap;
     gap: 30px;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
-}
-
-.section-card-list {
-    flex: 1;
-    min-width: 300px;
-    border: 4px solid var(--border-color);
-    background: #000;
-    box-shadow: 8px 8px 0 rgba(0,0,0,0.5);
-    padding: 20px;
-}
-
-.section-header {
-    font-size: 16px;
-    color: var(--accent-color);
-    margin-bottom: 20px;
-    text-transform: uppercase;
-    border-bottom: 2px solid var(--accent-color);
-    padding-bottom: 10px;
-    text-shadow: 2px 2px 0 #000;
-}
-
-.card-games-grid, .board-games-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); /* Slightly wider for longer names */
-    gap: 15px;
-}
-
-/* GAME LINKS / CARDS */
-
-.game-link {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-decoration: none;
-    color: white; /* Default text color */
-    background: #222; /* Fallback */
-    border: 2px solid white;
-    height: 80px;
-    font-size: 10px;
-    text-align: center;
-    line-height: 1.4;
-    position: relative;
-    box-shadow: 4px 4px 0 #000;
-    transition: all 0.1s;
-    text-transform: uppercase;
-    padding: 5px;
-    overflow: hidden;
-}
-
-.game-link span {
-    z-index: 2;
-    position: relative;
-}
-
-.game-link::before {
-    content: "";
-    position: absolute;
-    top: 0; 
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    transition: 0.5s;
-    skewX: -20deg;
-}
-
-.game-link:hover::before {
-    left: 100%;
-}
-
-.game-link:hover {
-    transform: translate(-2px, -2px);
-    box-shadow: 6px 6px 0 var(--accent-color);
-    background: var(--text-color);
-    color: #000;
-    border-color: var(--text-color);
-    text-shadow: none;
-}
-
-.game-link:active {
-    transform: translate(2px, 2px);
-    box-shadow: 2px 2px 0 #000;
-}
-
-/* RESPONSIVE */
-@media (max-width: 768px) {
-    .glow-title {
-        font-size: 28px;
-    }
-    .nav {
-        flex-direction: column;
-        gap: 20px;
-    }
-}
-
-/* CUSTOM CHECKBOX */
-.switch input { appearance: none; width: 40px; height: 20px; background: #333; border: 2px solid #fff; position: relative; cursor: pointer; }
-.switch input::after { content: 'OFF'; position: absolute; left: 2px; top: 1px; color: #fff; font-size: 8px; }
-.switch input:checked { background: var(--text-color); border-color: var(--text-color); }
-.switch input:checked::after { content: 'ON'; left: auto; right: 2px; color: #000; }
-
-
-/* UI CONTROLS */
-.score-display {
-    font-size: 12px;
-    color: var(--text-color);
-    text-shadow: 2px 2px 0 #000;
-    margin-right: 15px;
-    border: 2px solid var(--border-color);
-    padding: 10px;
-    background: #000;
-    box-shadow: 4px 4px 0 var(--shadow-color);
-}
-
-.difficulty-control select {
-    background: #000;
-    color: var(--secondary-color);
-    border: 2px solid var(--border-color);
-    padding: 10px;
-    font-family: 'Press Start 2P', cursive;
-    font-size: 10px;
-    cursor: pointer;
-    box-shadow: 4px 4px 0 var(--shadow-color);
-    margin-right: 15px;
-    outline: none;
-}
-
-.difficulty-control select:hover {
-    background: var(--bg-color);
-}
-
-
-
-
-/* LOBBY / HOME SPECIFIC */
-
-html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden; /* Prevent scrolling on the dashboard/map */
-}
-
-/* Background Wrapper */
-.lobby-wrapper {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1; /* Behind nav */
-    background: #000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-/* The Image creates the ratio */
-.lobby-wrapper::before {
-    content: "";
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background-image: url('https://media.discordapp.net/attachments/1441089574255460363/1475994705530720400/content.png?ex=699f82b0&is=699e3130&hm=2b05f96948b2729e192af8f903c8ebcef6496827150c53ee164d8b46f05c6142&=&format=webp&quality=lossless&width=1223&height=815');
-    background-size: cover;
-    background-position: center;
-    opacity: 0.8; 
-    /* Use 'contain' if you want full image visible always, 'cover' if you want full screen filled. 
-       User asked for 'ENTIRE background', usually implies cover. 
-       However, button positions are % based. If we use cover, the visible area changes ratio.
-       We MUST use a container that fits the image ratio to keep buttons aligned, OR use object-fit logic.
-       
-       Let's use the aspect-ratio container trick centered on screen.
-    */
-    display: none; /* Logic moved to child img or div */
-}
-
-
-/* REVISED APPROACH: Centered container that maintains aspect ratio */
-.lobby-wrapper {
-    background: #050510;
-}
-
-.lobby-wrapper {
-    /* Create a box that is always 1536/1024 ratio */
-    /* And fits within the viewport */
-    --img-w: 1536;
-    --img-h: 1024;
-    
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    
-    /* Calculate size to fit viewport while maintaining ratio - roughly */
-    width: 100vw;
-    height: 100vh;
-    
-    background-image: url('https://media.discordapp.net/attachments/1441089574255460363/1475994705530720400/content.png?ex=699f82b0&is=699e3130&hm=2b05f96948b2729e192af8f903c8ebcef6496827150c53ee164d8b46f05c6142&=&format=webp&quality=lossless&width=1223&height=815');
-    background-size: 100% 100%; /* Stretch to fill this wrapper */
-    background-repeat: no-repeat;
-    
-    /* We need to constrain THIS wrapper to the aspect ratio */
-    /* This is hard in pure CSS without aspect-ratio property on a responsive div that fits BOTH width/height */
-    
-    /* Better approach: Use background-size: contain on body? */
-}
-
-
-
-.lobby-wrapper {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    
-    /* STRETCH to fill screen completely (distorts image slightly but ensures full coverage) */
-    background-image: url('https://media.discordapp.net/attachments/1441089574255460363/1475994705530720400/content.png?ex=699f82b0&is=699e3130&hm=2b05f96948b2729e192af8f903c8ebcef6496827150c53ee164d8b46f05c6142&=&format=webp&quality=lossless&width=1223&height=815');
-    background-size: 100% 100%;
-    background-position: center;
-    background-repeat: no-repeat;
-    
-    z-index: 1;
-}
-
-/* Hide the aspect ratio media query stuff since we are brute-force stretching now */
-/* @media screen and (min-aspect-ratio: 3/2) ... removed */
-
-/* Nav needs to be on top */
-.home-nav {
-    position: fixed;
-    top: 0;
-    width: 100%;
-    z-index: 100;
-    border-bottom: none;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
-    box-shadow: none;
-    pointer-events: none; /* Let clicks pass through empty areas */
-}
-.home-nav * {
-    pointer-events: auto;
-}
-
-.lobby-title {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 50;
-    text-align: center;
-    pointer-events: none;
-}
-
-
-/* MAP NAVIGATION (LOBBY) */
-.map-container {
-    display: none; /* OLD CONTAINER - HIDE */
-}
-
-/* Clickable Zones */
-.map-zone {
-    position: absolute;
-    display: block;
-    text-decoration: none;
-    z-index: 10;
-    border: 2px solid transparent; 
-    transition: all 0.2s ease;
-    
-    /* Debugging/Development: set to rgba(255,0,0,0.2) to see zones */
-    background: rgba(255, 255, 255, 0); 
-}
-
-.map-zone:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border: 2px solid var(--secondary-color);
-    box-shadow: 
-        0 0 20px var(--secondary-color),
-        inset 0 0 20px var(--secondary-color);
-    cursor: pointer;
-    z-index: 20;
-}
-
-/* Zone Labels */
-.zone-hover {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) scale(0.8);
-    text-align: center;
-    opacity: 0;
-    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    pointer-events: none;
-    width: 100%;
-}
-
-.map-zone:hover .zone-hover {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-}
-
-.zone-label {
-    display: block;
-    font-size: 1.5vw; /* Responsive font size */
-    color: #fff;
-    text-shadow: 4px 4px 0 #000;
-    font-weight: bold;
-    background: rgba(0,0,0,0.8);
-    padding: 5px 10px;
-    border: 2px solid #fff;
-    box-shadow: 4px 4px 0 var(--accent-color);
-    margin-bottom: 5px;
-}
-
-.zone-sub {
-    font-size: 0.8vw;
-    color: var(--secondary-color);
-    text-shadow: 2px 2px 0 #000;
-    background: rgba(0,0,0,0.8);
-    padding: 2px 5px;
-}
-
-
-/* CARD STYLES DEPRECATED BUT KEPT FOR REFERENCE BELOW */
+    max-width:
 .hub-grid {
     display: none; /* Hidden used to be flex */
     justify-content: center;
@@ -753,4 +426,83 @@ html, body {
 .hub-card:hover::before {
     background-position: 100% 100%;
 }
+
+
+/* --- LOBBY MAP STYLES (Added Manually) --- */
+
+.lobby-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw !important;
+    height: 100vh !important;
+    background-image: url("https://media.discordapp.net/attachments/1179619163013824634/1344403194514309171/image0.jpg?ex=67c0c9f0&is=67bf7870&hm=8013d5b00c634db4c19794cb5d40026e7ae3bf92f2324dc25441af10777e0340&");
+    background-size: 100% 100% !important; /* Forces stretch */
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: 1; /* Above body background, covers old content */
+}
+
+/* Ensure map zones are clickable and visible on hover */
+.map-zone {
+    position: absolute;
+    display: block;
+    /* borders for debugging (remove later if needed) */
+    /* border: 2px solid rgba(255, 0, 0, 0.3); */
+    cursor: pointer;
+    z-index: 10;
+    text-decoration: none;
+}
+
+.zone-hover {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    /* background: rgba(0, 0, 0, 0.4);  Removed to clearly show image unless hovered */
+    opacity: 0;
+    transition: opacity 0.2s, background 0.2s;
+    border: 2px solid transparent;
+}
+
+.map-zone:hover .zone-hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.6); /* Dark overlay on hover */
+    border-color: var(--accent-color);
+    box-shadow: 0 0 15px var(--accent-color);
+}
+
+.zone-label {
+    color: var(--accent-color);
+    font-size: 1.5rem; /* Large font */
+    font-weight: bold;
+    text-transform: uppercase;
+    text-shadow: 2px 2px 0 #000;
+    margin-bottom: 5px;
+    font-family: 'Press Start 2P', cursive;
+    text-align: center;
+}
+
+.zone-sub {
+    color: #fff;
+    font-size: 0.8rem;
+    font-family: 'Quicksand', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+/* Ensure nav is above map */
+.nav {
+    position: relative; /* Change from sticky so it sits naturally above fixed background */
+    z-index: 100;
+    background: rgba(0,0,0,0.8); /* Keep semi-transparent */
+}
+
+/* Hide old content completely so it doesn't interfere */
+.hero, .hub-grid, .section-grid {
+    display: none !important;
+}
+
 
