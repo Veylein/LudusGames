@@ -21,6 +21,7 @@ const scoreboard = document.getElementById("scoreboard");
 
 function initGame() {
     if(!playerHandDiv) return;
+    createDeck(); // Was missing!
     shuffle(deck);
 
     playerHand = deck.splice(0, 5);
