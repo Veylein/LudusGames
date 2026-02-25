@@ -255,3 +255,129 @@ if (window.location.pathname.includes("/cards/") || window.location.pathname.inc
     if (lobbyOverlay) lobbyOverlay.remove();
 }
 
+
+/* AUTOMATIC SPA NAVIGATION HANDLER (FOR DISCORD & IFRAMES) */
+(function() {
+    // Prevent multiple initializations if script re-runs
+    if (window.LUDUS_SPA_ACTIVE) return;
+    window.LUDUS_SPA_ACTIVE = true;
+    
+    console.log("Ludus SPA Navigation Active");
+
+    document.addEventListener('click', function(e) {
+        const link = e.target.closest('a');
+        if (!link || !link.href) return;
+        
+        // Handle base-relative URLs
+        const url = new URL(link.href, window.location.href);
+        
+        // Only internal links
+        if (url.origin !== window.location.origin) return; 
+
+        // Only HTML navigations
+        if (url.pathname.endsWith('.html') || url.pathname.endsWith('/')) {
+            e.preventDefault();
+            navigateTo(url.href);
+        }
+    });
+
+    window.addEventListener('popstate', function(e) {
+        if (e.state && e.state.url) {
+            loadPageContent(e.state.url);
+        } else {
+             loadPageContent(window.location.href);
+        }
+    });
+
+    async function navigateTo(url) {
+        window.history.pushState({url: url}, '', url);
+        await loadPageContent(url);
+    }
+
+    async function loadPageContent(url) {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Network response was not ok');
+            const text = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(text, 'text/html');
+
+            document.title = doc.title;
+
+            // 1. UPDATE STYLES (HEAD)
+            // Preserve global styles, swap page-specific ones
+            // Simple heuristic to avoid removing global styles:
+            // - Keep any link with 'style.css' or 'themes.css' in href
+            // - Remove others, add new ones from doc
+            
+            const currentLinks = Array.from(document.head.querySelectorAll('link[rel="stylesheet"]'));
+            const newLinks = Array.from(doc.head.querySelectorAll('link[rel="stylesheet"]'));
+            
+            // Remove old page-specific styles
+            currentLinks.forEach(link => {
+                const isGlobal = link.href.includes('style.css') || link.href.includes('themes.css');
+                if (!isGlobal) link.remove();
+            });
+
+            // Add new page-specific styles
+            newLinks.forEach(link => {
+                const href = link.getAttribute('href');
+                if (!href) return;
+                
+                const isGlobal = href.includes('style.css') || href.includes('themes.css');
+                if (!isGlobal) {
+                    const newLink = document.createElement('link');
+                    newLink.rel = 'stylesheet';
+                    newLink.href = href; // Browser resolves relative to new current URL (set by pushState)
+                    document.head.appendChild(newLink);
+                }
+            });
+            
+            // 2. REPLACE BODY CONTENT
+            document.body.innerHTML = doc.body.innerHTML;
+            document.body.className = doc.body.className;
+
+            // 3. RE-EXECUTE SCRIPTS (CRITICAL)
+            // We must manually recreate script tags for them to execute
+            const scripts = document.body.querySelectorAll('script');
+
+            scripts.forEach(oldScript => {
+                const newScript = document.createElement('script');
+                const src = oldScript.getAttribute('src');
+
+                // Copy all attributes
+                Array.from(oldScript.attributes).forEach(attr => {
+                    newScript.setAttribute(attr.name, attr.value);
+                });
+
+                // Skip recursively loading ui.js
+                if (src && src.includes('ui.js')) return;
+
+                if (src) {
+                    newScript.src = src; // Browser resolves relative to new current URL
+                } else {
+                    newScript.textContent = oldScript.textContent;
+                }
+                
+                // Replace in DOM to execute
+                oldScript.parentNode.replaceChild(newScript, oldScript);
+            });
+
+            // 4. RE-INIT GLOBALS
+            if (typeof initTheme === 'function') initTheme();
+            if (typeof initStyle === 'function') initStyle();
+            if (typeof initFontTheme === 'function') initFontTheme();
+            if (typeof initDifficulty === 'function') initDifficulty();
+            
+            // Special: Re-run ensureBackButton logic
+            if (typeof ensureBackButton === 'function') ensureBackButton();
+
+            window.scrollTo(0, 0);
+
+        } catch (err) {
+            console.error('SPA Navigation Error:', err);
+            window.location.href = url; // Fallback
+        }
+    }
+})();
+
