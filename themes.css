@@ -105,46 +105,25 @@ body[data-style="style-arcade"]::before {
 
 /* 4. CASINO (Vegas Style) */
 body[data-style="style-casino"] {
-    background-color: #043815;
-    /* Rich felt green */
-    background-image: radial-gradient(#064e1d 15%, transparent 16%), radial-gradient(#064e1d 15%, transparent 16%);
-    background-size: 20px 20px;
-    background-position: 0 0, 10px 10px;
-    --text-color: #ffd700;
-    --border-color: #ffd700;
-    --accent-color: #aa0000;
-}
-body[data-style="style-casino"]::before {
-    display: none; /* No scanlines in casino */
-}
-
-/* 5. YACHT (Luxury) */
-body[data-style="style-yacht"] {
-    background-color: #f7f9fc;
-    background-image: linear-gradient(to right, #e2e8f0 1px, transparent 1px), linear-gradient(to bottom, #e2e8f0 1px, transparent 1px);
-    background-size: 50px 50px;
-    --text-color: #1a365d;
-    --border-color: #2b6cb0;
-    --accent-color: #c53030;
-    font-family: 'Times New Roman', serif;
-}
-body[data-style="style-yacht"]::before {
-    display: none;
-}
- 
+    background-color: #052a19;
+    /* Rich Casino Green with Image Overlay */
+    background-image: 
         linear-gradient(rgba(5, 42, 25, 0.9), rgba(5, 42, 25, 0.9)),
         url('https://images.unsplash.com/photo-1596838132731-3301c3fd4317?q=80&w=2070&auto=format&fit=crop');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
     animation: none;
-    /* Highlight borders with gold if in this style regardless of theme? Optional */
+    --text-color: #ffd700;
     --border-color: #ffd700;
+    --accent-color: #aa0000;
 }
 body[data-style="style-casino"]::before {
     /* Gold Vignette */
+    content: " ";
     background: radial-gradient(circle, rgba(255,215,0,0.05) 0%, transparent 80%);
     opacity: 0.5;
+    z-index: 9999;
 }
 
 
@@ -159,5 +138,10 @@ body[data-style="style-yacht"] {
     background-position: center;
     background-attachment: fixed;
     animation: none;
+    --text-color: #1a365d;
+    --border-color: #2b6cb0;
+    --accent-color: #c53030;
+    font-family: 'Times New Roman', serif;
 }
 body[data-style="style-yacht"]::before { display: none; }
+
