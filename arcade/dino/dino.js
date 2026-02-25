@@ -1,4 +1,5 @@
-﻿class Dino {
+﻿{
+class Dino {
     constructor(startX, groundY) {
         this.startX = startX;
         this.x = startX;
@@ -272,6 +273,7 @@ class Environment {
 class DinoGame {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
+        if (!this.canvas) return; // Guard
         this.ctx = this.canvas.getContext('2d');
         
         // UI
@@ -322,7 +324,7 @@ class DinoGame {
     }
 
     init() {
-        this.highScoreElement.innerText = this.padScore(this.highScore);
+        if(this.highScoreElement) this.highScoreElement.innerText = this.padScore(this.highScore);
         
         // Listeners
         document.addEventListener('keydown', (e) => this.handleInput(e, true));
@@ -346,22 +348,25 @@ class DinoGame {
         this.canvas.addEventListener('touchstart', (e) => { e.preventDefault(); tapHandler(e); });
         if(this.startScreen) this.startScreen.addEventListener('click', tapHandler);
 
-        this.restartBtn.addEventListener('click', () => this.resetGame());
-        this.pauseBtn.addEventListener('click', () => this.togglePause());
+        if(this.restartBtn) this.restartBtn.addEventListener('click', () => this.resetGame());
+        if(this.pauseBtn) this.pauseBtn.addEventListener('click', () => this.togglePause());
 
         // Mobile Controls
-        this.btnJump.addEventListener('touchstart', (e) => { e.preventDefault(); this.input.jump = true; });
-        this.btnJump.addEventListener('touchend', (e) => { e.preventDefault(); this.input.jump = false; });
-        this.btnJump.addEventListener('mousedown', () => { this.input.jump = true; });
-        this.btnJump.addEventListener('mouseup', () => { this.input.jump = false; });
-
-        this.btnDuck.addEventListener('touchstart', (e) => { e.preventDefault(); this.input.duck = true; });
-        this.btnDuck.addEventListener('touchend', (e) => { e.preventDefault(); this.input.duck = false; });
-        this.btnDuck.addEventListener('mousedown', () => { this.input.duck = true; });
-        this.btnDuck.addEventListener('mouseup', () => { this.input.duck = false; });
+        if(this.btnJump) {
+            this.btnJump.addEventListener('touchstart', (e) => { e.preventDefault(); this.input.jump = true; });
+            this.btnJump.addEventListener('touchend', (e) => { e.preventDefault(); this.input.jump = false; });
+            this.btnJump.addEventListener('mousedown', () => { this.input.jump = true; });
+            this.btnJump.addEventListener('mouseup', () => { this.input.jump = false; });
+        }
+        if(this.btnDuck) {
+            this.btnDuck.addEventListener('touchstart', (e) => { e.preventDefault(); this.input.duck = true; });
+            this.btnDuck.addEventListener('touchend', (e) => { e.preventDefault(); this.input.duck = false; });
+            this.btnDuck.addEventListener('mousedown', () => { this.input.duck = true; });
+            this.btnDuck.addEventListener('mouseup', () => { this.input.duck = false; });
+        }
 
         // Initial paint
-        this.environment.draw(this.ctx, 0, this.themeToggle.checked);
+        this.environment.draw(this.ctx, 0, this.themeToggle && this.themeToggle.checked);
         this.drawGround();
     }
     
@@ -372,8 +377,8 @@ class DinoGame {
         this.isPaused = false;
         this.isGameOver = false;
         this.extinctionEvent = false;
-        this.startScreen.style.display = 'none';
-        this.gameOverScreen.style.display = 'none';
+        if(this.startScreen) this.startScreen.style.display = 'none';
+        if(this.gameOverScreen) this.gameOverScreen.style.display = 'none';
         this.score = 0;
         this.displayScore = 0;
         this.updateScoreUI();
@@ -396,7 +401,7 @@ class DinoGame {
     togglePause() {
         if (!this.isGameRunning || this.isGameOver) return;
         this.isPaused = !this.isPaused;
-        this.pauseBtn.innerText = this.isPaused ? 'RESUME' : 'PAUSE';
+        if(this.pauseBtn) this.pauseBtn.innerText = this.isPaused ? 'RESUME' : 'PAUSE';
         if (!this.isPaused) this.loop();
     }
 
@@ -509,7 +514,7 @@ class DinoGame {
     }
 
     drawGround() {
-        const isRetro = this.themeToggle.checked;
+        const isRetro = this.themeToggle && this.themeToggle.checked;
         this.ctx.beginPath();
         this.ctx.moveTo(0, this.groundY);
         this.ctx.lineTo(this.width, this.groundY);
@@ -522,10 +527,10 @@ class DinoGame {
     }
 
     updateScoreUI() {
-        this.scoreElement.innerText = this.padScore(Math.floor(this.displayScore));
+        if(this.scoreElement) this.scoreElement.innerText = this.padScore(Math.floor(this.displayScore));
         if (this.displayScore > this.highScore) {
             this.highScore = Math.floor(this.displayScore);
-            this.highScoreElement.innerText = this.padScore(this.highScore);
+            if(this.highScoreElement) this.highScoreElement.innerText = this.padScore(this.highScore);
             localStorage.setItem('dinoHighScore', this.highScore);
         }
     }
@@ -539,19 +544,22 @@ class DinoGame {
         this.isGameOver = true;
         this.extinctionEvent = false; // Stop cutscene loop
         
-        this.finalScoreElement.innerText = Math.floor(this.displayScore);
+        if(this.finalScoreElement) this.finalScoreElement.innerText = Math.floor(this.displayScore);
         const title = document.getElementById('game-over-title');
         
         if (won) {
-            title.innerText = "SURVIVED?";
-            title.style.color = "#53d769";
-            // Custom ending message logic could go here
+            if(title) {
+                title.innerText = "SURVIVED?";
+                title.style.color = "#53d769";
+            }
         } else {
-            title.innerText = "EXTINCT";
-            title.style.color = "#ff0055";
+            if(title) {
+                title.innerText = "EXTINCT";
+                title.style.color = "#ff0055";
+            }
         }
         
-        this.gameOverScreen.style.display = 'flex';
+        if(this.gameOverScreen) this.gameOverScreen.style.display = 'flex';
         cancelAnimationFrame(this.animationId);
     }
 
@@ -572,5 +580,7 @@ class DinoGame {
     }
 }
 
-
-window.onload = () => { new DinoGame(); };
+if (document.getElementById('gameCanvas')) {
+    new DinoGame();
+}
+}

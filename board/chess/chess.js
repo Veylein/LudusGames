@@ -1,5 +1,8 @@
 // chess.js
 
+console.log("Game loaded: chess.js");
+{ // SCOPE START
+
 const BOARD_SIZE = 8;
 const boardEl = document.getElementById('chess-board');
 const turnIndicator = document.getElementById('turn-indicator');
@@ -38,6 +41,7 @@ const PIECES = {
 */
 
 function initGame() {
+    if(!boardEl) return;
     turn = WHITE;
     selectedSquare = null;
     validMoves = [];
@@ -543,4 +547,5 @@ document.getElementById('play-again-btn').addEventListener('click', () => {
     initGame();
 });
 
-initGame();
+if(typeof initGame === 'function') initGame();
+} // SCOPE END

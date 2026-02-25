@@ -1,8 +1,13 @@
+﻿{
 class GalagaGame {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
+        if (!this.canvas) return; // Guard
+
         this.ctx = this.canvas.getContext('2d');
         // Set proper size for vertical shooter
+        // Check if we are already approx this size or if it needs enforcement. 
+        // Arcade CSS often handles responsiveness, but internal resolution is good.
         this.canvas.width = 600;
         this.canvas.height = 800;
         
@@ -51,19 +56,30 @@ class GalagaGame {
     }
     
     setupControls() {
-        window.addEventListener('keydown', (e) => {
+        // cleanup old listeners?
+        // We can't really cleanup anonymous functions easily unless we store them.
+        // But since we wrap in Scope, previous instances are GC'd, though listeners remain on WINDOW.
+        // Best practice: Store bound functions.
+        
+        this.handleKeyDown = (e) => {
+            if (!this.canvas) return; // Dead object check
             if(e.code === 'ArrowLeft') this.input.left = true;
             if(e.code === 'ArrowRight') this.input.right = true;
             if(e.code === 'Space') {
                 this.input.fire = true;
                 if(!this.isGameRunning) this.startGame();
             }
-        });
-        window.addEventListener('keyup', (e) => {
+        };
+        
+        this.handleKeyUp = (e) => {
+            if (!this.canvas) return;
             if(e.code === 'ArrowLeft') this.input.left = false;
             if(e.code === 'ArrowRight') this.input.right = false;
             if(e.code === 'Space') this.input.fire = false;
-        });
+        };
+
+        window.addEventListener('keydown', this.handleKeyDown);
+        window.addEventListener('keyup', this.handleKeyUp);
         
         // Click/Touch to Start
         const touchStart = (e) => {
@@ -164,6 +180,14 @@ class GalagaGame {
     }
     
     loop() {
+        // DOM Check inside loop for cleanup?
+        if (!document.getElementById('gameCanvas')) {
+             // Clean up listeners if needed
+             window.removeEventListener('keydown', this.handleKeyDown);
+             window.removeEventListener('keyup', this.handleKeyUp);
+             return;
+        }
+
         if(this.isGameRunning && !this.isPaused) {
             this.update();
         } else {
@@ -366,6 +390,7 @@ class GalagaGame {
     }
     
     draw() {
+        if (!this.ctx) return;
         // Background
         this.ctx.fillStyle = '#000';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -378,7 +403,10 @@ class GalagaGame {
         });
         this.ctx.globalAlpha = 1.0;
         
-        if(!this.isGameRunning) return;
+        if(!this.isGameRunning) {
+             // Maybe Draw Title/Start Screen elements if desired
+             return;
+        }
         
         // Player (Retro Fighter)
         if(this.player && !this.player.dead) {
@@ -464,6 +492,8 @@ class GalagaGame {
     }
 }
 
-window.onload = () => {
+// Start Game if Canvas Exists
+if (document.getElementById('gameCanvas')) {
     new GalagaGame();
-};
+}
+}

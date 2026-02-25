@@ -1,6 +1,8 @@
-// Clue/Cluedo Game Logic - 24x25 Grid with BFS AI
+﻿// Clue/Cluedo Game Logic
 
-// Characters - Initial Positions matching standard board roughly (row, col) - using 24x25 grid
+console.log("Game loaded: clue.js");
+{ // SCOPE START
+
 const CHARACTERS = [
     { name: "Miss Scarlet", color: "var(--clue-red)", id: "scarlet", start: [0, 16], tokenColor: "#ff0000" },
     { name: "Col. Mustard", color: "var(--clue-yellow)", id: "mustard", start: [7, 23], tokenColor: "#FFD700" },
@@ -20,8 +22,6 @@ const ROOMS = [
     "Conservatory", "Ballroom", "Kitchen"
 ];
 
-// Room Centers/Entrance Mapping - Where players "snap" to when entering a room
-// Based on the grid template below
 const ROOM_MAP = {
     "Kitchen": { r: 21, c: 21, doors: [[19, 19]] }, 
     "Ballroom": { r: 20, c: 12, doors: [[19, 9], [19, 14], [17, 8], [17, 15]] },
@@ -34,53 +34,45 @@ const ROOM_MAP = {
     "Dining Room": { r: 12, c: 19, doors: [[9, 17], [12, 16]] }
 };
 
-/*
-Grid Legend:
-0: Wall/Void
-1: Hallway
-2: Room Floor
-3: Door (connected to Room)
-*/
-
-// Approximated 24x25 board layout (Rows 0-24)
 const BOARD_TEMPLATE = [
-    // Row 0
     "000000000100001000000000",
     "000002200122221002220000",
     "002222200222222002222220",
     "002222200222222002222220",
     "002222200222222002222220",
     "002222200222222000030000",
-    "010030000030030000101000", // Row 6 - Library door fixed
+    "010030000030030000101000", 
     "012222200111111002222220",
     "012222200122221002222220",
-    "002222200022220003222220", // Row 9
+    "002222200022220003222220", 
     "002222230022220000000000",
     "000000000022220000000000",
     "012222230000000032222220",
     "002222200000000002222220",
     "002222200000000002222220",
-    "002222230100000102222220", // Row 15
+    "002222230100000102222220", 
     "000000000122221000000000",
-    "000000003122221300000000", // Entrance to Ballroom, Conservatory
+    "000000003122221300000000", 
     "010000000022220000000000",
     "002222230030030000300000",
     "002222200222222001000000",
     "002222200222222002222220",
     "002222200222222002222220",
     "002222200222222002222220",
-    "000000000100001000000000" // Row 24 - Start points at bottom
+    "000000000100001000000000" 
 ];
 
 class ClueGame {
     constructor() {
+        if (!document.getElementById("game-board")) return;
+        
         this.players = [];
         this.currentPlayerIndex = 0;
         this.solution = {};
-        this.turnPhase = "roll"; // roll, move, action, end
+        this.turnPhase = "roll"; 
         this.diceValue = 0;
-        this.boardGrid = []; // 2D array of cell elements (DOM)
-        this.cells = []; // 2D array of logical types
+        this.boardGrid = []; 
+        this.cells = []; 
         
         this.init();
     }
@@ -88,7 +80,6 @@ class ClueGame {
     init() {
         this.createBoard();
         
-        // Setup Characters (Human is Scarlet)
         this.addPlayer(0, "scarlet", true);
         this.addPlayer(1, "mustard", false);
         this.addPlayer(2, "white", false);
@@ -106,17 +97,17 @@ class ClueGame {
 
     createBoard() {
         const boardEl = document.getElementById("game-board");
+        if (!boardEl) return;
         boardEl.innerHTML = "";
         this.boardGrid = [];
         this.cells = [];
 
-        // Parse template
         for (let r = 0; r < 25; r++) {
-            const rowStr = BOARD_TEMPLATE[r]; // Using fallback if string missing logic omitted for brevity
+            const rowStr = BOARD_TEMPLATE[r]; 
             const domRow = [];
             const logicalRow = [];
             
-            for (let c = 0; c < 24; c++) { // string is length 24
+            for (let c = 0; c < 24; c++) { 
                 const typeChar = rowStr ? rowStr[c] : "0";
                 const cell = document.createElement("div");
                 cell.dataset.r = r;
@@ -143,8 +134,7 @@ class ClueGame {
                     logicalType = "door";
                 }
                 
-                // Add room labels roughly in center of rooms
-                 const roomName = this.getRoomName(r, c);
+                const roomName = this.getRoomName(r, c);
                  if (roomName) {
                      const center = ROOM_MAP[roomName];
                      if (center && center.r === r && center.c === c) {
@@ -233,7 +223,6 @@ class ClueGame {
             pIndex = (pIndex + 1) % this.players.length;
         }
         
-        this.renderHand();
     }
     
     markCardImpossible(player, cardName) {
@@ -262,6 +251,7 @@ class ClueGame {
 
     renderHand() {
         const container = document.getElementById("hand-container");
+        if (!container) return;
         container.innerHTML = "";
         const human = this.players.find(p => p.isHuman);
         human.hand.forEach(card => {
@@ -273,6 +263,7 @@ class ClueGame {
     }
 
     startTurn() {
+        if (!document.getElementById("turn-indicator")) return;
         const player = this.players[this.currentPlayerIndex];
         document.getElementById("turn-indicator").textContent = `${player.name}`;
         
@@ -284,11 +275,16 @@ class ClueGame {
         this.diceValue = 0;
         this.turnPhase = "roll";
 
+        const btnRoll = document.getElementById("btn-roll");
+        const btnEnd = document.getElementById("btn-end-turn");
+        const btnSugg = document.getElementById("btn-suggest");
+        const btnAcc = document.getElementById("btn-accuse");
+
         if (player.isHuman) {
-             document.getElementById("btn-roll").disabled = false;
-             document.getElementById("btn-end-turn").disabled = true;
-             document.getElementById("btn-suggest").disabled = true;
-             document.getElementById("btn-accuse").disabled = false;
+             if (btnRoll) btnRoll.disabled = false;
+             if (btnEnd) btnEnd.disabled = true;
+             if (btnSugg) btnSugg.disabled = true;
+             if (btnAcc) btnAcc.disabled = false;
              this.log(`> Your turn.`);
         } else {
              setTimeout(() => this.aiTurn(), 800);
@@ -302,7 +298,8 @@ class ClueGame {
         const d2 = Math.floor(Math.random() * 6) + 1;
         this.diceValue = d1 + d2;
         
-        document.getElementById("dice-display").textContent = `🎲 ${d1 + d2} (${d1},${d2})`;
+        const diceDisplay = document.getElementById("dice-display");
+        if (diceDisplay) diceDisplay.textContent = ` ${d1 + d2} (${d1},${d2})`;
         this.log(`Rolled ${this.diceValue}.`);
         
         this.turnPhase = "move";
@@ -337,11 +334,34 @@ class ClueGame {
                         const type = this.cells[nr][nc];
                         
                         let canEnter = false;
-                        // Logic: Walk freely in Halls (1) logic. Doors (3) are transitions.
-                        if (type === "hall" || type === "door" || (type === "start")) {
-                            canEnter = true;
+                        if (type === "hall" || type === "door" || (type === "start")) type = "hall"; 
+                        if (type === "room") canEnter = false; // Cannot allow walking THROUGH walls of room
+                        // Actually in this grid, "room" cells are inside. "door" is the entry.
+                        // Can enter door from hall. Can enter hall from door.
+                        
+                        // Simplified:
+                        const myType = this.cells[current.r][current.c];
+                        // If I am in hall, I can go to hall or door.
+                        // If I am in door, I can go to hall or room?
+                        
+                        // Let's use simple logic: 'wall' is blocked.
+                        if (this.cells[nr][nc] !== "wall") {
+                            // But rooms don't have grid movement inside usually, you just "enter" via door.
+                            // My grid has rooms as walkable cells?
+                            // Based on template, rooms are "2".
+                            // If I am on 2, I can move to 2? NO, usually you move node-to-node.
+                            // Here it seems we walk on the grid.
+                            // Let's assume 2 is blocked unless via door?
+                            
+                            // Re-reading logic:
+                            /* 
+                            if (type === "hall" || type === "door" || (type === "start")) {
+                                canEnter = true;
+                            }
+                            */
+                            if (type === "hall" || type === "door") canEnter = true;
                         }
-
+                        
                         if (canEnter) {
                             visited.add(key);
                             reachable.push({r: nr, c: nc});
@@ -352,7 +372,7 @@ class ClueGame {
             }
         }
         
-        // Secret Passages
+        // Secret Passages logic
         const currentRoom = this.getRoomName(player.y, player.x);
         if (currentRoom) {
              let destRoom = null;
@@ -368,19 +388,12 @@ class ClueGame {
                  cell.dataset.isSecret = "true";
              }
              
-             // Also, if in a Room, you can exit to any of its doors "freely" usually as step 1?
-             // Simplification: BFS doesn't work well starting FROM inside a room unless we map the room nodes to doors.
-             // If starting in a room, add its doors to the Queue at cost 1.
-             if (current.dist === 0) { // Should adjust BFS init logic but simpler here:
+             if (current.dist === 0) { 
                 const mapData = ROOM_MAP[currentRoom];
-                if (mapData && mapData.r === player.y && mapData.c === player.x) {
+                if (mapData && (mapData.r === player.y && mapData.c === player.x)) {
                     mapData.doors.forEach(d => {
-                        // All doors of current room are reachable at cost 0 or 1
-                        // Let's add them to reachable for manual selection
                          const cell = this.boardGrid[d[0]][d[1]];
                          cell.classList.add("highlight");
-                         // Re-run BFS from each door? Too complex for this snippet.
-                         // Just allow moving to doors.
                     });
                 }
              }
@@ -394,7 +407,7 @@ class ClueGame {
             }
         });
         
-        // Fix for "leaving room": If in room, allow clicking doors
+        // Make doors walkable FROM room
         const startRoom = this.getRoomName(player.y, player.x);
         if (startRoom) {
             const mapData = ROOM_MAP[startRoom];
@@ -420,9 +433,7 @@ class ClueGame {
              this.movePlayerTo(player, r, c); 
              this.finishMove(player);
         } else if (cell.dataset.isDoor === "true") {
-             // Entering a room
              let targetRoomCenter = null;
-             // Check which room this door enters
             for (const [name, data] of Object.entries(ROOM_MAP)) {
                 if (data.doors.some(d => d[0] === r && d[1] === c)) {
                     targetRoomCenter = data;
@@ -431,25 +442,24 @@ class ClueGame {
             }
 
             if (targetRoomCenter) {
+                // Determine if we are ENTERING the room (from hall) or LEAVING (from room)?
+                // If I am in hall, I click door -> enter room?
+                // Logic says:
                 this.movePlayerTo(player, targetRoomCenter.r, targetRoomCenter.c);
                 this.finishMove(player);
             } else {
-                 // Just exit to door tile (leaving)?
                  this.movePlayerTo(player, r, c);
-                 // If leaving, we are now in hall (door). Usually you can continue moving but for simplicity stop.
                  this.currentMovesLeft = 0;
                  this.enableActionButtons(false);
                  document.getElementById("btn-end-turn").disabled = false;
             }
         } else {
-             // Hallway
              this.movePlayerTo(player, r, c);
              document.getElementById("btn-end-turn").disabled = false;
         }
         
-        // Clean up highlights
         document.querySelectorAll(".highlight").forEach(el => el.classList.remove("highlight"));
-        document.activeElement.blur();
+        if (document.activeElement) document.activeElement.blur();
     }
 
     movePlayerTo(player, r, c) {
@@ -473,8 +483,10 @@ class ClueGame {
         document.getElementById("btn-end-turn").disabled = false;
         
         const roomSel = document.getElementById("select-room");
-        roomSel.innerHTML = `<option>${roomName}</option>`;
-        roomSel.value = roomName;
+        if (roomSel) {
+            roomSel.innerHTML = `<option>${roomName}</option>`;
+            roomSel.value = roomName;
+        }
     }
     
     enableActionButtons(inRoom) {
@@ -500,7 +512,12 @@ class ClueGame {
             return;
         }
         
-        const targetRoomName = ai.possibleSolutions.rooms[Math.floor(Math.random() * ai.possibleSolutions.rooms.length)];
+        let targetRoomName = null;
+        if (ai.possibleSolutions.rooms.length > 0) {
+            targetRoomName = ai.possibleSolutions.rooms[Math.floor(Math.random() * ai.possibleSolutions.rooms.length)];
+        }
+        
+        // Simplified AI: teleport to target room if possible (just logic sim)
         const roomData = ROOM_MAP[targetRoomName];
 
         if (roomData) {
@@ -509,10 +526,9 @@ class ClueGame {
              this.renderPlayerToken(ai);
              this.log(`${ai.name} enters ${targetRoomName}.`);
 
-             // Prefer unknown cards for suggestion
+             // Suggestion
             let sus = ai.possibleSolutions.suspects[Math.floor(Math.random() * ai.possibleSolutions.suspects.length)];
             let wep = ai.possibleSolutions.weapons[Math.floor(Math.random() * ai.possibleSolutions.weapons.length)];
-            // Fallback if empty (shouldn't happen if game running)
             if(!sus) sus = CHARACTERS[0].name;
             if(!wep) wep = WEAPONS[0];
 
@@ -601,27 +617,37 @@ class ClueGame {
     }
 
     setupEventListeners() {
-        document.getElementById("btn-roll").onclick = () => this.rollDice();
-        document.getElementById("btn-end-turn").onclick = () => this.endTurn();
+        const btnRoll = document.getElementById("btn-roll");
+        if (btnRoll) btnRoll.onclick = () => this.rollDice();
         
-        document.getElementById("btn-notebook").onclick = () => {
+        const btnEnd = document.getElementById("btn-end-turn");
+        if (btnEnd) btnEnd.onclick = () => this.endTurn();
+        
+        const btnNote = document.getElementById("btn-notebook");
+        if (btnNote) btnNote.onclick = () => {
              this.renderNotebook();
              this.toggleModal("modal-notebook", true);
         };
-        document.getElementById("btn-cards").onclick = () => this.toggleModal("modal-cards", true);
+        
+        const btnCards = document.getElementById("btn-cards");
+        if (btnCards) btnCards.onclick = () => this.toggleModal("modal-cards", true);
         
         document.querySelectorAll(".close-modal").forEach(b => b.onclick = () => {
             document.querySelectorAll(".modal").forEach(m => m.classList.add("hidden"));
             document.getElementById("modal-overlay").classList.add("hidden");
         });
         
-        document.getElementById("btn-suggest").onclick = () => {
+        const btnSugg = document.getElementById("btn-suggest");
+        if (btnSugg) btnSugg.onclick = () => {
              document.getElementById("action-title").textContent = "Make Suggestion";
              this.fillSelects();
              const p = this.players[this.currentPlayerIndex];
              const r = this.getRoomName(p.y, p.x);
-             document.getElementById("select-room").value = r;
-             document.getElementById("select-room").disabled = true;
+             const roomSel = document.getElementById("select-room");
+             if (roomSel) {
+                 roomSel.value = r;
+                 roomSel.disabled = true;
+             }
              
              document.getElementById("btn-confirm-action").onclick = () => {
                  const s = document.getElementById("select-suspect").value;
@@ -633,12 +659,15 @@ class ClueGame {
              this.toggleModal("modal-action", true);
         };
         
-        document.getElementById("btn-accuse").onclick = () => {
+        const btnAcc = document.getElementById("btn-accuse");
+        if (btnAcc) btnAcc.onclick = () => {
              document.getElementById("action-title").textContent = "ACCUSE!";
              this.fillSelects();
-             document.getElementById("select-room").disabled = false;
+             const roomSel = document.getElementById("select-room");
+             if (roomSel) roomSel.disabled = false;
              
              document.getElementById("btn-confirm-action").onclick = () => {
+                 const p = this.players[this.currentPlayerIndex];
                  const s = document.getElementById("select-suspect").value;
                  const w = document.getElementById("select-weapon").value;
                  const rm = document.getElementById("select-room").value;
@@ -653,23 +682,25 @@ class ClueGame {
         const sSel = document.getElementById("select-suspect");
         const wSel = document.getElementById("select-weapon");
         const rSel = document.getElementById("select-room");
-        sSel.innerHTML=""; wSel.innerHTML=""; rSel.innerHTML="";
+        if(sSel) sSel.innerHTML=""; 
+        if(wSel) wSel.innerHTML=""; 
+        if(rSel) rSel.innerHTML="";
         
-        CHARACTERS.forEach(c => sSel.innerHTML += `<option>${c.name}</option>`);
-        WEAPONS.forEach(w => wSel.innerHTML += `<option>${w}</option>`);
-        ROOMS.forEach(r => rSel.innerHTML += `<option>${r}</option>`);
+        if(sSel) CHARACTERS.forEach(c => sSel.innerHTML += `<option>${c.name}</option>`);
+        if(wSel) WEAPONS.forEach(w => wSel.innerHTML += `<option>${w}</option>`);
+        if(rSel) ROOMS.forEach(r => rSel.innerHTML += `<option>${r}</option>`);
     }
 
     toggleModal(id, show) {
         const el = document.getElementById(id);
         const ov = document.getElementById("modal-overlay");
-        // Simple toggle
+        
         if (show) {
-            el.classList.remove("hidden");
-            ov.classList.remove("hidden");
+            if(el) el.classList.remove("hidden");
+            if(ov) ov.classList.remove("hidden");
         } else {
-            el.classList.add("hidden");
-            ov.classList.add("hidden");
+            if(el) el.classList.add("hidden");
+            if(ov) ov.classList.add("hidden");
         }
     }
     
@@ -681,8 +712,10 @@ class ClueGame {
     }
 
     renderNotebook() {
+        if (!this.players) return;
         const p = this.players.find(x => x.isHuman);
         const cont = document.getElementById("notebook-content");
+        if (!cont) return;
         
         const genList = (title, arr) => {
             let h = `<div class='notebook-col'><h4>${title}</h4>`;
@@ -710,14 +743,18 @@ class ClueGame {
     
     log(msg) {
         const logEl = document.getElementById("log-container");
-        const entry = document.createElement("div");
-        entry.className = "log-entry";
-        entry.textContent = `> ${msg}`;
-        logEl.prepend(entry);
+        if (logEl) {
+            const entry = document.createElement("div");
+            entry.className = "log-entry";
+            entry.textContent = `> ${msg}`;
+            logEl.prepend(entry);
+        }
     }
 }
 
 // Start
-window.onload = () => {
+if (document.getElementById("btn-suggest")) {
     new ClueGame();
-};
+}
+
+} // SCOPE END

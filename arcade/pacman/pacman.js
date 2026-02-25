@@ -1,6 +1,8 @@
+﻿{
 class PacmanGame {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
+        if (!this.canvas) return; // Guard
         this.ctx = this.canvas.getContext('2d');
         
         // Map Configuration 
@@ -82,16 +84,18 @@ class PacmanGame {
     }
 
     init() {
-        this.highScoreEl.innerText = this.highScore;
+        if(this.highScoreEl) this.highScoreEl.innerText = this.highScore;
         this.parseMap();
         this.draw(); // Initial draw 
 
         // Listeners
-        document.addEventListener('keydown', (e) => this.handleInput(e));
+        this.inputHandler = (e) => this.handleInput(e);
+        document.addEventListener('keydown', this.inputHandler);
         
         // CLICK TO START
         const clickStart = (e) => {
-             if (e.target.id === 'difficulty-select' || e.target.id === 'restart-btn' || e.target.id === 'pause-btn') return;
+             // Do not start if clicking UI elements
+             if (e.target.closest('button') || e.target.closest('select') || e.target.closest('input')) return;
              if(!this.isGameRunning) this.startGame();
         };
         
@@ -103,9 +107,9 @@ class PacmanGame {
              this.startScreen.addEventListener('touchstart', (e) => { e.preventDefault(); clickStart(e); });
         }
         
-        this.restartBtn.addEventListener('click', () => this.resetGame());
-        this.pauseBtn.addEventListener('click', () => this.togglePause());
-        this.difficultySelect.addEventListener('change', () => {/* Difficulty updates on next game */});
+        if(this.restartBtn) this.restartBtn.addEventListener('click', () => this.resetGame());
+        if(this.pauseBtn) this.pauseBtn.addEventListener('click', () => this.togglePause());
+        if(this.difficultySelect) this.difficultySelect.addEventListener('change', () => {/* Difficulty updates on next game */});
         
         // Touch
         this.setupMobileControls();
@@ -117,10 +121,10 @@ class PacmanGame {
             this.player.nextDx = dx;
             this.player.nextDy = dy;
         };
-        this.btnUp.addEventListener('click', () => handleTouch(0, -1));
-        this.btnDown.addEventListener('click', () => handleTouch(0, 1));
-        this.btnLeft.addEventListener('click', () => handleTouch(-1, 0));
-        this.btnRight.addEventListener('click', () => handleTouch(1, 0));
+        if(this.btnUp) this.btnUp.addEventListener('click', () => handleTouch(0, -1));
+        if(this.btnDown) this.btnDown.addEventListener('click', () => handleTouch(0, 1));
+        if(this.btnLeft) this.btnLeft.addEventListener('click', () => handleTouch(-1, 0));
+        if(this.btnRight) this.btnRight.addEventListener('click', () => handleTouch(1, 0));
     }
 
     parseMap() {
@@ -149,8 +153,8 @@ class PacmanGame {
         this.isPaused = false;
         this.score = 0;
         this.updateScore();
-        this.startScreen.style.display = 'none';
-        this.gameOverScreen.style.display = 'none';
+        if(this.startScreen) this.startScreen.style.display = 'none';
+        if(this.gameOverScreen) this.gameOverScreen.style.display = 'none';
         
         // Reset Map
         this.dots.forEach(d => d.active = true);
@@ -180,7 +184,9 @@ class PacmanGame {
     
     setupGhosts() {
         this.ghosts = [];
-        const level = this.difficultySelect.value;
+        let level = 'easy';
+        if(this.difficultySelect) level = this.difficultySelect.value;
+        
         let count = 2; // Easy
         let speed = 0.05;
         
@@ -214,7 +220,7 @@ class PacmanGame {
     togglePause() {
         if (!this.isGameRunning) return;
         this.isPaused = !this.isPaused;
-        this.pauseBtn.innerText = this.isPaused ? 'RESUME' : 'PAUSE';
+        if(this.pauseBtn) this.pauseBtn.innerText = this.isPaused ? 'RESUME' : 'PAUSE';
         
         if (this.isPaused) {
             if (this.animationId) cancelAnimationFrame(this.animationId);
@@ -225,6 +231,12 @@ class PacmanGame {
     }
 
     loop() {
+        // DOM Check
+        if (!document.getElementById('gameCanvas')) {
+             if (this.inputHandler) window.removeEventListener('keydown', this.inputHandler);
+             return;
+        }
+
         if (!this.isGameRunning) return;
         if (this.isPaused) return;
 
@@ -441,7 +453,8 @@ class PacmanGame {
     }
 
     draw() {
-        const isRetro = this.themeToggle.checked;
+        if (!this.ctx) return;
+        const isRetro = this.themeToggle && this.themeToggle.checked;
         
         // Clear & Background
         this.ctx.fillStyle = '#000';
@@ -598,6 +611,12 @@ class PacmanGame {
     }
 
     handleInput(e) {
+        // Remove listener if not on page
+        if (!document.getElementById('gameCanvas')) {
+             window.removeEventListener('keydown', this.inputHandler);
+             return;
+        }
+
         if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].indexOf(e.code) > -1) {
             e.preventDefault();
         }
@@ -618,58 +637,29 @@ class PacmanGame {
             case 'ArrowUp': 
                 this.player.nextDx = 0; 
                 this.player.nextDy = -1; 
-                if(this.player.dx === 0 && this.player.dy === 0) {
-                     // If stopped, try to move immediately if valid
-                     const gx = Math.round(this.player.pixelX / this.tileSize);
-                     const gy = Math.round(this.player.pixelY / this.tileSize);
-                     if(this.isValidMove(gx, gy-1)) {
-                         this.player.dx = 0;
-                         this.player.dy = -1;
-                     }
-                }
                 break;
             case 'ArrowDown': 
                 this.player.nextDx = 0; 
                 this.player.nextDy = 1; 
-                if(this.player.dx === 0 && this.player.dy === 0) {
-                     const gx = Math.round(this.player.pixelX / this.tileSize);
-                     const gy = Math.round(this.player.pixelY / this.tileSize);
-                     if(this.isValidMove(gx, gy+1)) {
-                         this.player.dx = 0;
-                         this.player.dy = 1;
-                     }
-                }
                 break;
             case 'ArrowLeft': 
                 this.player.nextDx = -1; 
                 this.player.nextDy = 0; 
-                if(this.player.dx === 0 && this.player.dy === 0) {
-                     const gx = Math.round(this.player.pixelX / this.tileSize);
-                     const gy = Math.round(this.player.pixelY / this.tileSize);
-                     if(this.isValidMove(gx-1, gy)) {
-                         this.player.dx = -1;
-                         this.player.dy = 0;
-                     }
-                }
                 break;
             case 'ArrowRight': 
                 this.player.nextDx = 1; 
                 this.player.nextDy = 0; 
-                if(this.player.dx === 0 && this.player.dy === 0) {
-                     const gx = Math.round(this.player.pixelX / this.tileSize);
-                     const gy = Math.round(this.player.pixelY / this.tileSize);
-                     if(this.isValidMove(gx+1, gy)) {
-                         this.player.dx = 1;
-                         this.player.dy = 0;
-                     }
-                }
                 break;
             case 'Space': this.togglePause(); break;
         }
+        
+        // Instant turn attempt for better feel even if not aligned yet
+        // (Handled in loop)
     }
 }
 
 // Start
-window.onload = () => {
+if (document.getElementById('gameCanvas')) {
     new PacmanGame();
-};
+}
+}

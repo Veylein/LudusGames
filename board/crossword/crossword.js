@@ -1,6 +1,10 @@
 // crossword.js
 
 // Game State
+console.log("Game loaded: crossword.js");
+{ // SCOPE START
+
+// Game State
 const GRID_SIZE = 12; // Smaller for easier generation
 const MIN_WORDS = 8;
 const MAX_WORDS = 15;
@@ -82,6 +86,7 @@ let timerInterval;
 // --- Initialization ---
 
 function initGame() {
+    if(!document.getElementById('crossword-grid')) return;
     clearInterval(timerInterval);
     placedWords = [];
     grid = createEmptyGrid(GRID_SIZE);
@@ -561,4 +566,5 @@ newGameBtn.addEventListener('click', initGame);
 playAgainBtn.addEventListener('click', initGame);
 
 // Init
-initGame();
+if(typeof initGame === 'function') initGame();
+} // SCOPE END

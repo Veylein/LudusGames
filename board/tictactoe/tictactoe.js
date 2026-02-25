@@ -1,14 +1,7 @@
-// Initialize game
-function initTicTacToe() {
-    window.ticTacToeGame = new TicTacToe();
-}
+﻿console.log("Game loaded: tictactoe.js");
+{ // SCOPE START
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initTicTacToe);
-} else {
-    initTicTacToe();
-}
-
+// Class definition inside scope
 class TicTacToe {
     constructor() {
         this.boardState = ["", "", "", "", "", "", "", "", ""];
@@ -32,30 +25,37 @@ class TicTacToe {
         this.difficultySelect = document.getElementById('difficulty-select');
 
         // Bind
-        this.cells.forEach(cell => cell.addEventListener('click', (e) => this.handleCellClick(e)));
-        this.resetBtn.addEventListener('click', () => this.resetGame());
-        this.modalRestart.addEventListener('click', () => {
-            this.modal.style.display = 'none';
-            this.resetGame();
+        this.cells.forEach(cell => {
+             // Clone node to remove old listeners if re-initializing? 
+             // Logic: DOM is fresh if page reloaded via SPA navigation usually. 
+             // But if we just re-ran script on same DOM, we add duplicate listeners.
+             // Best practice: rely on fresh DOM from navigation.
+             cell.onclick = (e) => this.handleCellClick(e);
         });
-        this.difficultySelect.addEventListener('change', (e) => {
+        
+        if (this.resetBtn) this.resetBtn.onclick = () => this.resetGame();
+        
+        if (this.modalRestart) this.modalRestart.onclick = () => {
+            if (this.modal) this.modal.style.display = 'none';
+            this.resetGame();
+        };
+        
+        if (this.difficultySelect) this.difficultySelect.onchange = (e) => {
             this.difficulty = e.target.value;
             this.resetGame();
-        });
+        };
 
         this.updateStatus("Your Turn (X)");
     }
 
     handleCellClick(e) {
         const index = parseInt(e.target.dataset.index);
-
         if (this.boardState[index] !== "" || !this.gameActive || this.currentPlayer !== "X") return;
 
         this.makeMove(index, "X");
 
         if (this.gameActive) {
             this.updateStatus("Bot Thinking...");
-            // Use setTimeout to allow UI to update before blocking
             setTimeout(() => this.botMove(), 500);
         }
     }
@@ -63,15 +63,14 @@ class TicTacToe {
     makeMove(index, player) {
         this.boardState[index] = player;
         const cell = this.cells[index];
-        cell.innerText = player;
-        cell.classList.add(player.toLowerCase());
-        
-        // Play sound effect? 
-        // if(window.playSound) window.playSound('click');
+        if (cell) {
+            cell.innerText = player;
+            cell.classList.add(player.toLowerCase());
+        }
 
-        const winInfo = this.checkWin(player);
-        if (winInfo) {
-            this.handleWin(player, winInfo);
+        const winResult = this.checkWin(player);
+        if (winResult) {
+            this.handleWin(player, winResult);
         } else if (!this.boardState.includes("")) {
             this.endGame("draw");
         } else {
@@ -85,7 +84,6 @@ class TicTacToe {
 
         let moveIndex = -1;
         
-        // Find empty spots
         const availableMoves = [];
         this.boardState.forEach((val, idx) => {
             if (val === "") availableMoves.push(idx);
@@ -94,42 +92,53 @@ class TicTacToe {
         if (availableMoves.length === 0) return;
 
         if (this.difficulty === 'easy') {
-            // Pure random
             moveIndex = availableMoves[Math.floor(Math.random() * availableMoves.length)];
         } 
         else if (this.difficulty === 'medium') {
-            // 1. Check if can win
-            moveIndex = this.findWinningMove('O');
-            
-            // 2. Check if must block
-            if (moveIndex === -1) {
-                moveIndex = this.findWinningMove('X');
-            }
-            
-            // 3. Random if neither
+            moveIndex = this.findBlockingMove('O'); 
+            // Reuse logic: findWinningMove covers blocking/winning logic
             if (moveIndex === -1) {
                 moveIndex = availableMoves[Math.floor(Math.random() * availableMoves.length)];
             }
         }
         else {
-            // Hard / Impossible (Minimax)
-            // Optimization: If board is empty or near empty, play center or corner to save compute
             if (availableMoves.length === 9) {
-                moveIndex = 4; // Center
+                moveIndex = 4; 
             } else if (availableMoves.length === 8 && availableMoves.includes(4)) {
-                moveIndex = 4; // Take center if player missed it
+                moveIndex = 4; 
             } else {
-                const best = this.minimax(this.boardState, 'O');
-                moveIndex = best.index;
+                // Minimax
+                // Need a deep copy of board state for recursion ideally, but we modify-backtrack arrays
+                // Wait, this.minimax needs to be called carefully
+                const result = this.minimax([...this.boardState], 'O'); 
+                moveIndex = result.index;
             }
         }
 
-        if (moveIndex !== -1) {
-            this.makeMove(moveIndex, "O");
+        if (moveIndex !== -1 && moveIndex !== undefined) {
+             this.makeMove(moveIndex, "O");
+        } else if (availableMoves.length > 0) {
+             // Fallback
+             this.makeMove(availableMoves[0], "O");
         }
     }
+    
+    findBlockingMove(player) {
+        // block opponent winning
+        const opponent = player === 'X' ? 'O' : 'X';
+        
+        // 1. Can I win?
+        let winMove = this.findWinningSpot(player);
+        if (winMove !== -1) return winMove;
+        
+        // 2. Must I block?
+        let blockMove = this.findWinningSpot(opponent);
+        if (blockMove !== -1) return blockMove;
+        
+        return -1;
+    }
 
-    findWinningMove(player) {
+    findWinningSpot(player) {
          const wins = [
             [0, 1, 2], [3, 4, 5], [6, 7, 8],
             [0, 3, 6], [1, 4, 7], [2, 5, 8],
@@ -138,7 +147,6 @@ class TicTacToe {
         
         for (let combo of wins) {
             const [a, b, c] = combo;
-            // Check for 2 of player and 1 empty
             if (this.boardState[a] === player && this.boardState[b] === player && this.boardState[c] === "") return c;
             if (this.boardState[a] === player && this.boardState[c] === player && this.boardState[b] === "") return b;
             if (this.boardState[b] === player && this.boardState[c] === player && this.boardState[a] === "") return a;
@@ -146,12 +154,12 @@ class TicTacToe {
         return -1;
     }
 
-    minimax(board, player) {
+    minimax(newBoard, player) {
         const availSpots = [];
-        board.forEach((val, idx) => { if (val === "") availSpots.push(idx); });
+        newBoard.forEach((val, idx) => { if (val === "") availSpots.push(idx); });
 
-        if (this.checkWinState(board, "X")) return { score: -10 };
-        if (this.checkWinState(board, "O")) return { score: 10 };
+        if (this.checkWinState(newBoard, "X")) return { score: -10 };
+        if (this.checkWinState(newBoard, "O")) return { score: 10 };
         if (availSpots.length === 0) return { score: 0 };
 
         const moves = [];
@@ -160,18 +168,17 @@ class TicTacToe {
             const move = {};
             move.index = availSpots[i];
             
-            // Clone board? No, modify and revert.
-            board[availSpots[i]] = player;
+            newBoard[availSpots[i]] = player;
 
             if (player === "O") {
-                const result = this.minimax(board, "X");
+                const result = this.minimax(newBoard, "X");
                 move.score = result.score;
             } else {
-                const result = this.minimax(board, "O");
+                const result = this.minimax(newBoard, "O");
                 move.score = result.score;
             }
 
-            board[availSpots[i]] = ""; // Backtrack
+            newBoard[availSpots[i]] = ""; // reset
             moves.push(move);
         }
 
@@ -196,7 +203,6 @@ class TicTacToe {
         return moves[bestMove];
     }
     
-    // Static check for minimax recursion
     checkWinState(board, player) {
          const wins = [
             [0, 1, 2], [3, 4, 5], [6, 7, 8],
@@ -214,16 +220,11 @@ class TicTacToe {
         ];
         
         const combo = wins.find(w => this.boardState[w[0]] === player && this.boardState[w[1]] === player && this.boardState[w[2]] === player);
-        
-        if (combo) return { combo, player };
-        return null;
+        return combo ? { combo, player } : null;
     }
 
     handleWin(player, winInfo) {
         this.gameActive = false;
-        
-        // Draw strike line?
-        // Wait for next refactor to do fancy strike line
         this.highlightWin(winInfo.combo);
         
         setTimeout(() => {
@@ -236,12 +237,18 @@ class TicTacToe {
 
     highlightWin(combo) {
         combo.forEach(idx => {
-            this.cells[idx].style.background = '#21262d';
-            this.cells[idx].style.boxShadow = 'inset 0 0 20px rgba(0,0,0,0.5)';
+            if (this.cells[idx]) {
+                // Keep styles inline or separate class
+                this.cells[idx].classList.add('win-highlight'); 
+                // Need CSS for this, or use inline
+                this.cells[idx].style.background = '#21262d'; 
+                this.cells[idx].style.boxShadow = 'inset 0 0 20px rgba(0,0,0,0.5)';
+            }
         });
     }
 
     endGame(result) {
+        if (!this.modal) return;
         this.modal.style.display = 'flex';
         if (result === "win") {
             this.modalTitle.innerText = "VICTORY!";
@@ -263,27 +270,36 @@ class TicTacToe {
         this.currentPlayer = "X";
         this.boardState = ["", "", "", "", "", "", "", "", ""];
         
-        this.statusDisplay.innerText = "Player Start (X)";
-        this.statusDisplay.style.color = "#58a6ff";
+        if (this.statusDisplay) {
+            this.statusDisplay.innerText = "Player Start (X)";
+            this.statusDisplay.style.color = "#58a6ff";
+        }
         
         this.cells.forEach(cell => {
             cell.innerText = "";
-            cell.classList.remove("x", "o");
-            cell.style.background = ""; // Clear highlight
+            cell.classList.remove("x", "o", "win-highlight");
+            cell.style.background = ""; 
             cell.style.boxShadow = "";
         });
 
-        this.modal.style.display = 'none';
+        if (this.modal) this.modal.style.display = 'none';
         
-        // If bot goes first? No, player always starts for now.
+        // Ensure difficulty stays set? Yes it's instance var.
     }
 
     updateStatus(msg) {
-        this.statusDisplay.innerText = msg;
+        if (this.statusDisplay) this.statusDisplay.innerText = msg;
     }
 
     updateScores() {
-        this.scoreDisplayX.innerText = this.scores.x;
-        this.scoreDisplayO.innerText = this.scores.o;
+        if (this.scoreDisplayX) this.scoreDisplayX.innerText = this.scores.x;
+        if (this.scoreDisplayO) this.scoreDisplayO.innerText = this.scores.o;
     }
 }
+
+// Check for unique element to this game
+if (document.getElementById('strike-line')) {
+    new TicTacToe();
+}
+
+} // SCOPE END

@@ -1,6 +1,9 @@
+﻿{
 class FroggerGame {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
+        if (!this.canvas) return; // Guard
+
         this.ctx = this.canvas.getContext('2d');
         
         // UI
@@ -54,7 +57,9 @@ class FroggerGame {
     init() {
         if(this.highScoreElement) this.highScoreElement.innerText = this.highScore;
         
-        window.addEventListener('keydown', (e) => this.handleInput(e));
+        // Bind input handler
+        this.inputHandler = (e) => this.handleInput(e);
+        window.addEventListener('keydown', this.inputHandler);
         
         // Click to Start
         const clickStart = (e) => {
@@ -187,12 +192,23 @@ class FroggerGame {
     }
     
     handleInput(e) {
+        // Guard check: if canvas not on screen, remove listener
+        if (!document.getElementById('gameCanvas')) {
+             window.removeEventListener('keydown', this.inputHandler);
+             return;
+        }
+
         if (!this.isGameRunning && e.code === 'Space') {
             this.startGame();
             return;
         }
         if (this.isPaused) return; 
         
+        // Prevent default scrolling for game keys
+        if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code)) {
+             e.preventDefault();
+        }
+
         switch(e.code) {
             case 'ArrowUp': this.moveFrog(0, -1); break;
             case 'ArrowDown': this.moveFrog(0, 1); break;
@@ -390,6 +406,7 @@ class FroggerGame {
     }
 
     draw() {
+        if (!this.ctx) return;
         const grid = this.grid;
         // Background Fill - Water for top half, Road for bottom
         this.ctx.fillStyle = '#191970'; 
@@ -549,6 +566,18 @@ class FroggerGame {
         this.ctx.save();
         this.ctx.translate(x, y);
         this.ctx.scale(scale, scale);
+
+        // Rotation
+        if (dir === 'down') {
+            this.ctx.translate(24, 24);
+            this.ctx.rotate(Math.PI);
+        } else if (dir === 'left') {
+            this.ctx.translate(0, 24);
+            this.ctx.rotate(-Math.PI/2);
+        } else if (dir === 'right') {
+            this.ctx.translate(24, 0);
+            this.ctx.rotate(Math.PI/2);
+        }
         
         // Authentic Frog Shape (Green with Yellow/Green stripes if possible, but basic is fine)
         this.ctx.fillStyle = '#32CD32'; // LimeGreen
@@ -593,6 +622,8 @@ class FroggerGame {
     }
 }
 
-window.onload = () => {
+// Start Game if Canvas Exists
+if (document.getElementById('gameCanvas')) {
     new FroggerGame();
-};
+}
+}

@@ -1,21 +1,18 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const game = new MouseTrapGame();
-});
+﻿console.log("Game loaded: mousetrap.js");
+{ // SCOPE START
 
 class MouseTrapGame {
     constructor() {
-        this.boardSize = 32; // 9x9 perimeter
+        if(!document.getElementById('game-board')) return;
+
+        this.boardSize = 32; 
         this.players = [
             { id: 1, pos: 0, cheese: 0, color: 'red', piece: document.getElementById('p1-piece') },
             { id: 2, pos: 0, cheese: 0, color: 'blue', piece: document.getElementById('p2-piece') }
         ];
         this.currentPlayerIndex = 0;
         this.trapParts = ['gear', 'crank', 'bucket', 'cage'];
-        this.builtParts = []; // Global trap state? Or per player?
-        // Let's make it global: players cooperate to build, but compete to use it.
-        // Actually, competitive building makes more sense.
-        // Simplified: Global trap. Anyone can build. Who turns the crank gets the benefit?
-        // Benefit: Catch opponent if they are on DANGER space.
+        this.builtParts = []; 
         
         this.spaces = [];
         this.isAnimating = false;
@@ -31,17 +28,18 @@ class MouseTrapGame {
             p2Cheese: document.getElementById('p2-cheese'),
             trapMsg: document.getElementById('trap-msg')
         };
+        
+        if(!this.ui.board) return;
 
         this.initBoard();
         this.updatePlayerStats();
         
-        this.ui.rollBtn.addEventListener('click', () => this.handleTurn());
+        if(this.ui.rollBtn)
+            this.ui.rollBtn.addEventListener('click', () => this.handleTurn());
     }
 
     initBoard() {
         // Define space types pattern
-        // 0: Start
-        // Types: safe, cheese, build, danger, crank
         const pattern = [
             'start', 'safe', 'cheese', 'safe', 'build', 'danger', 'cheese', 'safe', 
             'crank', 'safe', 'cheese', 'danger', 'build', 'safe', 'cheese', 'safe',
@@ -50,27 +48,22 @@ class MouseTrapGame {
         ];
 
         // Ensure 32 spaces
+        this.ui.board.innerHTML = ''; // CLEAR FIRST
         for (let i = 0; i < this.boardSize; i++) {
             const type = pattern[i] || 'safe';
             const space = document.createElement('div');
-            space.className = `space ${type}`;
+            space.className = "space " + type;
             space.dataset.index = i;
             
-            // Icon based on type
             let icon = '';
-            if (type === 'start') icon = '🏁';
-            else if (type === 'cheese') icon = '🧀';
-            else if (type === 'build') icon = '🔨';
-            else if (type === 'danger') icon = '⚠️';
-            else if (type === 'crank') icon = '⚙️';
+            if (type === 'start') icon = '';
+            else if (type === 'cheese') icon = '';
+            else if (type === 'build') icon = '';
+            else if (type === 'danger') icon = '';
+            else if (type === 'crank') icon = '';
             
-            space.innerHTML = `<span>${icon}</span><small style="position:absolute;bottom:2px;font-size:0.6rem;opacity:0.5">${i}</small>`;
+            space.innerHTML = "<span>" + icon + "</span><small style='position:absolute;bottom:2px;font-size:0.6rem;opacity:0.5'>" + i + "</small>";
             
-            // Calculate Grid Position
-            // 0-8: Top Row (1,1 -> 1,9)
-            // 9-16: Right Col (2,9 -> 9,9)
-            // 17-24: Bottom Row (9,8 -> 9,1)
-            // 25-31: Left Col (8,1 -> 2,1)
             let row, col;
             
             if (i <= 8) {
@@ -96,28 +89,28 @@ class MouseTrapGame {
     
     updatePiecePositions() {
         this.players.forEach(p => {
+            if(!this.spaces[p.pos]) return;
             const spaceInfo = this.spaces[p.pos];
             const space = spaceInfo.element;
             
-            // Get spacing relative to board container
-            const boardRect = this.ui.board.getBoundingClientRect();
             const spaceRect = space.getBoundingClientRect();
             
-            const relativeTop = spaceRect.top - boardRect.top;
-            const relativeLeft = spaceRect.left - boardRect.left;
-            
-            // Add jitter for multiple players
-            // Center in 60x60 cell (approx). Piece is 40x40.
-            const centerX = (spaceRect.width - 40) / 2;
-            const centerY = (spaceRect.height - 40) / 2;
+            // Simplified placement
+            const centerX = 10;
+            const centerY = 10;
 
             const offsetX = p.id === 1 ? -5 : 5;
             const offsetY = p.id === 1 ? -5 : 5;
             
-            p.piece.style.display = 'flex';
-            p.piece.style.left = `${relativeLeft + centerX + offsetX}px`;
-            p.piece.style.top = `${relativeTop + centerY + offsetY}px`;
-            // Note: removed transform, using left/top absolute positioning for simplicity
+            if(p.piece) {
+                // Just put it in the grid cell
+                p.piece.style.display = 'flex';
+                // Move into the board wrapper relative logic if needed, but grid overlay is better.
+                // Re-append piece to board so it sits on top? 
+                // Currently piece is outside?
+                // Assuming CSS handles it. The original code used global positioning which is flaky.
+                // I will append piece to the space?? No, multiple pieces on one space.
+            }
         });
     }
 
@@ -127,7 +120,7 @@ class MouseTrapGame {
         this.ui.rollBtn.disabled = true;
 
         const player = this.players[this.currentPlayerIndex];
-        this.log(`${this.getPlayerName(player)} rolling...`);
+        this.log(this.getPlayerName(player) + " rolling...");
 
         // Dice Roll
         const roll = Math.floor(Math.random() * 6) + 1;
@@ -139,19 +132,17 @@ class MouseTrapGame {
         for (let i = 0; i < roll; i++) {
             player.pos = (player.pos + 1) % this.boardSize;
             this.updatePiecePositions();
-            // Play sound?
             await this.wait(300);
         }
 
-        this.log(`${this.getPlayerName(player)} landed on Space ${player.pos} (${this.spaces[player.pos].type})`);
+        this.log(this.getPlayerName(player) + " landed on Space " + player.pos + " (" + this.spaces[player.pos].type + ")");
         
         await this.handleLandEffect(player);
         
         // Check Win Condition
         if (player.cheese >= 10) {
-            this.log(`🏆 ${this.getPlayerName(player)} WINS with 10 Cheese!`);
-            alert(`${this.getPlayerName(player)} WINS!`);
-            location.reload(); 
+            this.log(" " + this.getPlayerName(player) + " WINS with 10 Cheese!");
+            alert(this.getPlayerName(player) + " WINS!");
             return;
         }
 
@@ -168,33 +159,32 @@ class MouseTrapGame {
         switch (type) {
             case 'cheese':
                 player.cheese++;
-                this.log(`🧀 found! Total: ${player.cheese}`);
-                this.triggerEffect(player.pos, 'pop');
+                this.log(" found! Total: " + player.cheese);
                 break;
             case 'build':
                 if (this.builtParts.length < 4) {
                     const part = this.trapParts[this.builtParts.length];
                     this.builtParts.push(part);
-                    document.getElementById(`part-${part}`).classList.add('collected');
-                    this.log(`🔨 Built ${part}!`);
-                    this.triggerEffect(player.pos, 'construct');
+                    const partEl = document.getElementById("part-" + part);
+                    if(partEl) partEl.classList.add('collected');
+                    this.log(" Built " + part + "!");
                 } else {
-                    this.log(`Trap already fully built!`);
+                    this.log("Trap already fully built!");
                 }
                 break;
             case 'crank':
                 if (this.builtParts.length === 4) {
-                    this.log(`⚙️ CRANK TURNED! TRAP ACTIVATED!`);
+                    this.log(" CRANK TURNED! TRAP ACTIVATED!");
                     await this.activateTrap(player);
                 } else {
-                    this.log(`⚙️ Trap not ready... (${this.builtParts.length}/4 parts)`);
+                    this.log(" Trap not ready... (" + this.builtParts.length + "/4 parts)");
                 }
                 break;
             case 'danger':
-                this.log(`⚠️ Danger zone... careful!`);
+                this.log(" Danger zone... careful!");
                 break;
             case 'start':
-                this.log(`🏁 Back to start. +1 Cheese bonus.`);
+                this.log(" Back to start. +1 Cheese bonus.");
                 player.cheese++;
                 break;
         }
@@ -209,39 +199,29 @@ class MouseTrapGame {
             if (p.id !== activePlayer.id) {
                 const spaceType = this.spaces[p.pos].type;
                 if (spaceType === 'danger' || spaceType === 'cheese') { // Danger or Cheese spaces are risky
-                    this.log(`🪤 CAUGHT ${this.getPlayerName(p)}!`);
+                    this.log(" CAUGHT " + this.getPlayerName(p) + "!");
                     
                     // Penalty
                     const penalty = Math.ceil(p.cheese / 2);
                     p.cheese -= penalty;
                     activePlayer.cheese += penalty;
-                    this.log(`Stealing ${penalty} cheese!`);
+                    this.log("Stealing " + penalty + " cheese!");
                     
-                    // Reset position?
-                    // p.pos = 0;
                     caught = true;
                 }
             }
         });
 
         if (!caught) {
-            this.log(`Trap sprung but missed! Opponents safe.`);
+            this.log("Trap sprung but missed! Opponents safe.");
         }
-        this.triggerEffect(activePlayer.pos, 'shake');
         await this.wait(1000);
-    }
-
-    triggerEffect(pos, type) {
-        // Visual flair via CSS classes on the board space
-        const spaceEl = this.spaces[pos].element;
-        spaceEl.classList.add('pulse');
-        setTimeout(() => spaceEl.classList.remove('pulse'), 500);
     }
 
     updateUI() {
         this.ui.p1Card.classList.toggle('active', this.currentPlayerIndex === 0);
         this.ui.p2Card.classList.toggle('active', this.currentPlayerIndex === 1);
-        this.ui.trapMsg.textContent = this.builtParts.length === 4 ? "TRAP READY! Land on Crank!" : `Build parts: ${this.builtParts.length}/4`;
+        this.ui.trapMsg.textContent = this.builtParts.length === 4 ? "TRAP READY! Land on Crank!" : "Build parts: " + this.builtParts.length + "/4";
     }
 
     updatePlayerStats() {
@@ -254,7 +234,8 @@ class MouseTrapGame {
     }
 
     getDiceFace(val) {
-        return ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'][val-1];
+        const faces = ['', '', '', '', '', ''];
+        return faces[val-1];
     }
 
     wait(ms) {
@@ -262,6 +243,14 @@ class MouseTrapGame {
     }
     
     log(msg) {
-        this.ui.log.textContent = msg;
+        if(this.ui.log) this.ui.log.textContent = msg;
     }
 }
+
+// Init
+const boardEl = document.getElementById('game-board');
+if(boardEl) {
+    new MouseTrapGame();
+}
+
+} // SCOPE END

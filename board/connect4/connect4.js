@@ -1,6 +1,5 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const game = new ConnectFour();
-});
+console.log("Game loaded: connect4.js");
+{ // SCOPE START
 
 class ConnectFour {
     constructor() {
@@ -313,3 +312,11 @@ class ConnectFour {
         }
     }
 }
+
+// Init
+const boardWrapper = document.querySelector('.board-wrapper');
+if (boardWrapper) {
+    new ConnectFour();
+}
+
+} // SCOPE END

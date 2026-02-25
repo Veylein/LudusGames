@@ -1,4 +1,5 @@
-// wordladder.js
+﻿console.log("Game loaded: wordladder.js");
+{ // SCOPE START
 
 // A list of common 4-letter words for connectivity
 const dictionary = [
@@ -12,20 +13,61 @@ const uniqueDictionary = [...new Set(dictionary)];
 let startWord = "";
 let endWord = "";
 let currentLadder = []; // Array of strings
-let stepsContainer = document.getElementById('steps-container');
-let messageArea = document.getElementById('message-area');
-const winModal = document.getElementById('win-message');
+let stepsContainer = null;
+let messageArea = null;
+let winModal = null;
 
 // Init
 function initGame() {
-    messageArea.innerText = "";
-    messageArea.classList.remove('success');
-    winModal.classList.add('hidden');
+    if (!document.getElementById('steps-container')) return;
+
+    stepsContainer = document.getElementById('steps-container');
+    messageArea = document.getElementById('message-area');
+    winModal = document.getElementById('win-message');
+    
+    // Attach headers
+    const undoBtn = document.getElementById('undo-btn');
+    if (undoBtn) undoBtn.onclick = () => {
+        if (currentLadder.length > 1) {
+            currentLadder.pop();
+            renderBoard();
+            messageArea.innerText = "";
+        }
+    };
+
+    const resetBtn = document.getElementById('reset-btn');
+    if (resetBtn) resetBtn.onclick = () => {
+        currentLadder = [startWord];
+        renderBoard();
+        messageArea.innerText = "";
+    };
+
+    const hintBtn = document.getElementById('hint-btn');
+    if (hintBtn) hintBtn.onclick = () => {
+        let current = currentLadder[currentLadder.length-1];
+        let bestNext = findNextStep(current, endWord);
+        if (bestNext) {
+            showMessage(`Hint: Try "${bestNext}"`);
+        } else {
+            showMessage("No clear path found!");
+        }
+    };
+
+    const newGameBtn = document.getElementById('new-game-btn');
+    if (newGameBtn) newGameBtn.onclick = initGame;
+    
+    const playAgainBtn = document.getElementById('play-again-btn');
+    if (playAgainBtn) playAgainBtn.onclick = initGame;
+
+    if (messageArea) {
+        messageArea.innerText = "";
+        messageArea.classList.remove('success');
+    }
+    if (winModal) winModal.classList.add('hidden');
     
     // Generate Level
     let pair = generateLevel();
     if (!pair) {
-        // Fallback if random gen fails repeatedly (unlikely with this dict)
         startWord = "COLD";
         endWord = "WARM";
     } else {
@@ -90,23 +132,19 @@ function isOneOff(a, b) {
 }
 
 function renderBoard() {
+    if (!document.getElementById('start-word')) return;
     document.getElementById('start-word').innerText = startWord;
     document.getElementById('end-word').innerText = endWord;
     
-    stepsContainer.innerHTML = '';
-    
-    // Render completed steps
-    // Step 0 is start word, usually shown at top. But we can show intermediate inputs below start
-    // Actually, user inputs "Step 1". Start is static.
+    if (stepsContainer) stepsContainer.innerHTML = '';
     
     for (let i = 1; i < currentLadder.length; i++) {
         const div = document.createElement('div');
         div.classList.add('word-card', 'completed-step');
         div.innerText = currentLadder[i];
-        stepsContainer.appendChild(div);
+        if (stepsContainer) stepsContainer.appendChild(div);
     }
     
-    // Render active input step if not finished
     if (currentLadder[currentLadder.length-1] !== endWord) {
         createInputRow(currentLadder[currentLadder.length-1]);
     } else {
@@ -118,25 +156,21 @@ function createInputRow(prevWord) {
     const row = document.createElement('div');
     row.classList.add('ladder-step', 'active');
     
-    for (let i = 0; i < 4; i++) { // Assuming 4-letter words
+    for (let i = 0; i < 4; i++) {
         const input = document.createElement('input');
-        input.type = 'text'; // Explicitly set type
+        input.type = 'text';
         input.classList.add('letter-input');
         input.maxLength = 1;
-        input.value = prevWord[i]; // Pre-fill with previous char
+        input.value = prevWord[i];
         input.dataset.index = i;
         
-        // Use keyup for auto-advance to capture character after it's in value
         input.addEventListener('keyup', (e) => handleKeyUp(e, row));
         input.addEventListener('keydown', (e) => handleKeyDown(e, row));
-        
-        // Select text on focus so user can easily type over
         input.addEventListener('focus', (e) => e.target.select());
         
         row.appendChild(input);
     }
     
-    // Create a submit button for mobile/mouse users
     const submitBtn = document.createElement('button');
     submitBtn.innerText = 'Go';
     submitBtn.classList.add('action-btn', 'mini-btn'); 
@@ -144,10 +178,8 @@ function createInputRow(prevWord) {
     submitBtn.onclick = () => submitStep(row);
     row.appendChild(submitBtn);
 
-    stepsContainer.appendChild(row);
+    if (stepsContainer) stepsContainer.appendChild(row);
     
-    // Auto-focus first input? Or let user click? 
-    // Let's focus first input for convenience
     setTimeout(() => {
         const firstInput = row.querySelector('input');
         if(firstInput) firstInput.focus();
@@ -158,12 +190,10 @@ function handleKeyUp(e, row) {
     const inputs = row.querySelectorAll('input');
     const index = parseInt(e.target.dataset.index);
     
-    // Ignore navigation keys
     if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Enter', 'Shift', 'Control', 'Alt'].includes(e.key)) return;
 
     e.target.value = e.target.value.toUpperCase();
     
-    // Auto-advance if character entered
     if (e.target.value.length === 1 && index < 3) {
         inputs[index + 1].focus();
     }
@@ -205,7 +235,6 @@ function submitStep(row) {
     
     const prevWord = currentLadder[currentLadder.length-1];
     
-    // Validation 1: Only 1 letter different
     if (!isOneOff(prevWord, newWord)) {
         if (newWord === prevWord) {
             showMessage("Change one letter!", true);
@@ -216,77 +245,42 @@ function submitStep(row) {
         return;
     }
     
-    // Validation 2: Must be in dictionary
-    // We only check against our limited dictionary. If user knows a valid word not in dict, sorry.
-    // To be nicer, we can try to trust them if checks pass, but that breaks game mechanics (fake words).
     if (!uniqueDictionary.includes(newWord) && newWord !== endWord) { 
-        // Allow endWord specifically even if somehow not in dict (unlikely)
         showMessage("Not in dictionary!", true);
         shake(row);
         return;
     }
     
-    // Success
     currentLadder.push(newWord);
-    messageArea.innerText = "";
+    if (messageArea) messageArea.innerText = "";
     renderBoard();
     
-    // Scroll to bottom
     setTimeout(() => {
         window.scrollTo(0, document.body.scrollHeight);
     }, 100);
 }
 
 function showMessage(msg, isError) {
+    if (!messageArea) return;
     messageArea.innerText = msg;
     messageArea.className = 'message-area ' + (isError ? '' : 'success');
 }
 
 function shake(el) {
-    el.classList.add('error'); // actually creates border color
-    // trigger animation reflow
+    el.classList.add('error');
     el.style.animation = 'none';
-    el.offsetHeight; /* trigger reflow */
+    el.offsetHeight;
     el.style.animation = 'shake 0.4s';
 }
 
 function gameWin() {
-    messageArea.innerText = "COMPLETE!";
-    messageArea.classList.add('success');
-    document.getElementById('step-count').innerText = currentLadder.length - 1; // steps taken
-    winModal.classList.remove('hidden');
+    if (messageArea) {
+        messageArea.innerText = "COMPLETE!";
+        messageArea.classList.add('success');
+    }
+    if (document.getElementById('step-count')) document.getElementById('step-count').innerText = currentLadder.length - 1;
+    if (winModal) winModal.classList.remove('hidden');
 }
-
-// Controls
-document.getElementById('undo-btn').addEventListener('click', () => {
-    if (currentLadder.length > 1) {
-        currentLadder.pop();
-        renderBoard();
-        messageArea.innerText = "";
-    }
-});
-
-document.getElementById('reset-btn').addEventListener('click', () => {
-    currentLadder = [startWord];
-    renderBoard();
-    messageArea.innerText = "";
-});
-
-document.getElementById('hint-btn').addEventListener('click', () => {
-    // Find a valid next step towards goal
-    // Simple greedy approach: find neighbor of current that is closer to end?
-    // Or just any valid neighbor.
-    
-    let current = currentLadder[currentLadder.length-1];
-    // This requires a pathfinding algo again or BFS towards target
-    // Let's do a quick BFS to finding shortest path from current to end
-    let bestNext = findNextStep(current, endWord);
-    if (bestNext) {
-        showMessage(`Hint: Try "${bestNext}"`);
-    } else {
-        showMessage("No clear path found!");
-    }
-});
 
 function findNextStep(current, target) {
     let queue = [{ word: current, path: [] }];
@@ -297,7 +291,7 @@ function findNextStep(current, target) {
         let { word, path } = queue[head++];
         
         if (word === target) {
-            return path[0]; // first step
+            return path[0];
         }
         
         for (let w of uniqueDictionary) {
@@ -311,8 +305,7 @@ function findNextStep(current, target) {
     return null;
 }
 
-document.getElementById('new-game-btn').addEventListener('click', initGame);
-document.getElementById('play-again-btn').addEventListener('click', initGame);
-
 // Start
 initGame();
+
+} // SCOPE END

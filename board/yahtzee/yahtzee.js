@@ -1,15 +1,17 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const game = new YahtzeeGame();
-});
+﻿console.log("Game loaded: yahtzee.js");
+{ // SCOPE START
 
+// Class definition inside the scope
 class YahtzeeGame {
     constructor() {
+        if (!document.getElementById('turn-indicator')) return; // Guard in constructor too
+
         this.dice = [1, 1, 1, 1, 1];
         this.held = [false, false, false, false, false];
         this.rollsLeft = 3;
         this.turn = 1;
         this.maxTurns = 13;
-        this.scores = {}; // Tracks locked scores by category key
+        this.scores = {}; 
         this.gameOver = false;
         
         // DOM Elements
@@ -22,14 +24,14 @@ class YahtzeeGame {
         this.restartBtn = document.getElementById('restart-btn');
 
         // Bind Events
-        this.rollBtn.addEventListener('click', () => this.rollDice());
+        if (this.rollBtn) this.rollBtn.onclick = () => this.rollDice();
         this.diceElements.forEach((die, index) => {
-            die.addEventListener('click', () => this.toggleHold(index));
+            die.onclick = () => this.toggleHold(index);
         });
         this.scoreRows.forEach(row => {
-            row.addEventListener('click', (e) => this.handleScoreClick(e));
+            row.onclick = (e) => this.handleScoreClick(e);
         });
-        this.restartBtn.addEventListener('click', () => this.resetGame());
+        if (this.restartBtn) this.restartBtn.onclick = () => this.resetGame();
 
         // Initialize
         this.resetGame();
@@ -37,47 +39,49 @@ class YahtzeeGame {
 
     resetGame() {
         this.dice = [1, 1, 1, 1, 1];
-        this.held = [false, false, false, false, false]; // true if die is kept
+        this.held = [false, false, false, false, false]; 
         this.rollsLeft = 3;
         this.turn = 1;
         this.scores = {};
         this.gameOver = false;
         
-        this.updateDiceUI();
-        this.rollBtn.disabled = false;
-        this.rollBtn.textContent = `Roll Dice (${this.rollsLeft})`;
-        this.turnIndicator.textContent = `Turn: ${this.turn}/${this.maxTurns}`;
-        
         // Clear scorecard
         document.querySelectorAll('.score-value').forEach(cell => {
             cell.textContent = '';
             cell.classList.remove('filled');
+            cell.classList.remove('preview');
         });
         document.querySelectorAll('.score-row').forEach(row => {
             row.classList.remove('filled');
         });
 
         this.updateTotals();
-        this.modal.style.display = 'none';
+        if (this.modal) this.modal.style.display = 'none';
         
         // Clear held status
         this.diceElements.forEach(die => die.classList.remove('selected'));
+        
+        this.updateDiceUI();
+        if (this.rollBtn) {
+            this.rollBtn.disabled = false;
+            this.rollBtn.textContent = `Roll Dice (${this.rollsLeft})`;
+        }
+        if (this.turnIndicator) this.turnIndicator.textContent = `Turn: ${this.turn}/${this.maxTurns}`;
     }
 
     rollDice() {
         if (this.rollsLeft <= 0 || this.gameOver) return;
 
-        // Animate roll (simple random change for effect)
         let rolls = 0;
         const interval = setInterval(() => {
             rolls++;
             this.dice.forEach((val, i) => {
-                if (!this.held[i]) {
+                if (!this.held[i] && this.diceElements[i]) {
                     const tempVal = Math.floor(Math.random() * 6) + 1;
                     this.diceElements[i].textContent = tempVal;
                 }
             });
-            if (rolls > 5) {
+            if (rolls > 10) {
                 clearInterval(interval);
                 this.finalizeRoll();
             }
@@ -85,7 +89,6 @@ class YahtzeeGame {
     }
 
     finalizeRoll() {
-        // Generate actual values
         this.dice = this.dice.map((val, i) => {
             return this.held[i] ? val : Math.floor(Math.random() * 6) + 1;
         });
@@ -97,44 +100,51 @@ class YahtzeeGame {
     }
 
     toggleHold(index) {
-        if (this.rollsLeft === 3) return; // Can't hold before first roll
+        if (this.rollsLeft === 3 && this.turn <= this.maxTurns) {
+             // In some rules you can hold before rolling? Usually not.
+             // But let's allow toggling if they re-thought their hold?
+             // Actually standard rule: you roll, then hold.
+             // But after turn start (rollsLeft=3), you haven't rolled yet.
+             return; 
+        }
+        if (this.gameOver) return;
         
         this.held[index] = !this.held[index];
-        this.diceElements[index].classList.toggle('selected', this.held[index]);
+        if (this.diceElements[index]) this.diceElements[index].classList.toggle('selected', this.held[index]);
     }
 
     updateDiceUI() {
         this.diceElements.forEach((die, i) => {
-            die.textContent = this.dice[i];
-            // Here you could add logic to show pip images instead of numbers
+            if (die) die.textContent = this.dice[i];
         });
     }
 
     updateControls() {
+        if (!this.rollBtn) return;
         this.rollBtn.textContent = this.rollsLeft > 0 ? `Roll Dice (${this.rollsLeft})` : 'Select Score';
         this.rollBtn.disabled = this.rollsLeft === 0;
     }
 
     handleScoreClick(e) {
-        // Can't score if you haven't rolled yet
-        if (this.rollsLeft === 3) return;
+        if (this.rollsLeft === 3 && !this.gameOver) return; // Must roll at least once
         if (this.gameOver) return;
 
         const row = e.currentTarget;
-        const category = row.dataset.category;
+        const category = row.dataset.category; // Uses data-category
 
-        if (this.scores[category] !== undefined) return; // Already filled
+        // If clicking on row, sometimes target is child. currentTarget is row.
+        if (this.scores[category] !== undefined) return; 
 
-        // Calculate score for this category
+        // Calculate actual score to lock in
         const score = this.calculateScore(category);
         
-        // Lock in score
         this.scores[category] = score;
         
-        // UI Updates
         const scoreCell = row.querySelector('.score-value');
-        scoreCell.textContent = score;
-        scoreCell.classList.remove('preview'); // Remove preview styling if any
+        if (scoreCell) {
+            scoreCell.textContent = score;
+            scoreCell.classList.remove('preview');
+        }
         row.classList.add('filled');
 
         this.advanceTurn();
@@ -143,45 +153,55 @@ class YahtzeeGame {
     advanceTurn() {
         this.updateTotals();
         
-        if (Object.keys(this.scores).length >= this.maxTurns) {
+        // Check if game over (13 categories filled)
+        // We can just check number of keys in scores
+        // But categories names are fixed.
+        if (Object.keys(this.scores).length >= 13) { // 13 categories
             this.endGame();
             return;
         }
 
-        // Reset for next turn
         this.turn++;
         this.rollsLeft = 3;
         this.held = [false, false, false, false, false];
         this.diceElements.forEach(die => die.classList.remove('selected'));
         
-        this.turnIndicator.textContent = `Turn: ${this.turn}/${this.maxTurns}`;
-        this.rollBtn.disabled = false;
-        this.rollBtn.textContent = `Roll Dice (3)`;
+        if (this.turnIndicator) this.turnIndicator.textContent = `Turn: ${this.turn}/${this.maxTurns}`;
+        if (this.rollBtn) {
+            this.rollBtn.disabled = false;
+            this.rollBtn.textContent = `Roll Dice (3)`;
+        }
 
         // Clear previews
         document.querySelectorAll('.score-value').forEach(cell => {
-            if (!cell.parentElement.classList.contains('filled')) {
+            if (cell.parentElement && !cell.parentElement.classList.contains('filled')) {
                 cell.textContent = '';
+                cell.classList.remove('preview');
             }
         });
     }
 
     calculateScore(category) {
-        // Count occurrences of each die value
         const counts = {};
         for(let i=1; i<=6; i++) counts[i] = 0;
         this.dice.forEach(d => counts[d]++);
         
         const sum = this.dice.reduce((a, b) => a + b, 0);
-
-        // Pre-claculate checks
-        const values = Object.values(counts);
+        const values = Object.values(counts); // array of counts
+        
         const has3 = values.some(c => c >= 3);
         const has4 = values.some(c => c >= 4);
+        const has5 = values.some(c => c === 5);
+        
+        // Full House: 3 of one, 2 of another. Or 5 of one (Joker rule usually applies but simpler here)
+        // Standard FH is 25.
         const has3Exact = values.some(c => c === 3);
         const has2Exact = values.some(c => c === 2);
-        const has5 = values.some(c => c === 5);
+        const isFullHouse = (has3Exact && has2Exact) || has5;
 
+        // Small Straight (4 consecutive)
+        // Large Straight (5 consecutive)
+        
         switch (category) {
             case 'ones': return counts[1] * 1;
             case 'twos': return counts[2] * 2;
@@ -190,35 +210,19 @@ class YahtzeeGame {
             case 'fives': return counts[5] * 5;
             case 'sixes': return counts[6] * 6;
             
-            case 'three-kind': 
-                return has3 ? sum : 0;
-            
-            case 'four-kind':
-                return has4 ? sum : 0;
-            
-            case 'full-house':
-                // Full House is strictly 3 of one and 2 of another. 
-                // Or 5 of a kind (which is technically a full house in some variants, standard rules usually allow it as a "joker" or valid full house)
-                return (has3Exact && has2Exact) || has5 ? 25 : 0;
-            
-            case 'small-straight':
-                return this.checkStraight(4) ? 30 : 0;
-            
-            case 'large-straight':
-                return this.checkStraight(5) ? 40 : 0;
-            
-            case 'yahtzee':
-                return has5 ? 50 : 0;
-            
-            case 'chance':
-                return sum;
+            case 'three-kind': return has3 ? sum : 0;
+            case 'four-kind': return has4 ? sum : 0;
+            case 'full-house': return isFullHouse ? 25 : 0;
+            case 'small-straight': return this.checkStraight(4) ? 30 : 0;
+            case 'large-straight': return this.checkStraight(5) ? 40 : 0;
+            case 'yahtzee': return has5 ? 50 : 0;
+            case 'chance': return sum;
                 
             default: return 0;
         }
     }
 
     checkStraight(length) {
-        // Unique sorted dice values
         const unique = [...new Set(this.dice)].sort((a,b) => a-b);
         let run = 1;
         for (let i = 0; i < unique.length - 1; i++) {
@@ -229,59 +233,71 @@ class YahtzeeGame {
                 run = 1;
             }
         }
-        // Check if the run at the end satisfies condition, though loop returns early if met
         return run >= length;
     }
 
     updatePreviewScores() {
-        // Show potential scores for empty slots
         this.scoreRows.forEach(row => {
-            if (!row.classList.contains('filled')) { // Only for unfilled rows
+            if (!row.classList.contains('filled')) { 
                 const category = row.dataset.category;
                 const potentialScore = this.calculateScore(category);
                 const cell = row.querySelector('.score-value');
-                cell.textContent = potentialScore;
-                cell.classList.add('preview');
+                if (cell) {
+                    cell.textContent = potentialScore;
+                    cell.classList.add('preview');
+                }
             }
         });
     }
 
     updateTotals() {
-        // Upper Section
         const upperCats = ['ones', 'twos', 'threes', 'fours', 'fives', 'sixes'];
         let upperSum = 0;
         upperCats.forEach(cat => {
             if (this.scores[cat] !== undefined) upperSum += this.scores[cat];
         });
         
-        document.getElementById('upper-sum').textContent = upperSum;
+        const upperSumEl = document.getElementById('upper-sum');
+        if (upperSumEl) upperSumEl.textContent = upperSum;
         
         const bonus = upperSum >= 63 ? 35 : 0;
-        document.getElementById('upper-bonus').textContent = bonus;
+        const upperBonusEl = document.getElementById('upper-bonus');
+        if (upperBonusEl) upperBonusEl.textContent = bonus;
         
         const upperTotal = upperSum + bonus;
-        document.getElementById('upper-total').innerHTML = `<strong>${upperTotal}</strong>`;
+        const upperTotalEl = document.getElementById('upper-total');
+        if (upperTotalEl) upperTotalEl.innerHTML = `<strong>${upperTotal}</strong>`;
 
-        // Lower Section
         const lowerCats = ['three-kind', 'four-kind', 'full-house', 'small-straight', 'large-straight', 'yahtzee', 'chance'];
         let lowerTotal = 0;
         lowerCats.forEach(cat => {
             if (this.scores[cat] !== undefined) lowerTotal += this.scores[cat];
         });
 
-        document.getElementById('lower-total').innerHTML = `<strong>${lowerTotal}</strong>`;
+        const lowerTotalEl = document.getElementById('lower-total');
+        if (lowerTotalEl) lowerTotalEl.innerHTML = `<strong>${lowerTotal}</strong>`;
         
-        // Grand Total
         const grandTotal = upperTotal + lowerTotal;
-        document.getElementById('grand-total').innerHTML = `<strong>${grandTotal}</strong>`;
+        const grandTotalEl = document.getElementById('grand-total');
+        if (grandTotalEl) grandTotalEl.innerHTML = `<strong>${grandTotal}</strong>`;
+        
         this.currentTotalScore = grandTotal;
     }
 
     endGame() {
         this.gameOver = true;
-        this.finalScoreSpan.textContent = this.currentTotalScore;
-        this.modal.style.display = 'flex';
-        this.rollBtn.disabled = true;
-        this.rollBtn.textContent = 'Game Over';
+        if (this.finalScoreSpan) this.finalScoreSpan.textContent = this.currentTotalScore;
+        if (this.modal) this.modal.style.display = 'flex';
+        if (this.rollBtn) {
+            this.rollBtn.disabled = true;
+            this.rollBtn.textContent = 'Game Over';
+        }
     }
 }
+
+// Start Game Logic
+if (document.getElementById('turn-indicator')) {
+    new YahtzeeGame();
+}
+
+} // SCOPE END
