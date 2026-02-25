@@ -1,6 +1,13 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const game = new TicTacToe();
-});
+// Initialize game
+function initTicTacToe() {
+    window.ticTacToeGame = new TicTacToe();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTicTacToe);
+} else {
+    initTicTacToe();
+}
 
 class TicTacToe {
     constructor() {

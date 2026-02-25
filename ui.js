@@ -328,12 +328,6 @@ if (window.location.pathname.includes("/cards/") || window.location.pathname.inc
 
             document.title = doc.title;
 
-            // 1. UPDATE STYLES (HEAD)
-            // Preserve global styles, swap page-specific ones
-            // Simple heuristic to avoid removing global styles:
-            // - Keep any link with 'style.css' or 'themes.css' in href
-            // - Remove others, add new ones from doc
-            
             const currentLinks = Array.from(document.head.querySelectorAll('link[rel="stylesheet"]'));
             const newLinks = Array.from(doc.head.querySelectorAll('link[rel="stylesheet"]'));
             
@@ -362,7 +356,6 @@ if (window.location.pathname.includes("/cards/") || window.location.pathname.inc
             document.body.className = doc.body.className;
 
             // 3. RE-EXECUTE SCRIPTS (CRITICAL)
-            // We must manually recreate script tags for them to execute
             const scripts = document.body.querySelectorAll('script');
             const scriptPromises = [];
 
@@ -370,17 +363,14 @@ if (window.location.pathname.includes("/cards/") || window.location.pathname.inc
                 const newScript = document.createElement('script');
                 const src = oldScript.getAttribute('src');
 
-                // Copy all attributes
                 Array.from(oldScript.attributes).forEach(attr => {
                     newScript.setAttribute(attr.name, attr.value);
                 });
 
-                // Skip recursively loading ui.js
                 if (src && src.includes('ui.js')) return;
 
                 if (src) {
                     newScript.src = src; 
-                    // Track loading so we can trigger events after
                     scriptPromises.push(new Promise(resolve => {
                         newScript.onload = resolve;
                         newScript.onerror = resolve; // Continue even if error
@@ -389,18 +379,15 @@ if (window.location.pathname.includes("/cards/") || window.location.pathname.inc
                     newScript.textContent = oldScript.textContent;
                 }
                 
-                // Replace in DOM to execute
                 oldScript.parentNode.replaceChild(newScript, oldScript);
             });
             
-            // Wait for scripts to load, then trigger a simulated DOMContentLoaded
-            // This fixes games that wait for the event which already fired
+            // Wait for scripts to load
             Promise.all(scriptPromises).then(() => {
                 const event = document.createEvent("Event");
                 event.initEvent("DOMContentLoaded", true, true);
                 document.dispatchEvent(event);
                 
-                // Also trigger window.onload for older games
                 const loadEvent = document.createEvent("Event");
                 loadEvent.initEvent("load", true, true);
                 window.dispatchEvent(loadEvent);
@@ -412,8 +399,10 @@ if (window.location.pathname.includes("/cards/") || window.location.pathname.inc
             if (typeof initFontTheme === 'function') initFontTheme();
             if (typeof initDifficulty === 'function') initDifficulty();
             
-            // Special: Re-run ensureBackButton logic
             if (typeof ensureBackButton === 'function') ensureBackButton();
+            
+            // Ensure Mobile Controls are injected/hooked up
+            if (typeof ensureMobileControls === 'function') ensureMobileControls();
 
             window.scrollTo(0, 0);
 
@@ -424,3 +413,99 @@ if (window.location.pathname.includes("/cards/") || window.location.pathname.inc
     }
 })();
 
+
+/* --- UNIVERSAL MOBILE CONTROLS INJECTOR --- */
+function ensureMobileControls() {
+    // Only run for arcade games
+    // Note: We check if path includes /arcade/ OR body has theme-arcade
+    // But sometimes theme isn't applied yet. Path is safer.
+    if (!window.location.href.includes('/arcade/') && !document.body.classList.contains('theme-arcade')) return;
+
+    let container = document.querySelector('.mobile-controls');
+    
+    // If container doesn't exist, create it
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'mobile-controls';
+        document.body.appendChild(container);
+    }
+    
+    // If container is empty (or we just created it), populate standard D-Pad
+    if (!container.querySelector('button')) {
+        console.log('Injecting Universal Mobile Controls...');
+        container.innerHTML = `
+            <button id="up-btn" data-key="ArrowUp" style="grid-area: up;">▲</button>
+            <button id="left-btn" data-key="ArrowLeft" style="grid-area: left;">◀</button>
+            <button id="down-btn" data-key="ArrowDown" style="grid-area: down;">▼</button>
+            <button id="right-btn" data-key="ArrowRight" style="grid-area: right;">▶</button>
+        `;
+    }
+
+    // Bind events - UNIVERSAL SIMULATION
+    const buttons = container.querySelectorAll('button');
+    buttons.forEach(btn => {
+        // Determine key code
+        let code = btn.getAttribute('data-key');
+        if (!code) {
+            if (btn.id === 'up-btn') code = 'ArrowUp';
+            else if (btn.id === 'down-btn') code = 'ArrowDown';
+            else if (btn.id === 'left-btn') code = 'ArrowLeft';
+            else if (btn.id === 'right-btn') code = 'ArrowRight';
+        }
+        if (!code) return;
+
+        // Simulator function
+        const simulate = (type) => {
+            const eventOpts = {
+                key: code,
+                code: code,
+                bubbles: true,
+                cancelable: true,
+                view: window
+            };
+            
+            // Legacy keyCode support
+            if (code === 'ArrowUp') eventOpts.keyCode = 38;
+            if (code === 'ArrowDown') eventOpts.keyCode = 40;
+            if (code === 'ArrowLeft') eventOpts.keyCode = 37;
+            if (code === 'ArrowRight') eventOpts.keyCode = 39;
+            
+            const event = new KeyboardEvent(type, eventOpts);
+            document.dispatchEvent(event);
+            window.dispatchEvent(event); 
+        };
+
+        const handleStart = (e) => {
+            // e.preventDefault(); // CAREFUL: blocking default might stop scrolling on some pages?
+            // But for games, we DON'T want scrolling when pressing controls.
+            if(e.cancelable) e.preventDefault(); 
+            
+            simulate('keydown');
+            btn.classList.add('active');
+        };
+        
+        const handleEnd = (e) => {
+            if(e.cancelable) e.preventDefault();
+            simulate('keyup');
+            btn.classList.remove('active');
+        };
+
+        // Attach listeners (overwrite if needed to avoid duplicates)
+        btn.onmousedown = handleStart;
+        btn.ontouchstart = handleStart; // Passive: false by default for on-prop?
+        
+        btn.onmouseup = handleEnd;
+        btn.ontouchend = handleEnd;
+        btn.onmouseleave = handleEnd;
+        
+        // Stop click propagation
+        btn.onclick = (e) => e.stopPropagation();
+    });
+}
+
+// Run on load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', ensureMobileControls);
+} else {
+    ensureMobileControls();
+}
