@@ -63,6 +63,17 @@ class BreakoutGame {
         document.addEventListener("keydown", (e) => this.keyDownHandler(e), false);
         document.addEventListener("keyup", (e) => this.keyUpHandler(e), false);
         
+        // Add click to start
+        if(this.canvas) {
+            this.canvas.addEventListener("click", () => {
+                if(!this.isRunning) this.startGame();
+            });
+            this.canvas.addEventListener("touchstart", (e) => {
+                e.preventDefault(); 
+                if(!this.isRunning) this.startGame();
+            });
+        }
+        
         if(this.restartBtn) this.restartBtn.addEventListener("click", () => this.resetGame());
         
         // Mobile

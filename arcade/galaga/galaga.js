@@ -64,6 +64,27 @@ class GalagaGame {
             if(e.code === 'ArrowRight') this.input.right = false;
             if(e.code === 'Space') this.input.fire = false;
         });
+        
+        // Click/Touch to Start
+        const touchStart = (e) => {
+            if (e.type === 'touchstart') e.preventDefault();
+            if(!this.isGameRunning) {
+                this.startGame();
+            } else {
+                // Optional: Tap to fire?
+                this.input.fire = true;
+                setTimeout(() => this.input.fire = false, 100);
+            }
+        };
+        
+        this.canvas.addEventListener('mousedown', touchStart);
+        this.canvas.addEventListener('touchstart', touchStart);
+        
+        const startScreen = document.getElementById('start-screen');
+        if(startScreen) {
+             startScreen.addEventListener('click', touchStart);
+             startScreen.addEventListener('touchstart', touchStart);
+        }
     }
     
     createStars() {

@@ -328,6 +328,24 @@ class DinoGame {
         document.addEventListener('keydown', (e) => this.handleInput(e, true));
         document.addEventListener('keyup', (e) => this.handleInput(e, false));
         
+        // Click / Tap to start or Jump
+        const tapHandler = (e) => {
+             if(e.target.tagName !== 'CANVAS' && e.target.id !== 'start-screen' && !e.target.classList.contains('overlay')) return;
+
+             if(!this.isGameRunning) {
+                 this.startGame();
+                 return;
+             }
+             
+             // Tap to jump
+             this.input.jump = true;
+             setTimeout(() => this.input.jump = false, 200);
+        };
+        
+        this.canvas.addEventListener('click', tapHandler);
+        this.canvas.addEventListener('touchstart', (e) => { e.preventDefault(); tapHandler(e); });
+        if(this.startScreen) this.startScreen.addEventListener('click', tapHandler);
+
         this.restartBtn.addEventListener('click', () => this.resetGame());
         this.pauseBtn.addEventListener('click', () => this.togglePause());
 

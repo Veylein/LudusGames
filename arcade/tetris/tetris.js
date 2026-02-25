@@ -66,6 +66,20 @@ class TetrisGame {
     init() {
         window.addEventListener('keydown', (e) => this.handleInput(e));
         
+        // Click To Start
+        const clickStart = (e) => {
+             if(e.target.tagName === 'BUTTON') return;
+             if(!this.isRunning) {
+                 if(this.isGameOver) this.reset();
+                 else this.start();
+             }
+        };
+        
+        this.canvas.addEventListener('click', clickStart);
+        this.canvas.addEventListener('touchstart', (e) => { e.preventDefault(); clickStart(e); });
+        
+        if(this.startScreen) this.startScreen.addEventListener('click', clickStart);
+        
         // Mobile bindings
         if(this.btnRotate) this.btnRotate.addEventListener('click', () => this.playerRotate(1));
         if(this.btnLeft) this.btnLeft.addEventListener('click', () => this.playerMove(-1));

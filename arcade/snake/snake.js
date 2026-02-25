@@ -50,6 +50,24 @@ class SnakeGame {
         // Event Listeners
         document.addEventListener('keydown', (e) => this.handleInput(e));
         
+        // CLICK TO START
+        const clickStart = (e) => {
+             if(e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT') return;
+             if(!this.isGameRunning) this.startGame();
+        };
+        
+        this.canvas.addEventListener('click', clickStart);
+        this.canvas.addEventListener('touchstart', (e) => {
+            if(!this.isGameRunning) {
+                e.preventDefault(); 
+                this.startGame();
+            }
+        });
+        
+        if(this.startScreen) {
+             this.startScreen.addEventListener('click', clickStart);
+        }
+        
         this.restartBtn.addEventListener('click', () => this.resetGame());
         this.pauseBtn.addEventListener('click', () => this.togglePause());
 

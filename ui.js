@@ -196,37 +196,44 @@ document.head.appendChild(styleSheet);
 
 /* NAVIGATION */
 function ensureBackButton() {
-    // Only run in sub-pages
-    if (window.location.pathname.includes("/cards/") || window.location.pathname.includes("/board/") || window.location.pathname.includes("/connections/")) {
+    // Only run in sub-pages (Added /arcade/)
+    if (window.location.pathname.includes("/cards/") || window.location.pathname.includes("/board/") || window.location.pathname.includes("/connections/") || window.location.pathname.includes("/arcade/")) {
         
         // Remove old 'EXIT' button if it was auto-created previously to avoid dupes
         const oldBtn = document.querySelector(".back-button.fixed-corner");
         if (oldBtn) oldBtn.remove();
 
         // Find the top bar to inject the home button
-        const topBar = document.querySelector(".top-bar");
+        // Compatible with both .top-bar and header.nav
+        const topBar = document.querySelector(".top-bar") || document.querySelector("header.nav");
+        
         if (topBar) {
             // Check if home button already exists
             if (!topBar.querySelector(".home-button")) {
                 const homeBtn = document.createElement("a");
-                homeBtn.href = "../index.html";
+                // Determine target based on depth?
+                // For arcade games (depth 2), we want to go back to arcade root (depth 1)
+                // ../index.html usually works relative to current file.
+                homeBtn.href = "../index.html"; 
                 homeBtn.className = "home-button";
                 homeBtn.innerHTML = "🏠"; // House Emoji
-                homeBtn.title = "Back to Arcade";
+                homeBtn.title = "Back";
                 
                 // Style it right here or via class
                 homeBtn.style.marginLeft = "auto"; // Push to right if flex
                 homeBtn.style.fontSize = "24px";
                 homeBtn.style.textDecoration = "none";
                 homeBtn.style.filter = "drop-shadow(0 0 5px var(--accent-color))";
+                homeBtn.style.cursor = "pointer";
                 
                 topBar.appendChild(homeBtn);
             }
         } else {
-            // Fallback if no top-bar (unlikely given our structure, but safe)
+            // Fallback if no top-bar (Arcade Cabinet screens usually need this)
             let btn = document.querySelector(".back-button");
             if (!btn) {
                 btn = document.createElement("a");
+                // If we are deep in arcade/galaga/, ../index.html -> arcade/index.html. Perfect.
                 btn.href = "../index.html";
                 btn.className = "back-button fixed-corner";
                 btn.innerText = "🏠 EXIT";

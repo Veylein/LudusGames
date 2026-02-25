@@ -47,6 +47,15 @@ class PongGame {
         window.addEventListener('keydown', (e) => this.handleKeyDown(e));
         window.addEventListener('keyup', (e) => this.handleKeyUp(e));
         
+        // Click to Start
+        this.canvas.addEventListener('click', () => {
+             if(!this.isRunning) this.startGame();
+        });
+        
+        if(this.startScreen) this.startScreen.addEventListener('click', () => {
+             if(!this.isRunning) this.startGame(); // Tap anywhere on start screen
+        });
+        
         if (this.btnUp) {
             this.btnUp.addEventListener('mousedown', () => this.player.dy = -this.player.speed);
             this.btnUp.addEventListener('mouseup', () => this.player.dy = 0);

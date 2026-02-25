@@ -88,6 +88,21 @@ class PacmanGame {
 
         // Listeners
         document.addEventListener('keydown', (e) => this.handleInput(e));
+        
+        // CLICK TO START
+        const clickStart = (e) => {
+             if (e.target.id === 'difficulty-select' || e.target.id === 'restart-btn' || e.target.id === 'pause-btn') return;
+             if(!this.isGameRunning) this.startGame();
+        };
+        
+        this.canvas.addEventListener('click', clickStart);
+        this.canvas.addEventListener('touchstart', (e) => { e.preventDefault(); clickStart(e); });
+        
+        if(this.startScreen) {
+             this.startScreen.addEventListener('click', clickStart);
+             this.startScreen.addEventListener('touchstart', (e) => { e.preventDefault(); clickStart(e); });
+        }
+        
         this.restartBtn.addEventListener('click', () => this.resetGame());
         this.pauseBtn.addEventListener('click', () => this.togglePause());
         this.difficultySelect.addEventListener('change', () => {/* Difficulty updates on next game */});

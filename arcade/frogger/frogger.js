@@ -55,6 +55,21 @@ class FroggerGame {
         if(this.highScoreElement) this.highScoreElement.innerText = this.highScore;
         
         window.addEventListener('keydown', (e) => this.handleInput(e));
+        
+        // Click to Start
+        const clickStart = (e) => {
+             if(e.target.closest('button')) return;
+             if(!this.isGameRunning) this.startGame();
+        };
+        
+        this.canvas.addEventListener('click', clickStart);
+        this.canvas.addEventListener('touchstart', (e) => {
+             e.preventDefault();
+             if(!this.isGameRunning) this.startGame();
+        });
+        
+        if(this.startScreen) this.startScreen.addEventListener('click', clickStart);
+        
         if(this.restartBtn) this.restartBtn.addEventListener('click', () => this.resetGame());
         if(this.pauseBtn) this.pauseBtn.addEventListener('click', () => this.togglePause());
         

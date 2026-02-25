@@ -49,6 +49,29 @@ class AsteroidsGame {
         window.addEventListener('keydown', (e) => this.keyDown(e));
         window.addEventListener('keyup', (e) => this.keyUp(e));
         
+        // Add specific canvas click listener for mobile/mouse start
+        this.canvas.addEventListener('click', (e) => {
+            if (!this.isRunning) {
+                this.startGame();
+            } else {
+                 if(this.shoot) this.shoot();
+            }
+        });
+        
+        // Also allow clicking the start screen overlay
+        if(this.startScreen) {
+             this.startScreen.addEventListener('click', () => {
+                 if(!this.isRunning) this.startGame();
+             });
+        }
+        
+        // Game Over screen click to restart
+        if(this.gameOverScreen) {
+             this.gameOverScreen.addEventListener('click', () => {
+                 if(!this.isRunning) this.startGame();
+             });
+        }
+        
         if(this.restartBtn) this.restartBtn.addEventListener('click', () => this.startGame());
         
         // Mobile
