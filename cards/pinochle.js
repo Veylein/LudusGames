@@ -1,5 +1,6 @@
 
 console.log("Game loaded: pinochle.js");
+{ // SCOPE START
 
 // Pinochle - 4 players (1 human, 3 bots), trick-taking only (no bidding, no melds for simplicity)
 const pinochleRanks = ["9","J","Q","K","10","A"];
@@ -22,12 +23,14 @@ const pinochleLogDiv = document.getElementById("log");
 const pinochleScoreboard = document.getElementById("pinochle-scoreboard");
 
 function pinochleInit() {
+    if(!pinochlePlayerHandDiv) return;
 	pinochleDeck = createPinochleDeck();
 	shuffle(pinochleDeck);
 	pinochleHands = [[],[],[],[]];
 	for (let i = 0; i < 48; i++) {
 		pinochleHands[i%4].push(pinochleDeck[i]);
 	}
+
 	pinochleHands.forEach(h => h.sort(pinochleSort));
 	pinochleScores = [0,0,0,0];
 	pinochleTrick = [];
@@ -172,4 +175,5 @@ function pinochleAction(action) {
 
 window.pinochleAction = pinochleAction;
 
-pinochleInit();
+if(typeof pinochleInit === 'function') pinochleInit();
+} // SCOPE END

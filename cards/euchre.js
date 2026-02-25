@@ -1,5 +1,6 @@
 
 console.log("Game loaded: euchre.js");
+{ // SCOPE START
 
 // Euchre - 4 players (1 human, 3 bots), trick-taking only (no bidding, no trump for simplicity)
 const euchreRanks = ["9","10","J","Q","K","A"];
@@ -22,12 +23,14 @@ const euchreLogDiv = document.getElementById("log");
 const euchreScoreboard = document.getElementById("euchre-scoreboard");
 
 function euchreInit() {
+    if(!euchrePlayerHandDiv) return;
 	euchreDeck = createEuchreDeck();
 	shuffle(euchreDeck);
 	euchreHands = [[],[],[],[]];
 	for (let i = 0; i < 20; i++) {
 		euchreHands[i%4].push(euchreDeck[i]);
 	}
+
 	euchreHands.forEach(h => h.sort(euchreSort));
 	euchreScores = [0,0,0,0];
 	euchreTrick = [];
@@ -170,5 +173,8 @@ function euchreAction(action) {
 }
 
 window.euchreAction = euchreAction;
+if(typeof euchreInit === 'function') euchreInit();
+
+} // SCOPE END
 
 euchreInit();

@@ -1,5 +1,6 @@
 
 console.log("Game loaded: bridge.js");
+{ // SCOPE START
 
 // Bridge - 4 players (1 human, 3 bots), trick-taking only (no bidding)
 const bridgeRanks = ["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
@@ -22,12 +23,14 @@ const bridgeLogDiv = document.getElementById("log");
 const bridgeScoreboard = document.getElementById("bridge-scoreboard");
 
 function bridgeInit() {
+    if(!bridgePlayerHandDiv) return;
 	bridgeDeck = createBridgeDeck();
 	shuffle(bridgeDeck);
 	bridgeHands = [[],[],[],[]];
 	for (let i = 0; i < 52; i++) {
 		bridgeHands[i%4].push(bridgeDeck[i]);
 	}
+
 	bridgeHands.forEach(h => h.sort(bridgeSort));
 	bridgeScores = [0,0,0,0];
 	bridgeTrick = [];
@@ -170,5 +173,8 @@ function bridgeAction(action) {
 }
 
 window.bridgeAction = bridgeAction;
+if(typeof bridgeInit === 'function') bridgeInit();
+
+} // SCOPE END
 
 bridgeInit();

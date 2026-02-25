@@ -1,5 +1,6 @@
 
 console.log("Game loaded: canasta.js");
+{ // SCOPE START
 
 // Canasta - 2 players (1 human, 1 bot), simplified draw/discard
 const canastaRanks = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
@@ -21,6 +22,7 @@ const canastaLogDiv = document.getElementById("log");
 const canastaScoreboard = document.getElementById("canasta-scoreboard");
 
 function canastaInit() {
+    if(!canastaPlayerHandDiv) return;
 	canastaDeck = createCanastaDeck();
 	shuffle(canastaDeck);
 	canastaHands = [[],[]];
@@ -144,5 +146,8 @@ function canastaAction(action) {
 }
 
 window.canastaAction = canastaAction;
+if(typeof canastaInit === 'function') canastaInit();
+
+} // SCOPE END
 
 canastaInit();

@@ -1,5 +1,6 @@
 
 console.log("Game loaded: snap.js");
+{ // SCOPE START
 
 // Snap - 2 players (1 human, 1 bot)
 const snapRanks = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
@@ -19,6 +20,7 @@ const snapLogDiv = document.getElementById("log");
 const snapScoreboard = document.getElementById("snap-scoreboard");
 
 function snapInit() {
+    if(!snapPlayerHandDiv) return;
 	snapDeck = createSnapDeck();
 	shuffle(snapDeck);
 	snapHands = [snapDeck.slice(0,26), snapDeck.slice(26)];
@@ -29,6 +31,7 @@ function snapInit() {
 	updateSnapUI();
 	snapLogDiv.innerHTML = "New game!";
 }
+
 
 function createSnapDeck() {
 	let deck = [];
@@ -91,34 +94,10 @@ function updateSnapUI() {
 
 	snapScoreboard.textContent = `You: ${snapScores[0]} | Bot: ${snapScores[1]}`;
 }
-	for (let i = 0; i < snapHands[0].length; i++) {
-		let c = document.createElement("div");
-		c.className = "card show";
-		c.textContent = "🂠";
-		snapPlayerHandDiv.appendChild(c);
-	}
-	// Bot hand
-	snapBotHandDiv.innerHTML = "";
-	for (let i = 0; i < snapHands[1].length; i++) {
-		let c = document.createElement("div");
-		c.className = "card show";
-		c.textContent = "🂠";
-		snapBotHandDiv.appendChild(c);
-	}
-	// Pile
-	snapPileDiv.innerHTML = "";
-	snapPile.forEach(card => {
-		let d = document.createElement("div");
-		d.className = "card show";
-		d.textContent = card;
-		snapPileDiv.appendChild(d);
-	});
-	// Scoreboard
-	snapScoreboard.textContent = `You: ${snapScores[0]} | Bot: ${snapScores[1]}`;
-}
 
 function snapAction(action) {
 	if (snapGameOver && action !== 'restart') return;
+
 	if (action === 'play') {
 		if (snapHands[snapCurrentPlayer].length === 0) return;
 		let card = snapHands[snapCurrentPlayer].shift();
@@ -169,4 +148,5 @@ function snapCheckWin() {
 
 window.snapAction = snapAction;
 
-snapInit();
+if(typeof snapInit === 'function') snapInit();
+} // SCOPE END

@@ -1,5 +1,6 @@
 
 console.log("Game loaded: spoons.js");
+{ // SCOPE START
 
 // Spoons - 2 players (1 human, 1 bot), basic pass/grab, first to grab spoon wins
 const spoonsRanks = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
@@ -22,6 +23,7 @@ const spoonsLogDiv = document.getElementById("log");
 const spoonsScoreboard = document.getElementById("spoons-scoreboard");
 
 function spoonsInit() {
+    if(!spoonsPlayerHandDiv) return;
 	spoonsDeck = createSpoonsDeck();
 	shuffle(spoonsDeck);
 	spoonsHands = [[],[]];
@@ -35,6 +37,7 @@ function spoonsInit() {
 	updateSpoonsUI();
 	spoonsLogDiv.innerHTML = "New game! Pass cards and grab the spoon when you have 4 of a kind.";
 }
+
 
 function createSpoonsDeck() {
 	let deck = [];
@@ -106,29 +109,30 @@ function updateSpoonsUI() {
 	spoonsScoreboard.textContent = `You: ${spoonsScores[0]} | Bot: ${spoonsScores[1]}`;
 }
 
-// Adjusted action handler to take index for pass
 function spoonsAction(action, idx) {
 	if (action === 'restart') return spoonsInit();
 	if (spoonsGameOver) return;
 	
-	if (action === 'pass' && typeof idx === 'number') {
-		// Pass selected card
-		// Original logic was in spoonsSelectCard
-		spoonsSelectCard(idx);
-	} else if (action === 'pass') {
-		// Maybe selecting first card default? Or do nothing?
-		// User must click card to pass usually
-		spoonsLogDiv.textContent = "Click a card to pass it!";
+	if (action === 'pass') {
+        if (typeof idx === 'number') {
+            spoonsSelectCard(idx);
+        } else {
+             // If no index, maybe bot pass or ignore
+             // If player clicks "Pass" button, we might need to select a card first?
+             // For now assume clicks on card calls spoonsAction('pass', idx)
+             if(spoonsCurrentPlayer === 0) {
+                 spoonsLogDiv.textContent = "Click a card to pass it!";
+             }
+        }
 	}
 	
 	if (action === 'grab') {
-		// Logic to grab spoon
-		// ... (assume existing logic or implementation needed)
-		// For now just logging if function missing
-		// But wait, spoonsSelectCard was defined in original file. 
-		// I should probably keep spoonsSelectCard separate or merge.
-		// The tool replaces `updateSpoonsUI` and `spoonsSelectCard` together.
-		attemptGrab(); 
+        if (spoonsSpoons > 0) {
+            spoonsSpoons--;
+            spoonsGrabbed[0] = true;
+            spoonsLogDiv.innerHTML = "You grabbed the spoon!";
+            spoonsCheckGrab();
+        }
 	}
 }
 
@@ -138,37 +142,20 @@ function spoonsSelectCard(idx) {
 	spoonsHands[0].splice(idx, 1);
 	spoonsPile.push(card);
 	// Draw new card from deck?? Spoons logic varies.
-	// Original code: spoonsHands[0].push(spoonsDeck.pop());
 	if (spoonsDeck.length > 0) {
 		spoonsHands[0].push(spoonsDeck.pop());
 	}
+    
+    // Check for 4 of a kind
+    if(spoonsHasFourOfAKind(spoonsHands[0])) {
+         spoonsLogDiv.innerHTML += "<br>You have 4 of a kind! Grab a spoon!";
+    }
+
 	spoonsCurrentPlayer = 1;
 	updateSpoonsUI();
 	setTimeout(spoonsBotTurn, 900);
 }
 
-function attemptGrab() {
-	if (spoonsSpoons > 0) {
-		spoonsSpoons--;
-		spoonsGrabbed[0] = true;
-		spoonsLogDiv.innerHTML = "You grabbed the spoon!";
-		checkWin();
-	}
-}
-
-// Missing botTurn and checkWin in this replacement, need to be careful not to overwrite them if they are outside the range.
-// The read_file showed `spoonsSelectCard` and `spoonsAction`. 
-// I will replace `updateSpoonsUI` through `spoonsAction` block.
-
-	if (action === 'pass' && spoonsCurrentPlayer === 0) {
-		// Pass first card
-		spoonsSelectCard(0);
-	}
-	if (action === 'grab' && !spoonsGrabbed[0]) {
-		spoonsGrabbed[0] = true;
-		spoonsCheckGrab();
-	}
-}
 
 function spoonsBotTurn() {
 	if (spoonsGameOver) return;
@@ -219,4 +206,5 @@ function spoonsCheckGrab() {
 
 window.spoonsAction = spoonsAction;
 
-spoonsInit();
+if (typeof spoonsInit === 'function') spoonsInit();
+} // SCOPE END

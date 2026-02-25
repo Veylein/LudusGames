@@ -1,5 +1,6 @@
 
 console.log("Game loaded: gin_rummy.js");
+{ // SCOPE START
 
 // Gin Rummy - 2 players (1 human, 1 bot), basic draw/discard/knock
 const ginRanks = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
@@ -21,6 +22,7 @@ const ginLogDiv = document.getElementById("log");
 const ginScoreboard = document.getElementById("ginrummy-scoreboard");
 
 function ginRummyInit() {
+    if(!ginPlayerHandDiv) return;
 	ginDeck = createGinDeck();
 	shuffle(ginDeck);
 	ginHands = [[],[]];
@@ -174,5 +176,8 @@ function ginCalculateScore(hand) {
 }
 
 window.ginRummyAction = ginRummyAction;
+if(typeof ginRummyInit === 'function') ginRummyInit();
+
+} // SCOPE END
 
 ginRummyInit();

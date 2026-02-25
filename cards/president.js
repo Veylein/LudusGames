@@ -1,5 +1,6 @@
 
 console.log("Game loaded: president.js");
+{ // SCOPE START
 
 // President - 2 players (1 human, 1 bot), basic play/pass
 const presRanks = ["3","4","5","6","7","8","9","10","J","Q","K","A","2"];
@@ -20,18 +21,23 @@ const presLogDiv = document.getElementById("log");
 const presScoreboard = document.getElementById("president-scoreboard");
 
 function presidentInit() {
+    if(!presPlayerHandDiv) return;
 	presDeck = createPresDeck();
 	shuffle(presDeck);
 	presHands = [[],[]];
-	for (let i = 0; i < 26; i++) presHands[i%2].push(presDeck.pop());
+	for (let i = 0; i < 26; i++) {
+        if(presDeck.length > 0)
+            presHands[i%2].push(presDeck.pop());
+    }
 	presPile = [];
 	presScores = [0,0];
 	presCurrentPlayer = 0;
 	presSelected = [];
 	presGameOver = false;
 	updatePresUI();
-	presLogDiv.innerHTML = "New game! Play a card to start.";
+	if(presLogDiv) presLogDiv.innerHTML = "New game! Play a card to start.";
 }
+
 
 function createPresDeck() {
 	let deck = [];
@@ -167,4 +173,5 @@ function presCheckWin() {
 
 window.presidentAction = presidentAction;
 
-presidentInit();
+if(typeof presidentInit === 'function') presidentInit();
+} // SCOPE END

@@ -1,5 +1,6 @@
 
 console.log("Game loaded: slapjack.js");
+{ // SCOPE START
 
 // Slapjack - 2 players (1 human, 1 bot)
 const sjRanks = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
@@ -19,6 +20,7 @@ const sjLogDiv = document.getElementById("log");
 const sjScoreboard = document.getElementById("slapjack-scoreboard");
 
 function slapjackInit() {
+    if(!sjPlayerHandDiv) return;
 	sjDeck = createSjDeck();
 	shuffle(sjDeck);
 	sjHands = [sjDeck.slice(0,26), sjDeck.slice(26)];
@@ -29,6 +31,7 @@ function slapjackInit() {
 	updateSjUI();
 	sjLogDiv.innerHTML = "New game!";
 }
+
 
 function createSjDeck() {
 	let deck = [];
@@ -94,31 +97,6 @@ function updateSjUI() {
 
 	sjScoreboard.textContent = `You: ${sjScores[0]} | Bot: ${sjScores[1]}`;
 }
-	for (let i = 0; i < sjHands[0].length; i++) {
-		let c = document.createElement("div");
-		c.className = "card show";
-		c.textContent = "🂠";
-		sjPlayerHandDiv.appendChild(c);
-	}
-	// Bot hand
-	sjBotHandDiv.innerHTML = "";
-	for (let i = 0; i < sjHands[1].length; i++) {
-		let c = document.createElement("div");
-		c.className = "card show";
-		c.textContent = "🂠";
-		sjBotHandDiv.appendChild(c);
-	}
-	// Pile
-	sjPileDiv.innerHTML = "";
-	sjPile.forEach(card => {
-		let d = document.createElement("div");
-		d.className = "card show";
-		d.textContent = card;
-		sjPileDiv.appendChild(d);
-	});
-	// Scoreboard
-	sjScoreboard.textContent = `You: ${sjScores[0]} | Bot: ${sjScores[1]}`;
-}
 
 function slapjackAction(action) {
 	if (sjGameOver && action !== 'restart') return;
@@ -132,6 +110,7 @@ function slapjackAction(action) {
 		updateSjUI();
 		sjCheckWin();
 	} else if (action === 'slap') {
+
 		if (sjPile.length === 0) return;
 		let top = sjPile[sjPile.length-1];
 		if (top.slice(0,-1) === "J") {
@@ -170,4 +149,5 @@ function sjCheckWin() {
 
 window.slapjackAction = slapjackAction;
 
-slapjackInit();
+if(typeof slapjackInit === 'function') slapjackInit();
+} // SCOPE END

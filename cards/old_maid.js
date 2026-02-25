@@ -1,5 +1,6 @@
 
 console.log("Game loaded: old_maid.js");
+{ // SCOPE START
 
 // Old Maid - 3 players (1 human, 2 bots)
 const omRanks = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
@@ -18,6 +19,7 @@ const omLogDiv = document.getElementById("log");
 const omScoreboard = document.getElementById("old-maid-scoreboard");
 
 function oldMaidInit() {
+    if(!omPlayerHandDiv) return;
 	omDeck = createOmDeck();
 	shuffle(omDeck);
 	omHands = [[],[],[]];
@@ -164,5 +166,8 @@ function oldMaidAction(action) {
 }
 
 window.oldMaidAction = oldMaidAction;
+if(typeof oldMaidInit === 'function') oldMaidInit();
+
+} // SCOPE END
 
 oldMaidInit();
