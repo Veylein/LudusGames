@@ -183,62 +183,79 @@ function showFloatText(text, color) {
     setTimeout(() => floater.remove(), 1500);
 }
 
+/* GLOBAL CSS INJECTION FOR DYNAMIC ELEMENTS */
 const styleSheet = document.createElement("style");
-styleSheet.innerText = `
-@keyframes floatUpFade {
-    0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    100% { opacity: 0; transform: translate(-50%, -150%) scale(1.5); }
-}
-.fixed-corner { position: fixed !important; top: 20px; left: 20px; z-index: 1000; }
+styleSheet.textContent = `
+    @keyframes floatUpFade {
+        0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        100% { opacity: 0; transform: translate(-50%, -150%) scale(1.5); }
+    }
+    .fixed-corner { 
+        position: fixed !important; 
+        top: 20px; 
+        left: 20px; 
+        z-index: 99999 !important; 
+        background: rgba(0,0,0,0.8);
+        color: white !important;
+        padding: 10px 15px;
+        border: 2px solid var(--accent-color, #00ff9d);
+        border-radius: 5px;
+        font-family: 'Press Start 2P', monospace;
+        text-decoration: none !important;
+        box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        cursor: pointer;
+        display: block !important;
+    }
+    .fixed-corner:hover {
+        background: var(--accent-color, #00ff9d);
+        color: black !important;
+    }
 `;
 document.head.appendChild(styleSheet);
 
 
 /* NAVIGATION */
 function ensureBackButton() {
-    // Only run in sub-pages (Added /arcade/)
-    if (window.location.pathname.includes("/cards/") || window.location.pathname.includes("/board/") || window.location.pathname.includes("/connections/") || window.location.pathname.includes("/arcade/")) {
+    // Determine context
+    const path = window.location.pathname;
+    const isArcadeGame = path.includes("/arcade/") && !path.endsWith("/arcade/index.html");
+    const isCardGame = path.includes("/cards/") && !path.endsWith("/cards/index.html");
+    const isBoardGame = path.includes("/board/") && !path.endsWith("/board/index.html");
+    
+    // Only add button if we are deep in a game
+    if (isArcadeGame || isCardGame || isBoardGame) {
         
-        // Remove old 'EXIT' button if it was auto-created previously to avoid dupes
+        let targetUrl = "../index.html"; // Default up one level (e.g. arcade/game -> arcade/)
+        
+        // Remove existing to avoid dupes
         const oldBtn = document.querySelector(".back-button.fixed-corner");
         if (oldBtn) oldBtn.remove();
-
-        // Find the top bar to inject the home button
-        // Compatible with both .top-bar and header.nav
+        
+        // Find existing nav bar
         const topBar = document.querySelector(".top-bar") || document.querySelector("header.nav");
         
         if (topBar) {
-            // Check if home button already exists
+            // Inject into header if it exists
             if (!topBar.querySelector(".home-button")) {
                 const homeBtn = document.createElement("a");
-                // Determine target based on depth?
-                // For arcade games (depth 2), we want to go back to arcade root (depth 1)
-                // ../index.html usually works relative to current file.
-                homeBtn.href = "../index.html"; 
+                homeBtn.href = targetUrl;
                 homeBtn.className = "home-button";
-                homeBtn.innerHTML = "🏠"; // House Emoji
+                homeBtn.innerHTML = "🏠"; 
                 homeBtn.title = "Back";
-                
-                // Style it right here or via class
-                homeBtn.style.marginLeft = "auto"; // Push to right if flex
-                homeBtn.style.fontSize = "24px";
-                homeBtn.style.textDecoration = "none";
-                homeBtn.style.filter = "drop-shadow(0 0 5px var(--accent-color))";
-                homeBtn.style.cursor = "pointer";
-                
+                Object.assign(homeBtn.style, {
+                    marginLeft: "auto", fontSize: "24px", 
+                    textDecoration: "none", cursor: "pointer",
+                    filter: "drop-shadow(0 0 5px var(--accent-color))"
+                });
                 topBar.appendChild(homeBtn);
             }
         } else {
-            // Fallback if no top-bar (Arcade Cabinet screens usually need this)
-            let btn = document.querySelector(".back-button");
-            if (!btn) {
-                btn = document.createElement("a");
-                // If we are deep in arcade/galaga/, ../index.html -> arcade/index.html. Perfect.
-                btn.href = "../index.html";
-                btn.className = "back-button fixed-corner";
-                btn.innerText = "🏠 EXIT";
-                document.body.appendChild(btn);
-            }
+            // Floating button fallback
+            const btn = document.createElement("a");
+            btn.href = targetUrl;
+            btn.className = "back-button fixed-corner";
+            btn.innerHTML = "🏠 EXIT";
+            document.body.appendChild(btn);
         }
     }
 }
@@ -347,6 +364,7 @@ if (window.location.pathname.includes("/cards/") || window.location.pathname.inc
             // 3. RE-EXECUTE SCRIPTS (CRITICAL)
             // We must manually recreate script tags for them to execute
             const scripts = document.body.querySelectorAll('script');
+            const scriptPromises = [];
 
             scripts.forEach(oldScript => {
                 const newScript = document.createElement('script');
@@ -361,13 +379,31 @@ if (window.location.pathname.includes("/cards/") || window.location.pathname.inc
                 if (src && src.includes('ui.js')) return;
 
                 if (src) {
-                    newScript.src = src; // Browser resolves relative to new current URL
+                    newScript.src = src; 
+                    // Track loading so we can trigger events after
+                    scriptPromises.push(new Promise(resolve => {
+                        newScript.onload = resolve;
+                        newScript.onerror = resolve; // Continue even if error
+                    }));
                 } else {
                     newScript.textContent = oldScript.textContent;
                 }
                 
                 // Replace in DOM to execute
                 oldScript.parentNode.replaceChild(newScript, oldScript);
+            });
+            
+            // Wait for scripts to load, then trigger a simulated DOMContentLoaded
+            // This fixes games that wait for the event which already fired
+            Promise.all(scriptPromises).then(() => {
+                const event = document.createEvent("Event");
+                event.initEvent("DOMContentLoaded", true, true);
+                document.dispatchEvent(event);
+                
+                // Also trigger window.onload for older games
+                const loadEvent = document.createEvent("Event");
+                loadEvent.initEvent("load", true, true);
+                window.dispatchEvent(loadEvent);
             });
 
             // 4. RE-INIT GLOBALS
