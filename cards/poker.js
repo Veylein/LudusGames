@@ -1,6 +1,7 @@
 
 console.log("Game loaded: poker.js");
 
+{ // SCOPE START
 // Poker (Texas Hold'em) - Simple Single Player vs Bot
 const pokerRanks = ["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
 const pokerSuits = ["\u2660", "\u2665", "\u2666", "\u2663"];
@@ -21,7 +22,9 @@ const botHandDiv = document.getElementById("bot-hand");
 const communityDiv = document.getElementById("community-cards");
 
 function pokerInit() {
+    if (!playerHandDiv) return;
     const logDiv = document.getElementById("log");
+
 	pokerDeck = createPokerDeck();
 	shuffle(pokerDeck);
 	playerHand = [pokerDeck.pop(), pokerDeck.pop()];
@@ -169,18 +172,22 @@ function nextPokerStage() {
 		// Winner determination
 		let winner = Math.random() < 0.5 ? 'player' : 'bot';
 		if (winner === 'player') {
-			if (window.addPoints) window.addPoints(100);
+			if (typeof window.addPoints === 'function') window.addPoints(100);
 			logDiv.innerHTML += '<br>You win the pot!';
 			playerChips += pot;
 		} else {
 			logDiv.innerHTML += '<br>Bot wins the pot!';
 			botChips += pot;
 		}
+		pot = 0; // Clear Pot
 		updatePokerUI();
 		setTimeout(pokerInit, 3000);
 	}
 }
 
+// Global Export
 window.pokerAction = pokerAction;
 
-pokerInit();
+if (typeof pokerInit === 'function') pokerInit();
+
+} // SCOPE END

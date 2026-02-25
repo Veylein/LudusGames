@@ -1,4 +1,5 @@
 console.log("Game loaded: rummy.js");
+{ // SCOPE
 
 // Rummy game logic will go here
 // Rummy - 2 players (1 human, 1 bot)
@@ -21,6 +22,7 @@ const rummyLogDiv = document.getElementById("log");
 const rummyScoreboard = document.getElementById("rummy-scoreboard");
 
 function rummyInit() {
+    if(!rummyPlayerHandDiv) return;
 	rummyDeck = createRummyDeck();
 	shuffle(rummyDeck);
 	rummyHands = [[],[]];
@@ -143,5 +145,8 @@ function rummyAction(action) {
 }
 
 window.rummyAction = rummyAction;
+if(typeof rummyInit === 'function') rummyInit();
+
+} // SCOPE END
 
 rummyInit();

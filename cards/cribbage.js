@@ -1,5 +1,6 @@
 
 console.log("Game loaded: cribbage.js");
+{ // SCOPE
 
 // Cribbage - 2 players (1 human, 1 bot), simplified pegging only
 const cribRanks = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
@@ -18,6 +19,7 @@ const cribLogDiv = document.getElementById("log");
 const cribScoreboard = document.getElementById("cribbage-scoreboard");
 
 function cribbageInit() {
+    if(!cribPlayerHandDiv) return;
 	cribDeck = createCribDeck();
 	shuffle(cribDeck);
 	cribHands = [[],[]];
@@ -27,7 +29,7 @@ function cribbageInit() {
 	cribCurrentPlayer = 0;
 	cribGameOver = false;
 	updateCribUI();
-	cribLogDiv.innerHTML = "New game! (pegging only)";
+	if(cribLogDiv) cribLogDiv.innerHTML = "New game! (pegging only)";
 }
 
 function createCribDeck() {
@@ -120,5 +122,8 @@ function cribbageAction(action) {
 }
 
 window.cribbageAction = cribbageAction;
+if(typeof cribbageInit === 'function') cribbageInit();
+
+} // SCOPE END
 
 cribbageInit();

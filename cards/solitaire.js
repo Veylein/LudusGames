@@ -1,6 +1,7 @@
 
 console.log("Game loaded: solitaire.js");
 
+{ // SCOPE START
 // Solitaire (Klondike) - Basic Implementation
 const solRanks = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
 const solSuits = ["\u2660","\u2665","\u2666","\u2663"];
@@ -17,7 +18,10 @@ const logDiv = document.getElementById("log");
 const scoreboard = document.getElementById("solitaire-scoreboard");
 
 function solitaireInit() {
+    if (!boardDiv) return; // Guard
 	solDeck = createSolDeck();
+    // ...
+
 	shuffle(solDeck);
 	tableau = [];
 	foundations = [[],[],[],[]];
@@ -170,6 +174,9 @@ function solitaireAction(action) {
 	if (action === 'restart') solitaireInit();
 }
 
+// Global Export
 window.solitaireAction = solitaireAction;
 
-solitaireInit();
+if (typeof solitaireInit === 'function') solitaireInit();
+
+} // SCOPE END

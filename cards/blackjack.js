@@ -1,5 +1,5 @@
 /* SINGLE PLAYER RETRO BLACKJACK */
-
+{
 const ranks = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
 const suits = ["\u2660", "\u2665", "\u2666", "\u2663"];
 
@@ -48,6 +48,7 @@ function calculateScore(hand) {
     let score = 0;
     let aces = 0;
     for (const c of hand) {
+
         score += c.value;
         if (c.rank === "A") aces++;
     }
@@ -224,4 +225,8 @@ function updateDisplay(showDealer = false) {
 
 window.newGame = newGame;
 window.blackjackAction = blackjackAction;
-messageLog.innerText = "Press New Hand to Start";
+
+if (typeof messageLog !== 'undefined' && messageLog) {
+   messageLog.innerText = "Press New Hand to Start";
+}
+} // End scope

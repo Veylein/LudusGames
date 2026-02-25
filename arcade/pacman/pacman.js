@@ -228,8 +228,15 @@ class PacmanGame {
         if (!this.isGameRunning) return;
         if (this.isPaused) return;
 
-        this.update();
-        this.draw();
+        try {
+            this.update();
+            this.draw();
+        } catch (e) {
+            console.error("Game Loop Error:", e);
+            this.isGameRunning = false;
+            return;
+        }
+        
         this.animationId = requestAnimationFrame(() => this.loop());
     }
 
@@ -365,12 +372,27 @@ class PacmanGame {
                      // Dead end (shouldn't happen often in this map), reverse
                      g.dx *= -1;
                      g.dy *= -1;
+                     
+                     // Prevent stuck
+                     if (g.dx === 0 && g.dy === 0) {
+                         g.dx = 1; // Force move
+                     }
                  }
             }
             
             let speed = g.scared ? g.speed * 0.5 : g.speed;
             g.pixelX += g.dx * speed * this.tileSize;
             g.pixelY += g.dy * speed * this.tileSize;
+            
+            if (isNaN(g.pixelX) || isNaN(g.pixelY)) {
+                // Reset ghost if corrupt
+                g.x = 10;
+                g.y = 10;
+                g.pixelX = 200;
+                g.pixelY = 200;
+                g.dx = 1;
+                g.dy = 0;
+            }
             
             // Tunnel
             if (g.pixelX < -this.tileSize) g.pixelX = this.canvas.width;
@@ -385,6 +407,8 @@ class PacmanGame {
         const pCy = this.player.pixelY + pRadius;
 
         this.ghosts.forEach(g => {
+            if (g.dead) return; // Dead ghosts don't kill you
+
             const gCx = g.pixelX + this.tileSize / 2;
             const gCy = g.pixelY + this.tileSize / 2;
             
@@ -395,6 +419,7 @@ class PacmanGame {
                 if (g.scared) {
                     // Eat Ghost
                     g.dead = true;
+                    // Respawn logic or point logic
                     this.score += 200;
                     this.updateScore();
                 } else {
@@ -546,10 +571,10 @@ class PacmanGame {
     }
 
     updateScore() {
-        this.scoreEl.innerText = this.score;
+        if(this.scoreEl) this.scoreEl.innerText = this.score;
         if (this.score > this.highScore) {
             this.highScore = this.score;
-            this.highScoreElement.innerText = this.highScore;
+            if(this.highScoreEl) this.highScoreEl.innerText = this.highScore;
             localStorage.setItem('pacmanHighScore', this.highScore);
         }
     }
@@ -558,16 +583,18 @@ class PacmanGame {
         this.isGameRunning = false;
         if(this.animationId) cancelAnimationFrame(this.animationId);
         
-        this.finalScoreElement.innerText = this.score;
-        const title = this.gameOverScreen.querySelector('h2');
-        if (won) {
-            title.innerText = "YOU WIN!";
-            title.style.color = "#00ff9d";
-        } else {
-            title.innerText = "GAME OVER";
-            title.style.color = "#ff0055";
+        if(this.finalScoreEl) this.finalScoreEl.innerText = this.score;
+        const title = this.gameOverScreen ? this.gameOverScreen.querySelector('h2') : null;
+        if (title) {
+            if (won) {
+                title.innerText = "YOU WIN!";
+                title.style.color = "#00ff9d";
+            } else {
+                title.innerText = "GAME OVER";
+                title.style.color = "#ff0055";
+            }
         }
-        this.gameOverScreen.style.display = 'flex';
+        if(this.gameOverScreen) this.gameOverScreen.style.display = 'flex';
     }
 
     handleInput(e) {

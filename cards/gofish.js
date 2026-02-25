@@ -1,4 +1,6 @@
 console.log("Game loaded: gofish.js");
+{ // SCOPE
+
 const botHandDiv = document.getElementById("bot-hand");
 const ranks = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
 
@@ -18,7 +20,7 @@ const askRankSelect = document.getElementById("ask-rank");
 const scoreboard = document.getElementById("scoreboard");
 
 function initGame() {
-    createDeck();
+    if(!playerHandDiv) return;
     shuffle(deck);
 
     playerHand = deck.splice(0, 5);
@@ -198,8 +200,16 @@ function checkWin() {
 }
 
 function log(message) {
-    logDiv.innerHTML += message + "<br>";
-    logDiv.scrollTop = logDiv.scrollHeight;
+    if(logDiv) {
+        logDiv.innerHTML += message + "<br>";
+        logDiv.scrollTop = logDiv.scrollHeight;
+    }
 }
 
-initGame();
+// Global Export
+window.askForCard = askForCard;
+window.initGame = initGame;
+
+if(typeof initGame === 'function') initGame();
+
+} // SCOPE END

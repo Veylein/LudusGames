@@ -1,6 +1,7 @@
 
 console.log("Game loaded: hearts.js");
 
+{ // SCOPE
 // Hearts - Basic 4-player (1 human, 3 bots)
 const heartsRanks = ["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
 const heartsSuits = ["\u2660","\u2665","\u2666","\u2663"];
@@ -14,6 +15,7 @@ let currentPlayer = 0;
 let heartsBroken = false;
 let roundOver = false;
 
+// DOM
 const playerHandDiv = document.getElementById("player-hand");
 const bot1HandDiv = document.getElementById("bot1-hand");
 const bot2HandDiv = document.getElementById("bot2-hand");
@@ -23,10 +25,12 @@ const logDiv = document.getElementById("log");
 const scoreboard = document.getElementById("hearts-scoreboard");
 
 function heartsInit() {
+    if (!playerHandDiv) return;
 	heartsDeck = createHeartsDeck();
 	shuffle(heartsDeck);
 	hands = [[],[],[],[]];
 	for (let i = 0; i < 52; i++) {
+
 		hands[i%4].push(heartsDeck[i]);
 	}
 	hands.forEach(h => h.sort(heartsSort));
@@ -172,6 +176,11 @@ function botPlay() {
 function heartsAction(action) {
 	if (action === 'restart') heartsInit();
 }
+
+window.heartsAction = heartsAction;
+if(typeof heartsInit === 'function') heartsInit();
+
+} // SCOPE END
 
 window.heartsAction = heartsAction;
 

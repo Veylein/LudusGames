@@ -1,5 +1,6 @@
 
 /* WAR - BATTLE CARD GAME */
+{ // SCOPE
 
 const ranks = ["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
 const suits = ["\u2660", "\u2665", "\u2666", "\u2663"];
@@ -25,6 +26,7 @@ function createDeck() {
     let d = [];
     for (let s of suits) {
         for (let r of ranks) {
+
             d.push({ rank: r, suit: s, value: ranks.indexOf(r) + 2 });
         }
     }
@@ -173,15 +175,17 @@ function winRound(winner) {
 function checkWin() {
     if (playerDeck.length === 0) {
         gameActive = false;
-        logDiv.innerHTML = "DEFEAT! Bot has all the cards!";
+        if(logDiv) logDiv.innerHTML = "DEFEAT! Bot has all the cards!";
     } else if (botDeck.length === 0) {
         gameActive = false;
-        logDiv.innerHTML = "VICTORY! You have all the cards!";
+        if(logDiv) logDiv.innerHTML = "VICTORY! You have all the cards!";
         if (window.addPoints) window.addPoints(500);
     }
     updateUI();
 }
 
 window.warAction = warAction;
-warInit();
+if(typeof warInit === 'function') warInit();
+
+} // SCOPE END
 

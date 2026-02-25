@@ -1,6 +1,7 @@
 
 console.log("Game loaded: spades.js");
 
+{ // SCOPE
 // Spades - Basic 4-player (1 human, 3 bots)
 const spadesRanks = ["2","3","4","5","6","7","8","9","10","J","Q","K","A"];
 const spadesSuits = ["\u2660","\u2665","\u2666","\u2663"];
@@ -23,10 +24,12 @@ const logDiv = document.getElementById("log");
 const scoreboard = document.getElementById("spades-scoreboard");
 
 function spadesInit() {
+    if (!playerHandDiv) return;
 	spadesDeck = createSpadesDeck();
 	shuffle(spadesDeck);
 	hands = [[],[],[],[]];
 	for (let i = 0; i < 52; i++) {
+
 		hands[i%4].push(spadesDeck[i]);
 	}
 	hands.forEach(h => h.sort(spadesSort));
@@ -192,6 +195,12 @@ function spadesAction(action) {
 	if (action === 'restart') spadesInit();
 }
 
+// Global Export
 window.spadesAction = spadesAction;
+
+// Run Init
+if(typeof spadesInit === 'function') spadesInit();
+
+} // SCOPE END
 
 spadesInit();

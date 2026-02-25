@@ -1,5 +1,6 @@
 
 console.log("Game loaded: crazy_eights.js");
+{ // SCOPE
 
 // Crazy Eights - 3 players (1 human, 2 bots)
 const ceRanks = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
@@ -22,12 +23,14 @@ const ceLogDiv = document.getElementById("log");
 const ceScoreboard = document.getElementById("crazy-eights-scoreboard");
 
 function crazyEightsInit() {
+    if(!cePlayerHandDiv) return;
 	ceDeck = createCeDeck();
 	shuffle(ceDeck);
 	ceHands = [[],[],[]];
 	for (let i = 0; i < 21; i++) ceHands[i%3].push(ceDeck.pop());
 	ceDiscard = [ceDeck.pop()];
 	ceDraw = ceDeck;
+
 	ceCurrentPlayer = 0;
 	ceGameOver = false;
 	updateCeUI();
@@ -170,5 +173,8 @@ function crazyEightsAction(action) {
 }
 
 window.crazyEightsAction = crazyEightsAction;
+if(typeof crazyEightsInit === 'function') crazyEightsInit();
+
+} // SCOPE END
 
 crazyEightsInit();
