@@ -560,7 +560,9 @@ button:active, .retro-btn:active {
 }
 
 /* Hide old content completely so it doesn't interfere */
-.lobby-page .hero, 
+/* ONLY hide on the actual lobby page if needed. 
+   sub-pages use .hero heavily, so we must be precise */
+.lobby-page > .hero, 
 .lobby-page .hub-grid, 
 .lobby-page .section-grid {
     display: none !important;

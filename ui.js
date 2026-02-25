@@ -241,3 +241,17 @@ window.addPoints = addPoints;
 window.getPoints = () => userPoints;
 window.getDifficulty = getDifficulty;
 
+/* FIX: Ensure sub-pages aren't hidden by 'lobby-page' CSS or stale overlays */
+if (window.location.pathname.includes("/cards/") || window.location.pathname.includes("/board/") || window.location.pathname.includes("/arcade/") || window.location.pathname.includes("/connections/")) {
+    // 1. Remove 'lobby-page' class to unhide .hero
+    document.body.classList.remove("lobby-page");
+    
+    // 2. Force display of .hero content
+    const hero = document.querySelector(".hero");
+    if (hero) hero.style.display = "block";
+
+    // 3. Remove any lingering lobby overlay if copied by mistake
+    const lobbyOverlay = document.querySelector(".lobby-wrapper");
+    if (lobbyOverlay) lobbyOverlay.remove();
+}
+
