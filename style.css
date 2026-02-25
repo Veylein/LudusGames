@@ -413,6 +413,58 @@ button:active, .retro-btn:active {
     z-index: 2;
 }
 
+/* --- RETRO GAME BUTTONS (GLOBAL) --- */
+
+/* Grid container to ensure buttons wrap nicely */
+.card-games-grid, .section-card-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px;
+}
+
+.game-link {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-decoration: none;
+    background: #000;
+    border: 4px solid #fff;
+    color: #fff;
+    padding: 20px;
+    margin: 10px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 14px;
+    text-transform: uppercase;
+    position: relative;
+    transition: transform 0.1s, box-shadow 0.1s, background 0.2s;
+    box-shadow: 6px 6px 0 rgba(0,0,0,0.5), 6px 6px 0 2px #fff;
+    text-align: center;
+    min-width: 180px;
+    min-height: 80px;
+    cursor: pointer;
+}
+
+.game-link:hover {
+    transform: translate(-2px, -2px);
+    background: var(--text-color); /* Retro Green */
+    box-shadow: 8px 8px 0 rgba(0,0,0,0.5), 8px 8px 0 2px #fff;
+    color: #000;
+    z-index: 10;
+}
+
+.game-link:active {
+    transform: translate(4px, 4px);
+    box-shadow: 2px 2px 0 rgba(0,0,0,0.5), 2px 2px 0 2px #fff;
+}
+
+.game-link span {
+    position: relative;
+    z-index: 2;
+    text-shadow: 2px 2px 0 #000;
+}
+
 /* Card Specific Colors */
 .card-cards { --highlight-color: #ff3333; border-color: #ff3333; }
 .card-board { --highlight-color: #33ff33; border-color: #33ff33; }
