@@ -451,8 +451,9 @@ button:active, .retro-btn:active {
 .map-zone {
     position: absolute;
     display: block;
-    /* borders for debugging (remove later if needed) */
-    /* border: 2px solid rgba(255, 0, 0, 0.3); */
+    /* DEBUG LAYOUT: clear borders to help alignment */
+    border: 3px solid #ff00ff; 
+    background: rgba(255, 0, 255, 0.1);
     cursor: pointer;
     z-index: 10;
     text-decoration: none;
@@ -505,7 +506,9 @@ button:active, .retro-btn:active {
 }
 
 /* Hide old content completely so it doesn't interfere */
-.hero, .hub-grid, .section-grid {
+.lobby-page .hero, 
+.lobby-page .hub-grid, 
+.lobby-page .section-grid {
     display: none !important;
 }
 
