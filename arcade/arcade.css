@@ -74,49 +74,59 @@ button:active {
 }
 
 
-/* Enhanced Game Links - Original Arcade Style */
+/* Enhanced Game Links - Retro Button Style */
 .game-link {
     display: flex;
     justify-content: center;
     align-items: center;
     text-decoration: none;
-    background: #111;
-    border: 4px solid #555;
-    color: #0f0; /* Retro Green Default */
+    background: #000;
+    border: 4px solid #fff;
+    color: #fff; /* White base text */
     padding: 20px;
     margin: 10px;
     font-family: 'Press Start 2P', cursive;
-    font-size: 12px;
+    font-size: 14px;
     text-transform: uppercase;
     position: relative;
     overflow: hidden;
-    transition: all 0.2s;
-    box-shadow: 0 0 10px rgba(0, 255, 0, 0.2), inset 0 0 20px rgba(0,0,0,0.8);
+    transition: transform 0.1s, box-shadow 0.1s, background 0.2s;
+    box-shadow: 6px 6px 0 rgba(0,0,0,0.5), 6px 6px 0 2px #fff;
     text-align: center;
-    min-width: 150px;
-    min-height: 60px;
+    min-width: 180px; /* Wider buttons */
+    min-height: 80px; /* Taller buttons */
 }
 
 .game-link:hover {
-    transform: scale(1.05);
-    background: #000;
-    border-color: #0f0;
-    color: #fff;
-    box-shadow: 0 0 20px #0f0, inset 0 0 10px #0f0;
+    transform: translate(-3px, -3px);
+    background: #333; /* Dark gray hover */
+    border-color: #0f0; /* Green highlight on hover */
+    color: #0f0;
+    box-shadow: 10px 10px 0 rgba(0,0,0,0.5), 10px 10px 0 2px #0f0;
     z-index: 10;
 }
 
+.game-link:active {
+    transform: translate(4px, 4px);
+    box-shadow: 2px 2px 0 rgba(0,0,0,0.5), 2px 2px 0 2px #fff;
+}
+
 .game-link::before {
-    content: "";
+    content: ""; /* Scanline glint */
     position: absolute;
     top: 0; left: -100%;
-    width: 100%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    transition: left 0.5s;
+    width: 200%; height: 100%;
+    background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
+    transition: none;
 }
 
 .game-link:hover::before {
-    left: 100%;
+    animation: shine 0.5s ease-in-out;
+}
+
+@keyframes shine {
+    0% { left: -100%; }
+    100% { left: 100%; }
 }
 
 .game-link span {
@@ -125,21 +135,21 @@ button:active {
     text-shadow: 2px 2px 0 #000;
 }
 
-/* Unique Colors per Game (Optional) */
-.game-link[href*="pacman"] { border-color: #ffff00; color: #ffff00; }
-.game-link[href*="pacman"]:hover { box-shadow: 0 0 20px #ffff00; }
+/* Unique Colors per Game (ARCADE SPECIFIC) */
+.game-link[href*="pacman"] { border-color: #ffff00; color: #ffff00; box-shadow: 6px 6px 0 rgba(0,0,0,0.5), 6px 6px 0 2px #ffff00; }
+.game-link[href*="pacman"]:hover { background: #ffff00; color: #000; box-shadow: 10px 10px 0 rgba(0,0,0,0.5), 10px 10px 0 2px #ffff00; }
 
-.game-link[href*="mario"], .game-link[href*="kong"] { border-color: #ff0000; color: #ff0000; }
-.game-link[href*="mario"]:hover, .game-link[href*="kong"]:hover { box-shadow: 0 0 20px #ff0000; }
+.game-link[href*="mario"], .game-link[href*="kong"] { border-color: #ff0000; color: #ff0000; box-shadow: 6px 6px 0 rgba(0,0,0,0.5), 6px 6px 0 2px #ff0000; }
+.game-link[href*="mario"]:hover, .game-link[href*="kong"]:hover { background: #ff0000; color: #fff; box-shadow: 10px 10px 0 rgba(0,0,0,0.5), 10px 10px 0 2px #ff0000; }
 
-.game-link[href*="tetris"] { border-color: #00ffff; color: #00ffff; }
-.game-link[href*="tetris"]:hover { box-shadow: 0 0 20px #00ffff; }
+.game-link[href*="tetris"] { border-color: #00ffff; color: #00ffff; box-shadow: 6px 6px 0 rgba(0,0,0,0.5), 6px 6px 0 2px #00ffff; }
+.game-link[href*="tetris"]:hover { background: #00ffff; color: #000; box-shadow: 10px 10px 0 rgba(0,0,0,0.5), 10px 10px 0 2px #00ffff; }
 
-.game-link[href*="invaders"] { border-color: #00ff00; color: #00ff00; }
-.game-link[href*="invaders"]:hover { box-shadow: 0 0 20px #00ff00; }
+.game-link[href*="invaders"] { border-color: #00ff00; color: #00ff00; box-shadow: 6px 6px 0 rgba(0,0,0,0.5), 6px 6px 0 2px #00ff00; }
+.game-link[href*="invaders"]:hover { background: #00ff00; color: #000; box-shadow: 10px 10px 0 rgba(0,0,0,0.5), 10px 10px 0 2px #00ff00; }
 
-.game-link[href*="fighting"] { border-color: #ff8800; color: #ff8800; }
-.game-link[href*="fighting"]:hover { box-shadow: 0 0 20px #ff8800; }
+.game-link[href*="fighting"] { border-color: #ff8800; color: #ff8800; box-shadow: 6px 6px 0 rgba(0,0,0,0.5), 6px 6px 0 2px #ff8800; }
+.game-link[href*="fighting"]:hover { background: #ff8800; color: #000; box-shadow: 10px 10px 0 rgba(0,0,0,0.5), 10px 10px 0 2px #ff8800; }
 
 /* Scanline Effect */
 .scanlines {

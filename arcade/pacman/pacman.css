@@ -1,42 +1,116 @@
-body {
-    background-color: #000;
-    color: #e6edf3;
-    font-family: 'Press Start 2P', monospace;
+/* --- NEW ARCADE CABINET OVERLAY --- */
+
+/* This background pattern represents the carpet or wall of an arcade */
+body.theme-arcade {
+    background-color: #111;
+    background-image: 
+        radial-gradient(circle, #222 20%, transparent 21%),
+        radial-gradient(circle, #222 20%, transparent 21%);
+    background-size: 30px 30px;
+    background-position: 0 0, 15px 15px;
+    color: #fff;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
     margin: 0;
-    overflow: hidden;
-    /* Cabinet Bezel */
-    box-shadow: inset 0 0 100px #000;
+    overflow-x: hidden;
 }
 
+/* The physical cabinet container */
 .game-container {
+    background-color: #000;
+    border: 20px solid #FEF200; /* Pacman Yellow Cabinet */
+    border-radius: 20px 20px 0 0;
+    box-shadow: 
+        inset 0 0 50px rgba(0,0,0,0.8), /* Inner shadow for depth */
+        0 0 0 10px #D3AA00, /* Side molding */
+        0 20px 50px rgba(0,0,0,0.8); /* Cast shadow */
+    width: 600px;
+    max-width: 95vw;
+    padding: 20px;
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 100%;
-    max-width: 800px;
-    padding: 20px;
-    border: 4px solid #111;
-    border-radius: 20px;
-    background: #050505;
-    box-shadow: 
-        0 0 0 10px #111,
-        0 0 0 15px #222,
-        0 0 50px rgba(255, 255, 0, 0.1);
+    margin-top: 20px;
 }
 
+/* Side Art / Cabinet Stickers (Simulated) */
+.game-container::before {
+    content: "PAC-MAN";
+    position: absolute;
+    top: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #FEF200;
+    font-size: 40px;
+    font-family: 'Press Start 2P', cursive;
+    text-shadow: 4px 4px 0 #D3AA00, 0 0 20px rgba(255, 255, 0, 0.5);
+    background: #000;
+    padding: 10px 20px;
+    border: 4px solid #FEF200;
+    z-index: 100;
+}
+
+/* The Screen Area (CRT) */
+.canvas-wrapper {
+    position: relative;
+    padding: 20px;
+    background: #111;
+    border-radius: 50% 50% 5% 5% / 5% 5% 2% 2%; /* Slight curvature for CRT effect */
+    box-shadow: inset 0 0 40px rgba(0,0,0,1);
+    border: 2px solid #333;
+    overflow: hidden;
+}
+
+/* Joystick Panel Area */
+.controls {
+    margin-top: 30px;
+    background: #333;
+    width: 100%;
+    padding: 20px;
+    border-top: 10px solid #FEF200;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 0 0 10px 10px;
+    background-image: repeating-linear-gradient(45deg, #333, #333 10px, #444 10px, #444 20px);
+}
+
+/* Joystick Graphic (Visual Only) */
+.controls::before {
+    content: "🕹️";
+    font-size: 60px;
+    text-shadow: 0 5px 0 #000;
+    display: block;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5));
+}
+
+#gameCanvas {
+    /* Screen styling */
+    background-color: black;
+    border: 2px solid #222;
+    display: block;
+    margin: 0 auto;
+    /* CRT curved screen effect */
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,255, 0.3);
+} 
+
+/* Hide old header stuff or reintegrate it */
 header {
     width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    border-bottom: 2px dashed #333;
-    padding-bottom: 15px;
+    border-bottom: none;
+    padding-bottom: 0;
 }
+
+/* --- END CABINET OVERLAY --- */
 
 h1 {
     color: #ffff00;
