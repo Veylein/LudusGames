@@ -339,7 +339,10 @@ button:active, .retro-btn:active {
     justify-content: center;
     flex-wrap: wrap;
     gap: 30px;
-    max-width:
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
 .hub-grid {
     display: none; /* Hidden used to be flex */
     justify-content: center;
