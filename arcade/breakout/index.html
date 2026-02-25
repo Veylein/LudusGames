@@ -22,21 +22,25 @@
 </head>
 <body class="theme-arcade">
 
-    <div class="game-container">
-        <header>
-            <a href="../index.html" class="back-link">← Back to Arcade</a>
-            <h1 class="glow-title" data-text="BREAKOUT">BREAKOUT</h1>
-        </header>
+    <div class="arcade-cabinet">
+        <!-- CABINET HEADER / MARQUEE -->
+        <div class="cabinet-header">
+            <h1 class="cabinet-title">BREAKOUT</h1>
+            <div class="cabinet-chars">
+                <span>🧱</span><span>🏏</span><span>🧱</span>
+            </div>
+        </div>
 
-        <main>
-            <div class="breakout-container">
-                <div class="hud">
+        <!-- SCREEN BEZEL -->
+        <div class="crt-bezel">
+            <div class="game-area" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+                 <div class="hud" style="width: 100%; display: flex; justify-content: space-between; margin-bottom: 10px; color: yellow; font-size: 14px;">
                     <span>SCORE: <span id="score">0</span></span>
                     <span>LIVES: <span id="lives">3</span></span>
                 </div>
                 
-                <div class="canvas-wrapper">
-                    <canvas id="gameCanvas" width="480" height="320"></canvas>
+                <div class="canvas-wrapper" style="position: relative;">
+                    <canvas id="gameCanvas" width="480" height="320" style="max-width: 100%; border: 4px solid var(--accent-color); background: #000;"></canvas>
                     
                     <div id="start-screen" class="overlay">
                         <h2>BREAKOUT</h2>
@@ -47,16 +51,36 @@
                          <button id="restart-btn" class="retro-btn">TRY AGAIN</button>
                     </div>
                 </div>
-                
-                 <div class="controls-info">
-                    <p>LEFT/RIGHT ARROWS to move</p>
+
+                <div class="controls-info" style="margin-top: 10px; font-size: 10px; color: #aaa;">
+                     <p>Use Joystick or Arrows to Move | <a href="../index.html" style="color: #fff;">EXIT</a></p>
                 </div>
             </div>
-             <div class="mobile-controls">
-                <button id="left-btn">◀</button>
-                <button id="right-btn">▶</button>
+        </div>
+
+        <!-- CONTROL PANEL -->
+        <div class="control-panel">
+            <div class="joystick-area">
+                <div class="joystick-base">
+                    <div class="joystick-stick">
+                        <div class="joystick-ball" style="background: cyan;"></div>
+                    </div>
+                </div>
+                <div style="margin-top: 10px; font-size: 10px; color: #888;">MOVE</div>
             </div>
-        </main>
+            
+            <div class="buttons-area">
+                <div class="arcade-button btn-blue" style="width: 50px; height: 50px;" onclick="document.dispatchEvent(new KeyboardEvent('keydown', {'code': 'Space'}))"></div>
+                 <div style="margin-top: 10px; font-size: 10px; color: #888;">SERVE</div>
+            </div>
+        </div>
+
+    </div>
+    
+     <!-- Hidden Mobile Controls Bridge -->
+    <div class="mobile-controls" style="display:none;">
+        <button id="left-btn">◀</button>
+        <button id="right-btn">▶</button>
     </div>
 
     <script src="breakout.js"></script>

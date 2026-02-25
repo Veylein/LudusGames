@@ -7,66 +7,86 @@
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../../style.css">
     <link rel="stylesheet" href="../../themes.css">
+    <link rel="stylesheet" href="../arcade.css"> 
     <link rel="stylesheet" href="snake.css">
 </head>
 <body class="theme-arcade">
 
-    <div class="game-container">
-        <header>
-            <a href="../index.html" class="back-link">← Back to Arcade</a>
-            <h1 class="glow-title" data-text="SNAKE">SNAKE</h1>
-            <div class="theme-switch-wrapper">
+    <div class="arcade-cabinet">
+        <!-- CABINET HEADER -->
+        <div class="cabinet-header">
+            <h1 class="cabinet-title">SNAKE</h1>
+            <div class="cabinet-chars">
+                <span>🐍</span><span>🍏</span><span>🍄</span><span>🐛</span>
+            </div>
+            <!-- Toggle -->
+            <div class="theme-switch-wrapper" style="position: absolute; right: 10px; top: 10px; transform: scale(0.6);">
                 <label class="theme-switch" for="checkbox">
                     <input type="checkbox" id="checkbox" />
                     <div class="slider round"></div>
                 </label>
-                <em>Retro Mode</em>
             </div>
-        </header>
+        </div>
 
-        <main>
-            <div class="game-area">
-                <div class="status-bar">
+        <!-- SCREEN BEZEL -->
+        <div class="crt-bezel">
+            <div class="game-area" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+                <div class="status-bar" style="width: 100%; display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 12px; color: #0f0;">
                     <span>SCORE: <b id="score">0</b></span>
-                    <span>HIGH SCORE: <b id="high-score">0</b></span>
+                    <span>HIGH: <b id="high-score">0</b></span>
                 </div>
 
-                <div class="canvas-wrapper">
-                    <canvas id="gameCanvas" width="600" height="400"></canvas>
-                    <div id="start-screen">
+                <div class="canvas-wrapper" style="position: relative;">
+                    <canvas id="gameCanvas" width="600" height="400" style="max-width: 100%;"></canvas>
+                    <div id="start-screen" class="overlay"> 
                         <h2>PRESS SPACE TO START</h2>
                         <p>Use Arrow Keys to move</p>
                     </div>
-                    <div id="game-over-screen" style="display: none;">
+                    <div id="game-over-screen" class="overlay" style="display: none;"> 
                         <h2 style="color: #ff0055;">GAME OVER</h2>
                         <p>Score: <span id="final-score">0</span></p>
                         <button id="restart-btn" class="retro-btn">TRY AGAIN</button>
                     </div>
                 </div>
 
-                <div class="controls">
-                    <div class="difficulty-control">
-                        <span>SPEED: </span>
-                        <select id="difficulty-select">
-                            <option value="slug">Slug (Slow)</option>
-                            <option value="worm" selected>Worm (Normal)</option>
-                            <option value="python">Python (Fast)</option>
-                            <option value="cobra">Cobra (Insane)</option>
-                        </select>
-                    </div>
-                    <button id="pause-btn" class="retro-btn">PAUSE</button>
+                <div class="controls" style="margin-top: 10px; display: flex; gap: 10px; align-items: center;">
+                    <button id="pause-btn" class="retro-btn" style="padding: 5px 10px; font-size: 10px;">PAUSE</button>
+                    <select id="difficulty-select" style="background: #000; color: #fff; border: 1px solid #fff; font-family: inherit;">
+                        <option value="slug">Slug</option>
+                        <option value="worm" selected>Worm</option>
+                        <option value="python">Python</option>
+                        <option value="cobra">Cobra</option>
+                    </select>
                 </div>
-                
-                <div class="mobile-controls">
-                    <button id="up-btn">▲</button>
-                    <div class="row">
-                        <button id="left-btn">◀</button>
-                        <button id="down-btn">▼</button>
-                        <button id="right-btn">▶</button>
+            </div>
+        </div>
+
+        <!-- CONTROL PANEL -->
+        <div class="control-panel">
+            <div class="joystick-area">
+                <div class="joystick-base">
+                    <div class="joystick-stick">
+                        <div class="joystick-ball" style="background: #0f0;"></div>
                     </div>
                 </div>
             </div>
-        </main>
+            
+            <div class="buttons-area">
+                 <div class="arcade-button btn-blue" style="width: 50px; height: 50px;" onclick="document.dispatchEvent(new KeyboardEvent('keydown', {'code': 'Space'}))"></div> 
+            </div>
+        </div>
+        
+        <div class="controls-info" style="margin-top: 10px; font-size: 10px; color: #aaa;">
+            <p><a href="../index.html" style="color: #fff; text-decoration: none;">◄ EXIT TO LOBBY</a></p>
+        </div>
+    </div>
+
+    <!-- Hidden Mobile Bridge -->
+    <div class="mobile-controls" style="display:none;">
+        <button id="up-btn">▲</button>
+        <button id="left-btn">◀</button>
+        <button id="down-btn">▼</button>
+        <button id="right-btn">▶</button>
     </div>
 
     <script src="../../ui.js"></script>

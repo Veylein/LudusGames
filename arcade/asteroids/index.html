@@ -22,20 +22,24 @@
 </head>
 <body class="theme-arcade">
 
-    <div class="game-container">
-        <header>
-            <a href="../index.html" class="back-link">← Back to Arcade</a>
-            <h1 class="glow-title" data-text="ASTEROIDS">ASTEROIDS</h1>
-        </header>
+    <div class="arcade-cabinet">
+        <!-- CABINET HEADER / MARQUEE -->
+        <div class="cabinet-header">
+            <h1 class="cabinet-title">ASTEROIDS</h1>
+            <div class="cabinet-chars">
+                <span>👾</span><span>🚀</span><span>☄️</span><span>✨</span>
+            </div>
+        </div>
 
-        <main>
-            <div class="asteroids-container">
-                <div class="hud">
+        <!-- SCREEN BEZEL -->
+        <div class="crt-bezel">
+            <div class="game-container">
+                <div class="hud" style="width: 100%; display: flex; justify-content: space-between; margin-bottom: 10px; color: #fff;">
                     <span>SCORE: <span id="score">0</span></span>
                     <span>LIVES: <span id="lives">3</span></span>
                 </div>
                 
-                <div class="canvas-wrapper">
+                <div class="canvas-wrapper" style="position: relative;">
                     <canvas id="gameCanvas" width="600" height="400"></canvas>
                     
                     <div id="start-screen" class="overlay">
@@ -49,21 +53,39 @@
                         <button id="restart-btn" class="retro-btn">TRY AGAIN</button>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <div class="controls-info">
-                    <p>UP: Thrust | LEFT/RIGHT: Rotate | SPACE: Shoot</p>
+        <!-- CONTROL PANEL (Visual + Functional Mobile Fallback) -->
+        <div class="control-panel">
+            <div class="joystick-area">
+                <div class="joystick-base">
+                    <div class="joystick-stick">
+                        <div class="joystick-ball"></div>
+                    </div>
                 </div>
+                <div style="margin-top: 10px; font-size: 10px; color: #888;">MOVE</div>
             </div>
             
-            <div class="mobile-controls">
-                <button id="up-btn">▲</button>
-                <div class="row">
-                    <button id="left-btn">◀</button>
-                    <button id="fire-btn" class="fire-btn">●</button>
-                    <button id="right-btn">▶</button>
-                </div>
+            <div class="buttons-area">
+                <div class="arcade-button btn-red" onclick="document.dispatchEvent(new KeyboardEvent('keydown', {'code': 'Space'}))"></div>
+                <div class="arcade-button btn-blue"></div>
             </div>
-        </main>
+        </div>
+        
+        <div class="controls-info" style="margin-top: 10px; font-size: 10px; color: #aaa;">
+            <p>KB: ARROWS + SPACE | <a href="../index.html" style="color: #fff;">EXIT</a></p>
+        </div>
+
+    </div>
+
+    <!-- Hidden Mobile Controls Bridge for existing JS if needed, 
+         though we might want to map the visual buttons to events -->
+    <div class="mobile-controls" style="display:none;">
+        <button id="up-btn">▲</button>
+        <button id="left-btn">◀</button>
+        <button id="right-btn">▶</button>
+        <button id="fire-btn">●</button>
     </div>
 
     <script src="asteroids.js"></script>

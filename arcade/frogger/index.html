@@ -11,25 +11,31 @@
 </head>
 <body class="theme-arcade">
 
-    <div class="game-container">
-        <header>
-            <a href="../index.html" class="back-link">← Back to Arcade</a>
-            <h1 class="glow-title" data-text="FROGGER">FROGGER</h1>
-        </header>
+    <div class="arcade-cabinet">
+        <!-- CABINET HEADER / MARQUEE -->
+        <div class="cabinet-header">
+            <h1 class="cabinet-title">FROGGER</h1>
+            <div class="cabinet-chars">
+                <span>🐸</span><span>🚗</span><span>🪵</span><span>🌊</span>
+            </div>
+        </div>
 
-        <main>
-            <div class="game-area">
-                <div class="hud">
+        <!-- SCREEN BEZEL -->
+        <div class="crt-bezel">
+            <div class="game-area" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+                <div class="hud" style="width: 100%; display: flex; justify-content: space-between; margin-bottom: 10px; color: lime;">
                     <span>SCORE: <span id="score">0</span></span>
                     <span>HIGH: <span id="high-score">0</span></span>
+                    <span>LIVES: <span id="lives">3</span></span>
                 </div>
                 
-                <div class="canvas-wrapper">
-                    <canvas id="gameCanvas" width="448" height="480"></canvas>
+                <div class="canvas-wrapper" style="position: relative;">
+                    <canvas id="gameCanvas" width="448" height="480" style="max-width: 100%; height: auto; border: 4px solid var(--accent-color); background: #000;"></canvas>
                     
                     <div id="start-screen" class="overlay">
                         <h2>FROGGER</h2>
-                        <p>PRESS SPACE/TAP TO START</p>
+                        <p>PRESS SPACE TO START</p>
+                        <p class="blink">INSERT COIN</p>
                     </div>
                     
                     <div id="game-over-screen" class="overlay" style="display: none;">
@@ -39,33 +45,48 @@
                     </div>
                 </div>
 
-                <div class="controls">
-                    <div class="difficulty-control">
-                        <span>DIFFICULTY: </span>
-                        <select id="difficulty-select">
+                <div class="controls" style="margin-top: 10px; display: flex; gap: 10px; align-items: center; justify-content: center;">
+                     <button id="pause-btn" class="retro-btn" style="padding: 5px 10px; font-size: 10px;">PAUSE</button>
+                     <select id="difficulty-select" style="background: black; color: white; border: 1px solid white;">
                             <option value="easy">Tadpole</option>
                             <option value="normal" selected>Frog</option>
                             <option value="hard">Toad</option>
-                        </select>
-                    </div>
-                    <button id="pause-btn" class="retro-btn">PAUSE</button>
-                    <div class="lives-display">LIVES: <span id="lives">3</span></div>
-                </div>
-                
-                <div class="mobile-controls">
-                    <button id="up-btn">▲</button>
-                    <div class="row">
-                        <button id="left-btn">◀</button>
-                        <button id="down-btn">▼</button>
-                        <button id="right-btn">▶</button>
-                    </div>
+                    </select>
                 </div>
             </div>
-        </main>
+        </div>
+
+        <!-- CONTROL PANEL -->
+        <div class="control-panel">
+            <div class="joystick-area">
+                <div class="joystick-base">
+                    <div class="joystick-stick">
+                        <div class="joystick-ball" style="background: green;"></div>
+                    </div>
+                </div>
+                <div style="margin-top: 10px; font-size: 10px; color: #888;">MOVE</div>
+            </div>
+            
+            <div class="buttons-area">
+                <div class="arcade-button btn-red" style="width: 50px; height: 50px;" onclick="document.dispatchEvent(new KeyboardEvent('keydown', {'code': 'Space'}))"></div>
+                <div style="margin-top: 10px; font-size: 10px; color: #888;">START</div>
+            </div>
+        </div>
+
+        <div class="controls-info" style="margin-top: 10px; font-size: 10px; color: #aaa;">
+            <p>ARROWS to Move | <a href="../index.html" style="color: #fff;">EXIT</a></p>
+        </div>
+
     </div>
 
-    <script src="../../ui.js"></script>
-    <script src="../../effects.js"></script>
+    <!-- Hidden Mobile Controls Bridge -->
+    <div class="mobile-controls" style="display:none;">
+        <button id="up-btn">▲</button>
+        <button id="left-btn">◀</button>
+        <button id="down-btn">▼</button>
+        <button id="right-btn">▶</button>
+    </div>
+
     <script src="frogger.js"></script>
 </body>
 </html>

@@ -39,16 +39,22 @@
 </head>
 <body class="theme-arcade">
 
-    <div class="game-container">
-        <header>
-            <a href="../index.html" class="back-link">← Back to Arcade</a>
-            <h1 class="glow-title" data-text="TETRIS">TETRIS</h1>
-        </header>
+    <div class="arcade-cabinet">
+        <!-- CABINET HEADER -->
+        <div class="cabinet-header">
+            <h1 class="cabinet-title">TETRIS</h1>
+            <div class="cabinet-chars">
+                <span>⬜</span><span>🟫</span><span>🟩</span><span>🟦</span><span>🟪</span>
+            </div>
+        </div>
 
-        <main>
-            <div class="tetris-container">
-                <div class="game-area">
-                    <canvas id="gameCanvas" width="240" height="400"></canvas>
+        <!-- SCREEN BEZEL -->
+        <div class="crt-bezel">
+            <div class="tetris-container" style="display: flex; gap: 20px; align-items: flex-start;">
+                
+                <!-- Game Canvas -->
+                <div class="game-area" style="position: relative;">
+                    <canvas id="gameCanvas" width="240" height="400" style="border: 4px solid #fff; background: #000;"></canvas>
                     
                     <div id="start-screen" class="overlay">
                         <h2>TETRIS</h2>
@@ -62,40 +68,58 @@
                     </div>
                 </div>
 
-                <div class="side-panel">
+                <!-- Side Panel (Next Piece, Score) -->
+                <div class="side-panel" style="display: flex; flex-direction: column; gap: 10px; color: #fff; font-family: 'Press Start 2P', cursive; font-size: 10px;">
                     <div class="score-box">
-                        <small>SCORE</small>
+                        <small style="color: yellow;">SCORE</small>
                         <div id="score">0</div>
                     </div>
                     <div class="level-box">
-                        <small>LEVEL</small>
+                        <small style="color: cyan;">LEVEL</small>
                         <div id="level">1</div>
                     </div>
                     <div class="lines-box">
-                        <small>LINES</small>
+                        <small style="color: orange;">LINES</small>
                         <div id="lines">0</div>
                     </div>
                     <div class="next-box">
-                        <small>NEXT</small>
-                        <canvas id="nextCanvas" width="80" height="80" style="background:#111; border:2px solid #555;"></canvas>
+                        <small style="color: lime;">NEXT</small>
+                        <br>
+                        <canvas id="nextCanvas" width="80" height="80" style="background:#111; border:2px solid #555; margin-top: 5px;"></canvas>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div class="controls-info">
-                <p>ARROWS: Move/Rotate | SPACE: Hard Drop</p>
+        <!-- CONTROL PANEL -->
+        <div class="control-panel">
+            <div class="joystick-area">
+                <div class="joystick-base">
+                    <div class="joystick-stick">
+                        <div class="joystick-ball" style="background: red;"></div>
+                    </div>
+                </div>
             </div>
             
-            <div class="mobile-controls">
-                <button id="rotate-btn">↻</button>
-                <div class="row">
-                    <button id="left-btn">◀</button>
-                    <button id="down-btn">▼</button>
-                    <button id="right-btn">▶</button>
-                </div>
-                <button id="drop-btn" style="width: 100%; margin-top: 5px;">DROP</button>
+            <div class="buttons-area">
+                 <!-- Tetris usually uses just rotate and drop -->
+                 <div class="arcade-button btn-blue" style="width: 50px; height: 50px;" title="Rotate" onclick="document.dispatchEvent(new KeyboardEvent('keydown', {'code': 'ArrowUp'}))"></div> 
+                 <div class="arcade-button btn-yellow" style="width: 50px; height: 50px;" title="Hard Drop" onclick="document.dispatchEvent(new KeyboardEvent('keydown', {'code': 'Space'}))"></div>
             </div>
-        </main>
+        </div>
+        
+        <div class="controls-info" style="margin-top: 10px; font-size: 10px; color: #aaa;">
+            <p><a href="../index.html" style="color: #fff; text-decoration: none;">◄ EXIT TO LOBBY</a></p>
+        </div>
+    </div>
+
+    <!-- Hidden Mobile Controls Bridge -->
+    <div class="mobile-controls" style="display:none;">
+        <button id="rotate-btn">↻</button>
+        <button id="left-btn">◀</button>
+        <button id="down-btn">▼</button>
+        <button id="right-btn">▶</button>
+        <button id="drop-btn">DROP</button>
     </div>
 
     <script src="tetris.js"></script>

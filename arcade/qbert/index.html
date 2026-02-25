@@ -22,36 +22,62 @@
 </head>
 <body class="theme-arcade">
 
-    <div class="game-container">
-        <header>
-            <a href="../index.html" class="back-link">← Back to Arcade</a>
-            <h1 class="glow-title" data-text="Q*BERT">Q*BERT</h1>
-        </header>
+    <div class="arcade-cabinet">
+        <!-- CABINET HEADER / MARQUEE -->
+        <div class="cabinet-header">
+            <h1 class="cabinet-title">Q*BERT</h1>
+            <div class="cabinet-chars">
+                <span>🟧</span><span>🗣️</span><span>🌀</span>
+            </div>
+        </div>
 
-        <main>
-            <div class="qbert-container">
-                <div class="hud">
+        <!-- SCREEN BEZEL -->
+        <div class="crt-bezel">
+            <div class="game-area" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+                <div class="hud" style="width: 100%; display: flex; justify-content: space-between; margin-bottom: 10px; color: orange;">
                     <span>SCORE: <span id="score">0</span></span>
                     <span>LIVES: <span id="lives">3</span></span>
                 </div>
                 
-                <div class="canvas-wrapper">
-                    <canvas id="gameCanvas" width="400" height="500"></canvas>
+                <div class="canvas-wrapper" style="position: relative;">
+                    <canvas id="gameCanvas" width="400" height="500" style="max-width: 100%; height: auto; border: 4px solid var(--accent-color); background: #000;"></canvas>
                     
                     <div id="start-screen" class="overlay">
                         <h2>Q*BERT</h2>
                         <p>PRESS SPACE TO START</p>
+                         <p class="blink">INSERT COIN</p>
                     </div>
                 </div>
-                
-                 <div class="controls-info">
-                    <p>DIAGONALS (7,9,1,3 or Q,E,Z,C)</p> <!-- Simplified to arrows often -->
-                    <p>Use ARROW KEYS (Up/Left = TopLeft, etc)</p>
+
+                <div class="controls-info" style="margin-top: 10px; font-size: 10px; color: #aaa;">
+                    <p>Arrow Keys (Up/Left = Top-Left) | <a href="../index.html" style="color: #fff;">EXIT</a></p>
                 </div>
             </div>
-             <div class="mobile-controls">
-                 <!-- Diagonal pad needed? Or just arrows -->
-                <div class="row">
+        </div>
+
+        <!-- CONTROL PANEL -->
+        <div class="control-panel">
+            <div class="joystick-area">
+                <div class="joystick-base">
+                    <div class="joystick-stick">
+                        <div class="joystick-ball" style="background: orange;"></div>
+                    </div>
+                </div>
+                <!-- Rotated label for diagonal -->
+                <div style="margin-top: 10px; font-size: 10px; color: #888;">DIAGONAL</div>
+            </div>
+            
+            <div class="buttons-area">
+                <div class="arcade-button btn-yellow" style="width: 50px; height: 50px;" onclick="document.dispatchEvent(new KeyboardEvent('keydown', {'code': 'Space'}))"></div>
+                 <div style="margin-top: 10px; font-size: 10px; color: #888;">START</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Hidden Mobile Controls Bridge -->
+    <div class="mobile-controls" style="display:none;">
+         <div class="row">
                      <button id="upleft-btn">◤</button>
                      <button id="upright-btn">◥</button>
                 </div>
@@ -59,8 +85,6 @@
                      <button id="downleft-btn">◣</button>
                      <button id="downright-btn">◢</button>
                 </div>
-            </div>
-        </main>
     </div>
 
     <script src="qbert.js"></script>

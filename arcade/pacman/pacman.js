@@ -573,10 +573,55 @@ class PacmanGame {
         }
 
         switch(e.code) {
-            case 'ArrowUp': this.player.nextDx = 0; this.player.nextDy = -1; break;
-            case 'ArrowDown': this.player.nextDx = 0; this.player.nextDy = 1; break;
-            case 'ArrowLeft': this.player.nextDx = -1; this.player.nextDy = 0; break;
-            case 'ArrowRight': this.player.nextDx = 1; this.player.nextDy = 0; break;
+            case 'ArrowUp': 
+                this.player.nextDx = 0; 
+                this.player.nextDy = -1; 
+                if(this.player.dx === 0 && this.player.dy === 0) {
+                     // If stopped, try to move immediately if valid
+                     const gx = Math.round(this.player.pixelX / this.tileSize);
+                     const gy = Math.round(this.player.pixelY / this.tileSize);
+                     if(this.isValidMove(gx, gy-1)) {
+                         this.player.dx = 0;
+                         this.player.dy = -1;
+                     }
+                }
+                break;
+            case 'ArrowDown': 
+                this.player.nextDx = 0; 
+                this.player.nextDy = 1; 
+                if(this.player.dx === 0 && this.player.dy === 0) {
+                     const gx = Math.round(this.player.pixelX / this.tileSize);
+                     const gy = Math.round(this.player.pixelY / this.tileSize);
+                     if(this.isValidMove(gx, gy+1)) {
+                         this.player.dx = 0;
+                         this.player.dy = 1;
+                     }
+                }
+                break;
+            case 'ArrowLeft': 
+                this.player.nextDx = -1; 
+                this.player.nextDy = 0; 
+                if(this.player.dx === 0 && this.player.dy === 0) {
+                     const gx = Math.round(this.player.pixelX / this.tileSize);
+                     const gy = Math.round(this.player.pixelY / this.tileSize);
+                     if(this.isValidMove(gx-1, gy)) {
+                         this.player.dx = -1;
+                         this.player.dy = 0;
+                     }
+                }
+                break;
+            case 'ArrowRight': 
+                this.player.nextDx = 1; 
+                this.player.nextDy = 0; 
+                if(this.player.dx === 0 && this.player.dy === 0) {
+                     const gx = Math.round(this.player.pixelX / this.tileSize);
+                     const gy = Math.round(this.player.pixelY / this.tileSize);
+                     if(this.isValidMove(gx+1, gy)) {
+                         this.player.dx = 1;
+                         this.player.dy = 0;
+                     }
+                }
+                break;
             case 'Space': this.togglePause(); break;
         }
     }

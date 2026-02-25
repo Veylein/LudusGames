@@ -9,70 +9,73 @@
     <link rel="stylesheet" href="../../themes.css">
     <link rel="stylesheet" href="../arcade.css">
 </head>
-<body class="theme-classic">
-    <div id="emoji-container"></div>
-    <header class="nav">
-        <div class="logo"><a href="../../index.html" style="text-decoration: none; color: inherit;">LUDUS</a></div>
-        <div class="controls">
-            <div class="score-display">PTS: <span class="points-display">0</span></div>
-            <div class="difficulty-control">
-                <select id="difficultySelect">
-                    <option value="0">Apprentice</option>
-                    <option value="1">Gambler</option>
-                    <option value="2">Ruthless</option>
-                </select>
-                <button id="pause-btn" class="retro-btn" style="margin-left: 10px;">PAUSE</button>
-            </div>
-            <div class="font-dropdown">
-                <button id="fontBtn">Font</button>
-                <div class="font-menu">
-                    <button data-font="retro">Retro</button>
-                    <button data-font="cozy">Cozy</button>
-                    <button data-font="poker">Poker</button>
-                    <button data-font="classic">Classic</button>
-                <button data-font="discord">Discord</button>
-            </div>
-                    <div class="style-dropdown">
-            <button id="styleBtn">Style</button>
-            <div class="style-menu">
-                <button data-style="style-classic">Classic</button>
-                <button data-style="style-relaxation">Relaxation</button>
-                <button data-style="style-arcade">Arcade</button>
-                <button data-style="style-casino">Casino</button>
-                <button data-style="style-yacht">Yacht</button>
+<body class="theme-arcade">
+
+    <div class="arcade-cabinet">
+        <!-- CABINET HEADER / MARQUEE -->
+        <div class="cabinet-header">
+            <h1 class="cabinet-title">FLAPPY BIRD</h1>
+            <div class="cabinet-chars">
+                <span>🐦</span><span>🟩</span><span>☁️</span>
             </div>
         </div>
 
-        <div class="theme-dropdown">
-<button id="themeBtn">Theme</button>
-            <div class="theme-menu">
-                <button data-theme="theme-dark">Dark</button>
-                <button data-theme="theme-light">Light</button>
-                <button data-theme="theme-holo">Holographic</button>
-                <button data-theme="theme-rainbow">Rainbow</button>
-                <button data-theme="theme-opal-fire">Opal Fire</button>
+        <!-- SCREEN BEZEL -->
+        <div class="crt-bezel">
+            <div class="game-area" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+                <div class="hud" style="width: 100%; display: flex; justify-content: space-between; margin-bottom: 10px; color: cyan;">
+                    <span>SCORE: <span id="game-score">0</span></span>
+                    <span>HIGH: <span id="high-score">0</span></span>
+                </div>
+                
+                <div class="canvas-wrapper" style="position: relative;">
+                    <canvas id="gameCanvas" width="400" height="600" style="max-width: 100%; height: auto; border: 4px solid var(--accent-color); background: #70c5ce;"></canvas>
+                    
+                    <div id="start-screen" class="overlay" onclick="startGame()">
+                        <h2>FLAPPY BIRD</h2>
+                        <p>CLICK TO START</p>
+                        <p class="blink">INSERT COIN</p>
+                    </div>
+                    
+                    <div id="gameOver" class="overlay" style="display: none;">
+                        <h2 style="color: #ff0055;">GAME OVER</h2>
+                        <p>SCORE: <span id="final-score">0</span></p>
+                        <button class="retro-btn" onclick="startGame()">TRY AGAIN</button>
+                    </div>
+                </div>
+
+                <div class="controls-info" style="margin-top: 10px; font-size: 10px; color: #aaa;">
+                    <p>Space/Click/Touch to Flap | <a href="../index.html" style="color: #fff;">EXIT</a></p>
+                </div>
             </div>
         </div>
+
+        <!-- CONTROL PANEL -->
+        <div class="control-panel">
+            <div class="joystick-area">
+                <div class="joystick-base">
+                    <div class="joystick-stick">
+                        <div class="joystick-ball" style="background: yellow;"></div>
+                    </div>
+                </div>
+                <div style="margin-top: 10px; font-size: 10px; color: #888;">N/A</div>
+            </div>
+            
+            <div class="buttons-area">
+                <div class="arcade-button btn-green" style="width: 50px; height: 50px;" onclick="document.dispatchEvent(new KeyboardEvent('keydown', {'code': 'Space'}))"></div>
+                <div style="margin-top: 10px; font-size: 10px; color: #888;">FLAP</div>
             </div>
         </div>
-    </header>
 
-    <main class="game-container">
-        <div class="score-hud">Score: <span id="game-score">0</span></div>
-        <canvas id="gameCanvas" width="400" height="600"></canvas>
-        <div class="controls-info">Space or Click to Flap</div>
-        
-        <div id="gameOver" class="game-over-screen">
-            <h2>GAME OVER</h2>
-            <p>Score: <span id="final-score">0</span></p>
-            <button class="restart-btn" onclick="startGame()">Try Again</button>
-            <br><br>
-            <a href="../index.html" style="color: var(--text-color);">Back to Arcade</a>
-        </div>
-    </main>
+    </div>
 
-    <script src="../../ui.js"></script>
-    <script src="../../effects.js"></script>
-    <script src="flappy.js"></script>
+    <!-- Hidden Mobile Controls Bridge -->
+    <div class="mobile-controls" style="display:none;">
+    </div>
+    
+     <script src="flappy.js"></script>
+    <script>
+        // Start game wrapper
+    </script>
 </body>
 </html>

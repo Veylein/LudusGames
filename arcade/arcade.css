@@ -1,5 +1,4 @@
 
-/* Main Arcade Styling - Retro Overhaul */
 :root {
     --pacman-yellow: #ffff00;
     --ghost-red: #ff0000;
@@ -9,6 +8,11 @@
     --arcade-blue: #1919a6;
     --neon-green: #39ff14;
     --bg-dark: #050510;
+    --cabinet-color: #2c2c54;
+    --cabinet-border: #474787;
+    --joystick-red: #e74c3c;
+    --button-blue: #3498db;
+    --button-yellow: #f1c40f;
 }
 
 body {
@@ -18,6 +22,194 @@ body {
     margin: 0;
     min-height: 100vh;
     display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Dark arcade atmosphere background */
+    background-image: 
+        radial-gradient(circle at 50% 50%, rgba(20, 20, 40, 0.8), rgba(0, 0, 0, 0.95)),
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.5) 3px),
+        repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 0, 0, 0.5) 3px);
+    background-size: 100% 100%, 4px 4px, 4px 4px;
+}
+
+/* --- ARCADE CABINET CONTAINER --- */
+.arcade-cabinet {
+    position: relative;
+    width: 90vw;
+    max-width: 800px;
+    background: var(--cabinet-color);
+    border: 15px solid #1a1a2e;
+    border-radius: 20px 20px 4px 4px;
+    box-shadow: 
+        inset 0 0 20px rgba(0,0,0,0.8),
+        0 0 50px rgba(0, 255, 255, 0.2),
+        10px 10px 0 rgba(0,0,0,0.5); /* 3D depth */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+/* Cabinet Header / Marquee */
+.cabinet-header {
+    width: 100%;
+    background: #000;
+    border: 4px solid var(--cabinet-border);
+    border-radius: 10px 10px 0 0;
+    margin-bottom: 20px;
+    padding: 15px 0;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 0 10px rgba(255,255,255,0.1);
+}
+
+.cabinet-title {
+    color: var(--neon-green);
+    font-size: 24px;
+    text-shadow: 
+        2px 2px 0 var(--arcade-blue),
+        0 0 10px var(--neon-green);
+    letter-spacing: 4px;
+    z-index: 2;
+    position: relative;
+}
+
+/* Decorative Characters on Top */
+.cabinet-chars {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    transform: translateY(-50%);
+    display: flex;
+    justify-content: space-between;
+    padding: 0 10px;
+    opacity: 0.3;
+    pointer-events: none;
+    font-size: 12px;
+}
+
+/* Screen Bezel */
+.crt-bezel {
+    background: #111;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: inset 0 0 20px #000;
+    margin-bottom: 20px;
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center; /* Center the canvas */
+}
+
+/* The Game Canvas styling (within bezel) */
+canvas {
+    border: 2px solid #333;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+    max-width: 100%;
+    background: #000;
+    /* CRT Curve effect could go here */
+}
+
+/* Control Panel (Joystick area) */
+.control-panel {
+    background: #34343f; /* Lighter plastic texture */
+    width: 110%; /* Slightly wider than cabinet */
+    margin-left: -5%;
+    padding: 20px;
+    border-top: 5px solid #111;
+    border-radius: 0 0 10px 10px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    box-shadow: inset 0 5px 10px rgba(255,255,255,0.05);
+    background-image: linear-gradient(45deg, #3a3a4a 25%, transparent 25%, transparent 75%, #3a3a4a 75%, #3a3a4a), 
+                      linear-gradient(45deg, #3a3a4a 25%, transparent 25%, transparent 75%, #3a3a4a 75%, #3a3a4a);
+    background-size: 4px 4px;
+    background-position: 0 0, 2px 2px;
+}
+
+/* Visual Joystick */
+.joystick-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.joystick-base {
+    width: 60px;
+    height: 60px;
+    background: #111;
+    border-radius: 50%;
+    position: relative;
+    box-shadow: 
+        inset 0 0 10px rgba(0,0,0,0.8),
+        0 5px 0 #222;
+}
+
+.joystick-stick {
+    width: 16px;
+    height: 40px;
+    background: #555;
+    position: absolute;
+    top: -20px;
+    left: 22px;
+    z-index: 10;
+}
+
+.joystick-ball {
+    width: 36px;
+    height: 36px;
+    background: var(--joystick-red);
+    border-radius: 50%;
+    position: absolute;
+    top: -45px;
+    left: 12px;
+    z-index: 20;
+    box-shadow: 
+        inset -5px -5px 10px rgba(0,0,0,0.5),
+        inset 5px 5px 10px rgba(255,255,255,0.3),
+        5px 5px 5px rgba(0,0,0,0.3);
+}
+
+/* Visual Buttons */
+.buttons-area {
+    display: flex;
+    gap: 15px;
+}
+
+.arcade-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 4px solid #111;
+    position: relative;
+    box-shadow: 0 5px 0 #000;
+    cursor: pointer; /* Even if visual only, feels nice */
+}
+
+.arcade-button::after {
+    content: ""; /* Shininess */
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: 10px;
+    height: 10px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 50%;
+}
+
+.btn-red { background: var(--joystick-red); }
+.btn-blue { background: var(--button-blue); }
+.btn-yellow { background: var(--button-yellow); }
+
+.arcade-button:active {
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 #000;
+    border-bottom: none;
+}
     flex-direction: column;
     align-items: center;
     position: relative;

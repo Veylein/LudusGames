@@ -148,8 +148,13 @@ class AsteroidsGame {
         if ((e.code === 'ArrowLeft') || (e.code === 'KeyA')) this.ship.rot = -0.1; // Rotate Left (CCW)
         else if ((e.code === 'ArrowRight') || (e.code === 'KeyD')) this.ship.rot = 0.1; // Rotate Right (CW)
         else if ((e.code === 'ArrowUp') || (e.code === 'KeyW')) this.ship.thrusting = true;
-        else if ((e.code === 'Space') || (e.code === 'KeyK') || (e.code === 'Enter')) this.shoot();
-        else if (e.code === 'Enter' && !this.isRunning) this.startGame();
+        else if ((e.code === 'Space') || (e.code === 'KeyK') || (e.code === 'Enter')) {
+            if (!this.isRunning) {
+                this.startGame();
+            } else {
+                this.shoot();
+            }
+        }
     }
     
     keyUp(e) {
