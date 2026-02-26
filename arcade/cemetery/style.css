@@ -1,0 +1,342 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #000;
+    font-family: 'Courier New', monospace;
+    color: #fff;
+    user-select: none;
+}
+
+#game-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+#ui-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    pointer-events: none; /* Let clicks pass through to game */
+}
+
+/* Minimap */
+#minimap-container {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    padding: 5px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid #555;
+    text-align: center;
+}
+#minimap {
+    width: 150px;
+    height: 150px;
+    background: #222;
+    position: relative;
+    overflow: hidden;
+    border: 1px dashed #444;
+}
+#player-dot {
+    width: 6px;
+    height: 6px;
+    background: red;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 5px red;
+}
+.dot {
+    /* For map markers */
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: #888;
+}
+
+/* Time Display */
+#time-display {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 24px;
+    color: #ddd;
+    text-shadow: 0 0 5px #000;
+}
+
+/* Health Bar (Left Vertical) */
+#health-container {
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+#health-bar-bg {
+    width: 20px;
+    height: 300px;
+    background: rgba(50, 0, 0, 0.5);
+    border: 2px solid #555;
+    position: relative;
+}
+#health-bar-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to top, #800, #f00);
+    transition: height 0.5s ease-out;
+}
+.bar-label {
+    margin-bottom: 5px;
+    font-size: 14px;
+    color: #aaa;
+    transform: rotate(-90deg); /* Optional styling */
+}
+
+/* Sanity Bar (Right Vertical) */
+#sanity-container {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+#sanity-bar-bg {
+    width: 20px;
+    height: 300px;
+    background: rgba(0, 50, 50, 0.5);
+    border: 2px solid #555;
+    position: relative;
+}
+#sanity-bar-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%; /* Starts full */
+    background: linear-gradient(to top, #004d40, #00bfa5);
+    transition: height 0.5s ease-out, filter 1s;
+}
+
+/* Bottom HUD: Inventory & Compass */
+#bottom-hud {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Inventory Slots */
+#inventory-slots {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+.slot {
+    width: 60px;
+    height: 60px;
+    border: 2px solid #777;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+.key-hint {
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    font-size: 10px;
+    color: #aaa;
+}
+.item-icon {
+    font-size: 12px;
+    text-align: center;
+}
+
+/* Compass */
+#compass-container {
+    width: 400px;
+    height: 40px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.6);
+    border: 2px solid #555;
+    position: relative;
+    mask-image: linear-gradient(to right, transparent, black 20%, black 80%, transparent);
+}
+#compass-strip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: transform 0.1s linear;
+    width: 2000px; /* Big enough to hold repeating compass points */
+    font-size: 18px;
+    color: #eee;
+}
+#compass-arrow {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 8px solid red;
+    z-index: 2;
+}
+
+/* Reticle */
+#reticle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 4px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    mix-blend-mode: difference;
+}
+
+/* VIGNETTE & EFFECTS */
+#vignette {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle, transparent 50%, black 150%);
+    pointer-events: none;
+    z-index: 5;
+}
+#noise-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    z-index: 4;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+#hallucination-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: transparent;
+    pointer-events: none;
+    z-index: 6;
+    mix-blend-mode: overlay;
+    transition: opacity 2s;
+}
+
+/* Messages */
+#interaction-prompt {
+    position: absolute;
+    top: 60%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 18px;
+    color: #fff;
+    text-shadow: 0 0 5px #000;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+#story-message {
+    position: absolute;
+    top: 30%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.8);
+    padding: 20px;
+    border: 1px solid #666;
+    display: none;
+    max-width: 600px;
+    text-align: center;
+}
+
+/* Start Screen */
+#start-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    pointer-events: auto; /* Catch clicks */
+}
+#start-screen h1 {
+    font-size: 4rem;
+    color: #a00;
+    text-shadow: 0 0 20px #500;
+    margin-bottom: 10px;
+    letter-spacing: 5px;
+}
+#start-screen p {
+    color: #aaa;
+    font-size: 1rem;
+    line-height: 1.6;
+    text-align: center;
+}
+#start-btn {
+    margin-top: 40px;
+    padding: 15px 40px;
+    font-size: 24px;
+    background: #222;
+    color: #ddd;
+    border: 2px solid #555;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+#start-btn:hover {
+    background: #400;
+    color: #fff;
+    border-color: #f00;
+    box-shadow: 0 0 20px #800;
+}
+
+/* Sanity Effects */
+.glitch-text {
+    animation: glitch 1s infinite;
+}
+@keyframes glitch {
+    0% { transform: translate(0); }
+    20% { transform: translate(-2px, 2px); }
+    40% { transform: translate(-2px, -2px); }
+    60% { transform: translate(2px, 2px); }
+    80% { transform: translate(2px, -2px); }
+    100% { transform: translate(0); }
+}
+
+.low-sanity-blur {
+    filter: blur(2px) contrast(150%);
+}
