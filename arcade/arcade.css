@@ -509,9 +509,6 @@ canvas {
     position: absolute;
     z-index: 20;
     display: block;
-    /* DEBUG LAYOUT */
-    border: 2px solid red;
-    background: rgba(255, 0, 0, 0.2);
 }
 
 .arcade-wrapper .zone-hover {
