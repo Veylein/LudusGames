@@ -148,10 +148,6 @@ class Chunk {
         const mesh = new THREE.Mesh(geom, mat);
         mesh.receiveShadow = true;
         
-        // Add water plane if low part exists?
-        // Simple uniform water plane logic:
-        // If this chunk has low points, add a water plane at y=-4.5
-        
         this.group.add(mesh);
         this.terrainMesh = mesh; // Keep ref for raycasting
     }
@@ -212,7 +208,7 @@ function updateChunks() {
     const nearbyKeys = new Set();
     for (let x = -RENDER_DISTANCE; x <= RENDER_DISTANCE; x++) {
         for (let z = -RENDER_DISTANCE; z <= RENDER_DISTANCE; z++) {
-            const key = ${currentGx + x},; // Fixed template literal
+            const key = `${currentGx + x},${currentGz + z}`;
             nearbyKeys.add(key);
             if (!chunks.has(key)) {
                 chunks.set(key, new Chunk(currentGx + x, currentGz + z));
@@ -255,9 +251,6 @@ function createTree(x, y, z, parent) {
     trunk.rotation.z = (Math.random() - 0.5) * 0.2;
     trunk.rotation.x = (Math.random() - 0.5) * 0.2;
     parent.add(trunk);
-    
-    // Branches?
-    // KEEP IT SIMPLE for now
 }
 
 
@@ -276,16 +269,6 @@ scene.add(mansion);
 const mansionLight = new THREE.PointLight(0xffaa00, 1, 100);
 mansionLight.position.set(mX, mY + 15, mZ + 16);
 scene.add(mansionLight);
-
-
-// --- ENEMIES --- (Empty for now to prioritize map)
-const enemies = [];
-class Enemy {
-    constructor(type, x, z) {
-        // ... (Re-add later)
-    }
-    update(playerPos, camera, delta, frustum) {}
-}
 
 
 // --- PRE-LOAD ---
@@ -344,8 +327,8 @@ const minimapDot = document.getElementById('player-dot');
 const timeDisplay = document.getElementById('time-display');
 
 function updateUI() {
-    healthFill.style.height = ${state.health}%; // Fixed template literal
-    sanityFill.style.height = ${state.sanity}%; // Fixed template literal
+    healthFill.style.height = `${state.health}%`;
+    sanityFill.style.height = `${state.sanity}%`;
     
     // Compass
     const dir = new THREE.Vector3();
@@ -354,29 +337,21 @@ function updateUI() {
     let degrees = THREE.MathUtils.radToDeg(angle);
     if (degrees < 0) degrees += 360;
     if (state.sanity < 20) degrees += (Math.random() - 0.5) * 40;
-    compassStrip.style.transform = 	ranslateX(-px); // Fixed template literal
+    compassStrip.style.transform = `translateX(-${degrees * 5}px)`;
     
     // Minimap (Local to chunk)
-    // 5km map is too big for one minimap. Make it relative.
     // Display area: +/- 100 meters
-    const mapScale = 150 / 200; // 200m view in 150px
-    minimapDot.style.left = 75px; 
-    minimapDot.style.top = 75px;
-    // We should move the map background instead of the dot for infinite world?
-    // For now, keep the dot fixed center and maybe hints move around it? 
-    // Or just let it be a static "you are here"
+    const mapScale = 150 / 200; 
+    minimapDot.style.left = `75px`; 
+    minimapDot.style.top = `75px`;
     
     // Time
     const hours = Math.floor(state.time);
     const minutes = Math.floor((state.time - hours) * 60);
     const ampm = hours >= 12 ? 'PM' : 'AM';
     const displayHours = hours % 12 || 12;
-    timeDisplay.innerText = ${displayHours.toString().padStart(2, '0')}: ; // Fixed template literal
+    timeDisplay.innerText = `${displayHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
 }
-
-// --- INTERACTION ---
-const raycaster = new THREE.Raycaster();
-const interactables = [];
 
 // --- MAIN LOOP ---
 function animate() {
@@ -410,7 +385,6 @@ function animate() {
         controls.moveForward(-velocity.z * delta);
         
         // Snap to ground height (+ player height)
-        // Lerp for smoothness?
         camera.position.y = currentY + 1.7;
         
         updateChunks();
