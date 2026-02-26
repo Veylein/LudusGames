@@ -45,11 +45,11 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.getElementById('game-container').appendChild(renderer.domElement);
 
 // --- LIGHTING ---
-const ambientLight = new THREE.AmbientLight(0x111111); // Very dark
+const ambientLight = new THREE.AmbientLight(0x050510); // Very dark blue/black
 scene.add(ambientLight);
 
 // Flashlight 
-const flashLight = new THREE.SpotLight(0xffffff, 2, 60, 0.5, 0.5, 1);
+const flashLight = new THREE.SpotLight(0xffffee, 5, 40, 0.4, 0.5, 1); // Brighter, tighter beam
 flashLight.position.set(0, 0, 0);
 flashLight.target.position.set(0, 0, -1);
 camera.add(flashLight);
@@ -57,7 +57,7 @@ camera.add(flashLight.target);
 scene.add(camera);
 
 // Moon
-const moonLight = new THREE.DirectionalLight(0x334466, 0.3);
+const moonLight = new THREE.DirectionalLight(0x223355, 0.5); // Slightly brighter moon for silhouettes
 moonLight.position.set(50, 100, 50);
 moonLight.castShadow = true;
 // Optimize shadows for open world
@@ -77,12 +77,23 @@ const noise = new Noise(Math.random());
 function getNoiseHeight(x, z) {
     // Combine frequencies for hills and roughness
     let y = 0;
-    y += noise.noise2D(x * 0.01, z * 0.01) * 10;   // Large hills
-    y += noise.noise2D(x * 0.05, z * 0.05) * 2;    // Small roughness
-    y += noise.noise2D(x * 0.002, z * 0.002) * 20; // Mountains/Valleys
+    // Lower frequency for broad terrain features
+    const base = noise.noise2D(x * 0.005, z * 0.005); 
     
-    // Flatten valleys for 'mud' / water level
-    if (y < -5) y = -5 + (y + 5) * 0.1; 
+    // Create flat "floor" areas
+    if (base < 0.2) {
+        // Flat valley/ground
+        y = base * 2; 
+    } else {
+        // Hills start rising
+        y = (base - 0.2) * 15;
+    }
+
+    // Add small detail everywhere so flat isn't PERFECTLY flat
+    y += noise.noise2D(x * 0.1, z * 0.1) * 0.5;
+
+    // Deep pits/water
+    if (y < -3) y = -3 + (y + 3) * 0.2; 
     
     return y;
 }
@@ -227,30 +238,100 @@ function updateChunks() {
 
 // Procedural Objects Helper
 function createGrave(x, y, z, parent) {
-    const graveGeo = new THREE.BoxGeometry(0.6, 1.2, 0.2);
-    const graveMat = new THREE.MeshStandardMaterial({ color: 0x555555 });
-    const grave = new THREE.Mesh(graveGeo, graveMat);
-    grave.position.set(x, y + 0.6, z);
-    grave.castShadow = true;
-    grave.receiveShadow = true;
-    grave.rotation.y = (Math.random() - 0.5) * 0.5;
-    // Tilted graves
-    grave.rotation.z = (Math.random() - 0.5) * 0.3;
-    grave.rotation.x = (Math.random() - 0.5) * 0.3;
-    parent.add(grave);
+    const graveGroup = new THREE.Group();
+    graveGroup.position.set(x, y, z); // Base position
+    
+    // Rotation for the whole group
+    graveGroup.rotation.y = (Math.random() - 0.5) * 0.5;
+
+    // Base of the tombstone
+    const baseGeo = new THREE.BoxGeometry(0.8, 0.2, 0.4);
+    const stoneMat = new THREE.MeshStandardMaterial({ 
+        color: 0x444444, 
+        roughness: 0.9 
+    });
+    const base = new THREE.Mesh(baseGeo, stoneMat);
+    base.position.y = 0.1;
+    base.castShadow = true;
+    base.receiveShadow = true;
+    graveGroup.add(base);
+
+    // Headstone styles
+    const type = Math.random();
+    let headGeo;
+    
+    if (type < 0.3) {
+        // Cross
+        const vGeo = new THREE.BoxGeometry(0.15, 1.2, 0.15);
+        const hGeo = new THREE.BoxGeometry(0.8, 0.15, 0.15);
+        
+        const vMesh = new THREE.Mesh(vGeo, stoneMat);
+        vMesh.position.y = 0.7;
+        const hMesh = new THREE.Mesh(hGeo, stoneMat);
+        hMesh.position.y = 0.9;
+        
+        vMesh.castShadow = true; hMesh.castShadow = true;
+        graveGroup.add(vMesh); graveGroup.add(hMesh);
+    } else {
+        // Tablet / Slab
+        if ( type < 0.6) {
+             // Rounded Top
+             headGeo = new THREE.BoxGeometry(0.6, 1.0, 0.15);
+        } else {
+             // Square Top
+             headGeo = new THREE.BoxGeometry(0.6, 0.8, 0.15);
+        }
+        const head = new THREE.Mesh(headGeo, stoneMat);
+        head.position.y = 0.6; // On top of base
+        head.castShadow = true;
+        head.receiveShadow = true;
+        
+        // Tilt the stone slightly like an old grave
+        head.rotation.x = (Math.random() - 0.5) * 0.2;
+        head.rotation.z = (Math.random() - 0.5) * 0.1;
+        
+        graveGroup.add(head);
+    }
+
+    parent.add(graveGroup);
 }
 
 function createTree(x, y, z, parent) {
-    const trunkGeo = new THREE.CylinderGeometry(0.2, 0.5, 4, 6);
-    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x1a1109 });
+    const treeGroup = new THREE.Group();
+    treeGroup.position.set(x, y, z);
+    
+    // Trunk
+    const trunkHeight = 2 + Math.random() * 2;
+    const trunkGeo = new THREE.CylinderGeometry(0.15, 0.3, trunkHeight, 6);
+    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x2d1c12, roughness: 1.0 });
     const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-    trunk.position.set(x, y + 2, z);
+    trunk.position.y = trunkHeight / 2;
     trunk.castShadow = true;
     trunk.receiveShadow = true;
+    treeGroup.add(trunk);
+    
+    // Foliage (Pine style cones)
+    const foliageMat = new THREE.MeshStandardMaterial({ color: 0x0f210f, roughness: 0.9 });
+    const layers = 3 + Math.floor(Math.random() * 3);
+    
+    for(let i=0; i<layers; i++) {
+        const size = 1.5 - (i * 0.3);
+        const fY = (trunkHeight * 0.4) + (i * 0.8);
+        const cone = new THREE.Mesh(
+            new THREE.ConeGeometry(size, 1.5, 7),
+            foliageMat
+        );
+        cone.position.y = fY;
+        cone.castShadow = true;
+        cone.receiveShadow = true;
+        treeGroup.add(cone);
+    }
+
     // Random lean
-    trunk.rotation.z = (Math.random() - 0.5) * 0.2;
-    trunk.rotation.x = (Math.random() - 0.5) * 0.2;
-    parent.add(trunk);
+    treeGroup.rotation.z = (Math.random() - 0.5) * 0.1;
+    treeGroup.rotation.x = (Math.random() - 0.5) * 0.1;
+    
+    parent.add(treeGroup);
 }
 
 

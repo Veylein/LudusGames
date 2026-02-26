@@ -87,11 +87,13 @@ body, html {
     align-items: center;
 }
 #health-bar-bg {
-    width: 20px;
+    width: 24px;
     height: 300px;
-    background: rgba(50, 0, 0, 0.5);
-    border: 2px solid #555;
+    background: rgba(40, 0, 0, 0.8);
+    border: 3px solid #600;
+    box-shadow: 0 0 10px #600;
     position: relative;
+    border-radius: 4px;
 }
 #health-bar-fill {
     position: absolute;
@@ -99,8 +101,15 @@ body, html {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(to top, #800, #f00);
+    background: repeating-linear-gradient(
+        45deg,
+        #600,
+        #600 10px,
+        #a00 10px,
+        #a00 20px
+    );
     transition: height 0.5s ease-out;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
 }
 .bar-label {
     margin-bottom: 5px;
@@ -120,11 +129,13 @@ body, html {
     align-items: center;
 }
 #sanity-bar-bg {
-    width: 20px;
+    width: 24px;
     height: 300px;
-    background: rgba(0, 50, 50, 0.5);
-    border: 2px solid #555;
+    background: rgba(0, 20, 20, 0.8);
+    border: 3px solid #004d40;
+    box-shadow: 0 0 10px #004d40;
     position: relative;
+    border-radius: 4px;
 }
 #sanity-bar-fill {
     position: absolute;
@@ -132,8 +143,15 @@ body, html {
     left: 0;
     width: 100%;
     height: 100%; /* Starts full */
-    background: linear-gradient(to top, #004d40, #00bfa5);
+    background: repeating-linear-gradient(
+        45deg,
+        #004d40,
+        #004d40 10px,
+        #00bfa5 10px,
+        #00bfa5 20px
+    );
     transition: height 0.5s ease-out, filter 1s;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
 }
 
 /* Bottom HUD: Inventory & Compass */
@@ -230,7 +248,8 @@ body, html {
 #vignette {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: radial-gradient(circle, transparent 50%, black 150%);
+    /* Stronger vignette with oval shape */
+    background: radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.8) 70%, black 100%);
     pointer-events: none;
     z-index: 5;
 }
