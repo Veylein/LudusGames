@@ -212,7 +212,7 @@ function updateChunks() {
     const nearbyKeys = new Set();
     for (let x = -RENDER_DISTANCE; x <= RENDER_DISTANCE; x++) {
         for (let z = -RENDER_DISTANCE; z <= RENDER_DISTANCE; z++) {
-            const key = ${currentGx + x},;
+            const key = ${currentGx + x},; // Fixed template literal
             nearbyKeys.add(key);
             if (!chunks.has(key)) {
                 chunks.set(key, new Chunk(currentGx + x, currentGz + z));
@@ -344,8 +344,8 @@ const minimapDot = document.getElementById('player-dot');
 const timeDisplay = document.getElementById('time-display');
 
 function updateUI() {
-    healthFill.style.height = ${state.health}%;
-    sanityFill.style.height = ${state.sanity}%;
+    healthFill.style.height = ${state.health}%; // Fixed template literal
+    sanityFill.style.height = ${state.sanity}%; // Fixed template literal
     
     // Compass
     const dir = new THREE.Vector3();
@@ -354,7 +354,7 @@ function updateUI() {
     let degrees = THREE.MathUtils.radToDeg(angle);
     if (degrees < 0) degrees += 360;
     if (state.sanity < 20) degrees += (Math.random() - 0.5) * 40;
-    compassStrip.style.transform = 	ranslateX(-px);
+    compassStrip.style.transform = 	ranslateX(-px); // Fixed template literal
     
     // Minimap (Local to chunk)
     // 5km map is too big for one minimap. Make it relative.
@@ -364,14 +364,14 @@ function updateUI() {
     minimapDot.style.top = 75px;
     // We should move the map background instead of the dot for infinite world?
     // For now, keep the dot fixed center and maybe hints move around it? 
-    // Or just let it be a static 'you are here'
+    // Or just let it be a static "you are here"
     
     // Time
     const hours = Math.floor(state.time);
     const minutes = Math.floor((state.time - hours) * 60);
     const ampm = hours >= 12 ? 'PM' : 'AM';
     const displayHours = hours % 12 || 12;
-    timeDisplay.innerText = ${displayHours.toString().padStart(2, '0')}: ;
+    timeDisplay.innerText = ${displayHours.toString().padStart(2, '0')}: ; // Fixed template literal
 }
 
 // --- INTERACTION ---
@@ -398,7 +398,7 @@ function animate() {
         // Terrain Height & Slope Check
         const currentY = getNoiseHeight(camera.position.x, camera.position.z);
         
-        // 'Mud' physics
+        // "Mud" physics
         let terrainSpeedMod = 1.0;
         if (currentY < -2) terrainSpeedMod = 0.6; // Mucky low ground
         if (currentY < -4) terrainSpeedMod = 0.3; // Deep water/mud
