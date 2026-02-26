@@ -71,6 +71,53 @@ moonLight.shadow.camera.top = 100;
 moonLight.shadow.camera.bottom = -100;
 scene.add(moonLight);
 
+// --- PROCEDURAL TEXTURES ---
+function generateTexture(width, height, type) {
+    const canvas = document.createElement('canvas');
+    canvas.width = width; canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    
+    // Fill background
+    if (type === 'grass') ctx.fillStyle = '#1a331a';
+    else if (type === 'stone') ctx.fillStyle = '#555555';
+    else if (type === 'bark') ctx.fillStyle = '#2d1c12';
+    else if (type === 'leaves') ctx.fillStyle = '#0f210f';
+    ctx.fillRect(0,0, width, height);
+    
+    // Simple noise
+    for(let i=0; i< width*height*0.1; i++) {
+        const x = Math.random() * width;
+        const y = Math.random() * height;
+        if (type === 'grass') {
+            ctx.fillStyle = Math.random() < 0.5 ? '#112211' : '#224422';
+            ctx.fillRect(x,y, 2, 2);
+        }
+        else if (type === 'stone') {
+             ctx.fillStyle = Math.random() < 0.5 ? '#444444' : '#666666';
+             ctx.fillRect(x,y, 2, 2);
+        }
+        else if (type === 'bark') {
+             ctx.fillStyle = Math.random() < 0.5 ? '#1e120b' : '#3c2618';
+             ctx.fillRect(x,y, 2, 6); // vertical streaks
+        }
+        else if (type === 'leaves') {
+             ctx.fillStyle = Math.random() < 0.5 ? '#0a170a' : '#1e3e1e';
+             ctx.fillRect(x,y, 3, 3);
+        }
+    }
+    
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    return tex;
+}
+
+const grassTex = generateTexture(512, 512, 'grass');
+const stoneTex = generateTexture(256, 256, 'stone');
+const barkTex = generateTexture(256, 512, 'bark');
+const leavesTex = generateTexture(256, 256, 'leaves');
+
+
 // --- TERRAIN GENERATION ---
 const noise = new Noise(Math.random());
 
@@ -312,10 +359,10 @@ function updateChunks() {
 // Procedural Objects Helper
 function createGrave(x, y, z, parent) {
     const graveGroup = new THREE.Group();
-    graveGroup.position.set(x, y, z); // Base position
+    graveGroup.position.set(x, y, z); 
     
     // Rotation for the whole group
-    graveGroup.rotation.y = (Math.random() - 0.5) * 0.5;
+    graveGroup.rotation.y = (Math.random() - 0.5) * 1.5;
 
     // Stone Material with procedural texture
     const stoneMat = new THREE.MeshStandardMaterial({ 
@@ -325,49 +372,120 @@ function createGrave(x, y, z, parent) {
         metalness: 0.2
     });
 
-    // Base of the tombstone
-    const baseGeo = new THREE.BoxGeometry(0.8, 0.2, 0.4);
+    // Base of the tombstone (Shared by most)
+    const baseGeo = new THREE.BoxGeometry(0.8, 0.2, 0.6);
     const base = new THREE.Mesh(baseGeo, stoneMat);
     base.position.y = 0.1;
     base.castShadow = true;
     base.receiveShadow = true;
     graveGroup.add(base);
 
-    // Headstone styles
+    // Grave Variation Logic
     const type = Math.random();
-    let headGeo;
-    
-    if (type < 0.3) {
-        // Cross
-        const vGeo = new THREE.BoxGeometry(0.15, 1.2, 0.15);
+
+    if (type < 0.15) {
+        // --- 1. Cross ---
+        const vGeo = new THREE.BoxGeometry(0.15, 1.4, 0.15);
         const hGeo = new THREE.BoxGeometry(0.8, 0.15, 0.15);
         
         const vMesh = new THREE.Mesh(vGeo, stoneMat);
-        vMesh.position.y = 0.7;
+        vMesh.position.y = 0.8;
         const hMesh = new THREE.Mesh(hGeo, stoneMat);
-        hMesh.position.y = 0.9;
+        hMesh.position.y = 1.0;
         
         vMesh.castShadow = true; hMesh.castShadow = true;
         graveGroup.add(vMesh); graveGroup.add(hMesh);
-    } else {
-        // Tablet / Slab
-        if ( type < 0.6) {
-             // Rounded Top with segment detail
+
+    } else if (type < 0.25) {
+        // --- 2. Obelisk ---
+        const obeliskGeo = new THREE.CylinderGeometry(0.1, 0.3, 1.8, 4);
+        const obelisk = new THREE.Mesh(obeliskGeo, stoneMat);
+        obelisk.position.y = 1.0;
+        obelisk.castShadow = true;
+        graveGroup.add(obelisk);
+
+    } else if (type < 0.35) {
+        // --- 3. Sarcophagus / Crypt ---
+        const sarcGeo = new THREE.BoxGeometry(0.8, 0.6, 1.5);
+        const sarc = new THREE.Mesh(sarcGeo, stoneMat);
+        sarc.position.set(0, 0.4, 0);
+        sarc.castShadow = true;
+        
+        // Lid detail
+        const lidGeo = new THREE.CylinderGeometry(0.4, 0.4, 1.5, 3, 1, false, 0, Math.PI);
+        const lid = new THREE.Mesh(lidGeo, stoneMat);
+        lid.position.set(0, 0.7, 0);
+        lid.rotation.z = Math.PI / 2;
+        lid.rotation.y = Math.PI / 2;
+        lid.castShadow = true;
+        
+        graveGroup.remove(base); // Replace base
+        graveGroup.add(sarc);
+        graveGroup.add(lid);
+
+    } else if (type < 0.45) {
+        // --- 4. Angel Statue (Simplified) ---
+        // Reuse base logic
+        const bodyGeo = new THREE.CylinderGeometry(0.15, 0.25, 1.0, 8);
+        const body = new THREE.Mesh(bodyGeo, stoneMat);
+        body.position.y = 0.7;
+        graveGroup.add(body);
+        
+        const headGeo = new THREE.SphereGeometry(0.15, 8, 8);
+        const head = new THREE.Mesh(headGeo, stoneMat);
+        head.position.y = 1.3;
+        graveGroup.add(head);
+        
+        // Wings
+        const wingGeo = new THREE.BoxGeometry(0.05, 0.6, 0.4);
+        const lWing = new THREE.Mesh(wingGeo, stoneMat);
+        lWing.position.set(0.15, 1.0, 0.1); lWing.rotation.z = -0.5;
+        const rWing = new THREE.Mesh(wingGeo, stoneMat);
+        rWing.position.set(-0.15, 1.0, 0.1); rWing.rotation.z = 0.5;
+        graveGroup.add(lWing); graveGroup.add(rWing);
+
+    } else if (type < 0.55) {
+        // --- 5. Gargoyle (Perched) ---
+        const pillarGeo = new THREE.BoxGeometry(0.4, 1.2, 0.4);
+        const pillar = new THREE.Mesh(pillarGeo, stoneMat);
+        pillar.position.y = 0.7;
+        graveGroup.add(pillar);
+        
+        const gargGeo = new THREE.DodecahedronGeometry(0.25);
+        const garg = new THREE.Mesh(gargGeo, stoneMat);
+        garg.position.y = 1.45;
+        garg.castShadow = true;
+        graveGroup.add(garg);
+
+    } else if (type < 0.8) {
+        // --- 6. Headstone (Classic) ---
+        let headGeo;
+        if (Math.random() < 0.5) {
+             // Rounded Top
              headGeo = new THREE.BoxGeometry(0.6, 1.0, 0.15);
         } else {
-             // Square Top
-             headGeo = new THREE.BoxGeometry(0.6, 0.8, 0.15);
+             // Gothic Top (Pointed)
+             headGeo = new THREE.BoxGeometry(0.5, 1.2, 0.15);
         }
         const head = new THREE.Mesh(headGeo, stoneMat);
-        head.position.y = 0.6; // On top of base
+        head.position.y = 0.7; 
         head.castShadow = true;
-        head.receiveShadow = true;
         
-        // Tilt the stone slightly like an old grave
+        // Tilt
         head.rotation.x = (Math.random() - 0.5) * 0.2;
         head.rotation.z = (Math.random() - 0.5) * 0.1;
         
         graveGroup.add(head);
+
+    } else {
+        // --- 7. Flat Marker ---
+        const flatGeo = new THREE.BoxGeometry(0.6, 0.1, 0.8);
+        const flat = new THREE.Mesh(flatGeo, stoneMat);
+        flat.position.y = 0.05;
+        flat.castShadow = true;
+        
+        graveGroup.remove(base); // Replace base
+        graveGroup.add(flat);
     }
 
     parent.add(graveGroup);
