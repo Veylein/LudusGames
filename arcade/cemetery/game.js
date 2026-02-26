@@ -115,12 +115,13 @@ class Chunk {
     }
     
     generateTerrain() {
-        const segs = 32;
+        const segs = 64; // Increased detail (was 32)
         const geom = new THREE.PlaneGeometry(CHUNK_SIZE, CHUNK_SIZE, segs, segs);
         geom.rotateX(-Math.PI / 2);
         
         const posAttribute = geom.attributes.position;
         const colors = [];
+        const uvs = geom.attributes.uv;
         
         for (let i = 0; i < posAttribute.count; i++) {
             const lx = posAttribute.getX(i);
@@ -134,16 +135,14 @@ class Chunk {
             posAttribute.setY(i, h);
             
             // Vertex Coloring based on height
-            // Low = Mud/Water (Dark Brown/Blue-ish), High = Grass (Dark Green/Grey)
             if (h < -4) {
-                 colors.push(0.1, 0.1, 0.15); // Watery mud
+                 colors.push(0.05, 0.05, 0.1); // Deep water
             } else if (h < 0) {
-                 colors.push(0.25, 0.15, 0.1); // Mud
+                 colors.push(0.15, 0.1, 0.05); // Mud
             } else {
-                 // Noisy grass color
-                 const start = 0.1;
-                 const varG = Math.random() * 0.1;
-                 colors.push(start, start + 0.1 + varG, start); 
+                 // Grass variation
+                 const v = 0.1 + Math.random() * 0.1;
+                 colors.push(v, v+0.1, v); 
             }
         }
         
@@ -152,15 +151,64 @@ class Chunk {
         
         const mat = new THREE.MeshStandardMaterial({ 
             vertexColors: true,
+            map: grassTex, // Detail texture Overlay
             roughness: 0.9,
-            metalness: 0.1
+            metalness: 0.1,
+            flatShading: false
         });
         
         const mesh = new THREE.Mesh(geom, mat);
         mesh.receiveShadow = true;
         
         this.group.add(mesh);
-        this.terrainMesh = mesh; // Keep ref for raycasting
+        this.terrainMesh = mesh; 
+        
+        // Grass Blades (Instanced Mesh for performance)
+        this.generateGrass(mesh, 400); // 400 blades per chunk
+    }
+
+    generateGrass(terrainMesh, count) {
+        // Simple Billboard Grass
+        const grassGeo = new THREE.PlaneGeometry(0.5, 1.0);
+        grassGeo.translate(0, 0.5, 0); // Pivot at bottom
+        
+        const grassMat = new THREE.MeshLambertMaterial({
+            color: 0x224422,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.9
+        });
+        
+        const instancedGrass = new THREE.InstancedMesh(grassGeo, grassMat, count);
+        const dummy = new THREE.Object3D();
+        
+        for(let i=0; i<count; i++) {
+            const lx = (Math.random() - 0.5) * CHUNK_SIZE;
+            const lz = (Math.random() - 0.5) * CHUNK_SIZE;
+            const wx = lx + this.gx * CHUNK_SIZE;
+            const wz = lz + this.gz * CHUNK_SIZE;
+            
+            const h = getNoiseHeight(wx, wz);
+            
+            if (h > 0) { // Only on grass, not mud
+                dummy.position.set(lx, h, lz);
+                dummy.rotation.y = Math.random() * Math.PI;
+                // Random scale variation
+                const s = 0.8 + Math.random() * 0.5;
+                dummy.scale.set(s, s, s);
+                dummy.updateMatrix();
+                instancedGrass.setMatrixAt(i, dummy.matrix);
+            } else {
+                // Hide underwater grass by scaling to 0
+                dummy.scale.set(0,0,0);
+                dummy.updateMatrix();
+                instancedGrass.setMatrixAt(i, dummy.matrix);
+            }
+        }
+        
+        instancedGrass.instanceMatrix.needsUpdate = true;
+        instancedGrass.receiveShadow = true;
+        this.group.add(instancedGrass);
     }
     
     generateFeatures() {
@@ -190,10 +238,35 @@ class Chunk {
                 createTree(lx, h, lz, this.group);
             }
         }
+        
+        // Rare: Spawn an Angel? (1 in 5 chunks)
+        if (Math.random() < 0.2) {
+             const lx = (Math.random() - 0.5) * CHUNK_SIZE;
+             const lz = (Math.random() - 0.5) * CHUNK_SIZE;
+             const wx = lx + this.gx * CHUNK_SIZE;
+             const wz = lz + this.gz * CHUNK_SIZE;
+             const h = getNoiseHeight(wx, wz);
+             if (h > -2) {
+                 const enemy = new Enemy('angel', wx, wz);
+                 enemies.push(enemy);
+                 // Associate enemy with this chunk to delete it later
+                 this.enemies = this.enemies || [];
+                 this.enemies.push(enemy); 
+             }
+        }
     }
     
     dispose() {
         scene.remove(this.group);
+        // Remove enemies associated with this chunk
+        if (this.enemies) {
+            this.enemies.forEach(e => {
+                e.dispose();
+                const idx = enemies.indexOf(e);
+                if (idx > -1) enemies.splice(idx, 1);
+            });
+        }
+        
         // Clean up geometries/materials if needed to prevent leaks
         this.group.traverse(obj => {
             if(obj.geometry) obj.geometry.dispose();
@@ -244,12 +317,16 @@ function createGrave(x, y, z, parent) {
     // Rotation for the whole group
     graveGroup.rotation.y = (Math.random() - 0.5) * 0.5;
 
+    // Stone Material with procedural texture
+    const stoneMat = new THREE.MeshStandardMaterial({ 
+        color: 0x555555, 
+        map: stoneTex,
+        roughness: 0.9,
+        metalness: 0.2
+    });
+
     // Base of the tombstone
     const baseGeo = new THREE.BoxGeometry(0.8, 0.2, 0.4);
-    const stoneMat = new THREE.MeshStandardMaterial({ 
-        color: 0x444444, 
-        roughness: 0.9 
-    });
     const base = new THREE.Mesh(baseGeo, stoneMat);
     base.position.y = 0.1;
     base.castShadow = true;
@@ -275,7 +352,7 @@ function createGrave(x, y, z, parent) {
     } else {
         // Tablet / Slab
         if ( type < 0.6) {
-             // Rounded Top
+             // Rounded Top with segment detail
              headGeo = new THREE.BoxGeometry(0.6, 1.0, 0.15);
         } else {
              // Square Top
@@ -302,8 +379,13 @@ function createTree(x, y, z, parent) {
     
     // Trunk
     const trunkHeight = 2 + Math.random() * 2;
-    const trunkGeo = new THREE.CylinderGeometry(0.15, 0.3, trunkHeight, 6);
-    const trunkMat = new THREE.MeshStandardMaterial({ color: 0x2d1c12, roughness: 1.0 });
+    const trunkGeo = new THREE.CylinderGeometry(0.15, 0.3, trunkHeight, 8);
+    const trunkMat = new THREE.MeshStandardMaterial({ 
+        color: 0x2d1c12, 
+        map: barkTex,
+        roughness: 1.0,
+        bumpScale: 0.1
+    });
     const trunk = new THREE.Mesh(trunkGeo, trunkMat);
     trunk.position.y = trunkHeight / 2;
     trunk.castShadow = true;
@@ -311,14 +393,19 @@ function createTree(x, y, z, parent) {
     treeGroup.add(trunk);
     
     // Foliage (Pine style cones)
-    const foliageMat = new THREE.MeshStandardMaterial({ color: 0x0f210f, roughness: 0.9 });
+    const foliageMat = new THREE.MeshStandardMaterial({ 
+        color: 0x0f210f, 
+        map: leavesTex,
+        roughness: 0.9,
+        side: THREE.DoubleSide
+    });
     const layers = 3 + Math.floor(Math.random() * 3);
     
     for(let i=0; i<layers; i++) {
         const size = 1.5 - (i * 0.3);
         const fY = (trunkHeight * 0.4) + (i * 0.8);
         const cone = new THREE.Mesh(
-            new THREE.ConeGeometry(size, 1.5, 7),
+            new THREE.ConeGeometry(size, 1.5, 9),
             foliageMat
         );
         cone.position.y = fY;
@@ -469,6 +556,18 @@ function animate() {
         camera.position.y = currentY + 1.7;
         
         updateChunks();
+        
+        // Update Enemies
+        enemies.forEach(e => e.update(camera.position, camera, delta));
+        
+        // Apply Screen Shake if needed
+        if (state.sanityEffects.shakeIntensity > 0) {
+            const s = state.sanityEffects.shakeIntensity;
+            camera.rotation.x += (Math.random() - 0.5) * 0.01 * s;
+            camera.rotation.z += (Math.random() - 0.5) * 0.01 * s;
+            state.sanityEffects.shakeIntensity = Math.max(0, s - delta * 2);
+        }
+
         updateUI();
     }
 
