@@ -1,0 +1,619 @@
+﻿
+:root {
+    --pacman-yellow: #ffff00;
+    --ghost-red: #ff0000;
+    --ghost-pink: #ffb8ff;
+    --ghost-cyan: #00ffff;
+    --ghost-orange: #ffb852;
+    --arcade-blue: #1919a6;
+    --neon-green: #39ff14;
+    --bg-dark: #050510;
+    --cabinet-color: #2c2c54;
+    --cabinet-border: #474787;
+    --joystick-red: #e74c3c;
+    --button-blue: #3498db;
+    --button-yellow: #f1c40f;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: #fff;
+    font-family: 'Press Start 2P', cursive, monospace;
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Dark arcade atmosphere background */
+    background-image: 
+        radial-gradient(circle at 50% 50%, rgba(20, 20, 40, 0.8), rgba(0, 0, 0, 0.95)),
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.5) 3px),
+        repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 0, 0, 0.5) 3px);
+    background-size: 100% 100%, 4px 4px, 4px 4px;
+}
+
+/* --- ARCADE CABINET CONTAINER --- */
+.arcade-cabinet {
+    position: relative;
+    width: 90vw;
+    max-width: 800px;
+    background: var(--cabinet-color);
+    border: 15px solid #1a1a2e;
+    border-radius: 20px 20px 4px 4px;
+    box-shadow: 
+        inset 0 0 20px rgba(0,0,0,0.8),
+        0 0 50px rgba(0, 255, 255, 0.2),
+        10px 10px 0 rgba(0,0,0,0.5); /* 3D depth */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+/* Cabinet Header / Marquee */
+.cabinet-header {
+    width: 100%;
+    background: #000;
+    border: 4px solid var(--cabinet-border);
+    border-radius: 10px 10px 0 0;
+    margin-bottom: 20px;
+    padding: 15px 0;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 0 10px rgba(255,255,255,0.1);
+}
+
+.cabinet-title {
+    color: var(--neon-green);
+    font-size: 24px;
+    text-shadow: 
+        2px 2px 0 var(--arcade-blue),
+        0 0 10px var(--neon-green);
+    letter-spacing: 4px;
+    z-index: 2;
+    position: relative;
+}
+
+/* Decorative Characters on Top */
+.cabinet-chars {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    transform: translateY(-50%);
+    display: flex;
+    justify-content: space-between;
+    padding: 0 10px;
+    opacity: 0.3;
+    pointer-events: none;
+    font-size: 12px;
+}
+
+/* Screen Bezel */
+.crt-bezel {
+    background: #111;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: inset 0 0 20px #000;
+    margin-bottom: 20px;
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center; /* Center the canvas */
+}
+
+/* The Game Canvas styling (within bezel) */
+canvas {
+    border: 2px solid #333;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+    max-width: 100%;
+    background: #000;
+    /* CRT Curve effect could go here */
+}
+
+/* Control Panel (Joystick area) */
+.control-panel {
+    background: #34343f; /* Lighter plastic texture */
+    width: 110%; /* Slightly wider than cabinet */
+    margin-left: -5%;
+    padding: 20px;
+    border-top: 5px solid #111;
+    border-radius: 0 0 10px 10px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    box-shadow: inset 0 5px 10px rgba(255,255,255,0.05);
+    background-image: linear-gradient(45deg, #3a3a4a 25%, transparent 25%, transparent 75%, #3a3a4a 75%, #3a3a4a), 
+                      linear-gradient(45deg, #3a3a4a 25%, transparent 25%, transparent 75%, #3a3a4a 75%, #3a3a4a);
+    background-size: 4px 4px;
+    background-position: 0 0, 2px 2px;
+}
+
+/* Visual Joystick */
+.joystick-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.joystick-base {
+    width: 60px;
+    height: 60px;
+    background: #111;
+    border-radius: 50%;
+    position: relative;
+    box-shadow: 
+        inset 0 0 10px rgba(0,0,0,0.8),
+        0 5px 0 #222;
+}
+
+.joystick-stick {
+    width: 16px;
+    height: 40px;
+    background: #555;
+    position: absolute;
+    top: -20px;
+    left: 22px;
+    z-index: 10;
+}
+
+.joystick-ball {
+    width: 36px;
+    height: 36px;
+    background: var(--joystick-red);
+    border-radius: 50%;
+    position: absolute;
+    top: -45px;
+    left: 12px;
+    z-index: 20;
+    box-shadow: 
+        inset -5px -5px 10px rgba(0,0,0,0.5),
+        inset 5px 5px 10px rgba(255,255,255,0.3),
+        5px 5px 5px rgba(0,0,0,0.3);
+}
+
+/* Visual Buttons */
+.buttons-area {
+    display: flex;
+    gap: 15px;
+}
+
+.arcade-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 4px solid #111;
+    position: relative;
+    box-shadow: 0 5px 0 #000;
+    cursor: pointer; /* Even if visual only, feels nice */
+}
+
+.arcade-button::after {
+    content: ""; /* Shininess */
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: 10px;
+    height: 10px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 50%;
+}
+
+.btn-red { background: var(--joystick-red); }
+.btn-blue { background: var(--button-blue); }
+.btn-yellow { background: var(--button-yellow); }
+
+.arcade-button:active {
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 #000;
+    border-bottom: none;
+}
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    overflow-x: hidden;
+    
+    /* Authentic Arcade Pattern Background */
+    background-image: 
+        linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath d='M20,50 L40,40 A15,15 0 1,0 40,60 Z' fill='%23ffff00' opacity='0.1'/%3E%3Cpath d='M70,70 Q70,60 80,60 Q90,60 90,70 L90,85 L85,80 L80,85 L75,80 L70,85 Z' fill='%23ff0000' opacity='0.1'/%3E%3Crect x='10' y='10' width='4' height='4' fill='%2339ff14' opacity='0.1'/%3E%3Crect x='18' y='10' width='4' height='4' fill='%2339ff14' opacity='0.1'/%3E%3Crect x='12' y='14' width='8' height='4' fill='%2339ff14' opacity='0.1'/%3E%3Ccircle cx='80' cy='20' r='3' fill='%23ff0000' opacity='0.1'/%3E%3C/svg%3E");
+    background-size: 150px 150px;
+    background-attachment: fixed;
+    animation: bgScroll 60s linear infinite;
+}
+
+@keyframes bgScroll {
+    from { background-position: 0 0, 0 0; }
+    to { background-position: 0 0, 150px 150px; }
+}
+
+/* Character Sprites (Simulated via CSS) */
+body::before, body::after {
+    display: none; /* Replaced by SVG background */
+}
+
+/* Shared Arcade Styles */
+canvas {
+    border: 4px solid var(--arcade-blue);
+    box-shadow: 0 0 20px var(--arcade-blue), inset 0 0 20px rgba(0,0,0,0.5);
+    background-color: #000;
+    border-radius: 4px;
+    image-rendering: pixelated;
+}
+
+h1, h2, h3 {
+    text-shadow: 4px 4px 0px #000;
+    letter-spacing: 2px;
+}
+
+button {
+    font-family: 'Press Start 2P', cursive;
+    background: #dd0000;
+    color: white;
+    border: 4px solid #fff;
+    padding: 15px 30px;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 6px 0 #990000;
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+button:active {
+    transform: translateY(6px);
+    box-shadow: 0 0 0 #990000;
+}
+
+
+/* Enhanced Game Links - Retro Button Style */
+.game-link {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-decoration: none;
+    background: #000;
+    border: 4px solid #fff;
+    color: #fff; /* White base text */
+    padding: 20px;
+    margin: 10px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 14px;
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.1s, box-shadow 0.1s, background 0.2s;
+    box-shadow: 6px 6px 0 rgba(0,0,0,0.5), 6px 6px 0 2px #fff;
+    text-align: center;
+    min-width: 180px; /* Wider buttons */
+    min-height: 80px; /* Taller buttons */
+}
+
+.game-link:hover {
+    transform: translate(-3px, -3px);
+    background: #333; /* Dark gray hover */
+    border-color: #0f0; /* Green highlight on hover */
+    color: #0f0;
+    box-shadow: 10px 10px 0 rgba(0,0,0,0.5), 10px 10px 0 2px #0f0;
+    z-index: 10;
+}
+
+.game-link:active {
+    transform: translate(4px, 4px);
+    box-shadow: 2px 2px 0 rgba(0,0,0,0.5), 2px 2px 0 2px #fff;
+}
+
+.game-link::before {
+    content: ""; /* Scanline glint */
+    position: absolute;
+    top: 0; left: -100%;
+    width: 200%; height: 100%;
+    background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
+    transition: none;
+}
+
+.game-link:hover::before {
+    animation: shine 0.5s ease-in-out;
+}
+
+@keyframes shine {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.game-link span {
+    position: relative;
+    z-index: 2;
+    text-shadow: 2px 2px 0 #000;
+}
+
+/* Unique Colors per Game (ARCADE SPECIFIC) */
+.game-link[href*="pacman"] { border-color: #ffff00; color: #ffff00; box-shadow: 6px 6px 0 rgba(0,0,0,0.5), 6px 6px 0 2px #ffff00; }
+.game-link[href*="pacman"]:hover { background: #ffff00; color: #000; box-shadow: 10px 10px 0 rgba(0,0,0,0.5), 10px 10px 0 2px #ffff00; }
+
+.game-link[href*="mario"], .game-link[href*="kong"] { border-color: #ff0000; color: #ff0000; box-shadow: 6px 6px 0 rgba(0,0,0,0.5), 6px 6px 0 2px #ff0000; }
+.game-link[href*="mario"]:hover, .game-link[href*="kong"]:hover { background: #ff0000; color: #fff; box-shadow: 10px 10px 0 rgba(0,0,0,0.5), 10px 10px 0 2px #ff0000; }
+
+.game-link[href*="tetris"] { border-color: #00ffff; color: #00ffff; box-shadow: 6px 6px 0 rgba(0,0,0,0.5), 6px 6px 0 2px #00ffff; }
+.game-link[href*="tetris"]:hover { background: #00ffff; color: #000; box-shadow: 10px 10px 0 rgba(0,0,0,0.5), 10px 10px 0 2px #00ffff; }
+
+.game-link[href*="invaders"] { border-color: #00ff00; color: #00ff00; box-shadow: 6px 6px 0 rgba(0,0,0,0.5), 6px 6px 0 2px #00ff00; }
+.game-link[href*="invaders"]:hover { background: #00ff00; color: #000; box-shadow: 10px 10px 0 rgba(0,0,0,0.5), 10px 10px 0 2px #00ff00; }
+
+.game-link[href*="fighting"] { border-color: #ff8800; color: #ff8800; box-shadow: 6px 6px 0 rgba(0,0,0,0.5), 6px 6px 0 2px #ff8800; }
+.game-link[href*="fighting"]:hover { background: #ff8800; color: #000; box-shadow: 10px 10px 0 rgba(0,0,0,0.5), 10px 10px 0 2px #ff8800; }
+
+/* Scanline Effect */
+.scanlines {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0),
+        rgba(255,255,255,0) 50%,
+        rgba(0,0,0,0.2) 50%,
+        rgba(0,0,0,0.2)
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 999;
+}
+
+canvas {
+    background: #000;
+    margin: 20px auto;
+    display: block;
+    image-rendering: pixelated;
+}
+
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh;
+}
+
+.controls-info {
+    margin-top: 20px;
+    color: var(--text-color);
+    font-size: 12px;
+    text-align: center;
+}
+
+.score-hud {
+    font-size: 24px;
+    color: var(--secondary-color);
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 0 #000;
+}
+
+.game-over-screen {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid var(--accent-color);
+    padding: 40px;
+    text-align: center;
+    display: none;
+    z-index: 100;
+}
+
+.game-over-screen h2 {
+    color: var(--accent-color);
+    margin-bottom: 20px;
+    font-size: 32px;
+}
+
+.restart-btn {
+    background: var(--primary-color);
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    font-family: inherit;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+.restart-btn:hover {
+    background: var(--accent-color);
+}
+
+ 
+ / *   - - -   U N I V E R S A L   M O B I L E   C O N T R O L S   ( D - P A D )   - - -   * / 
+ 
+ / *   E n a b l e   o n - s c r e e n   c o n t r o l s   f o r   a l l   a r c a d e   g a m e s   * / 
+ 
+ . m o b i l e - c o n t r o l s   { 
+ 
+         d i s p l a y :   g r i d   ! i m p o r t a n t ;   / *   F O R C E   D I S P L A Y   o v e r r i d e s   i n l i n e   s t y l e = " d i s p l a y : n o n e "   * / 
+ 
+         g r i d - t e m p l a t e - a r e a s :   
+ 
+                 " .   u p   . " 
+ 
+                 " l e f t   .   r i g h t " 
+ 
+                 " .   d o w n   . " ; 
+ 
+         g r i d - t e m p l a t e - r o w s :   6 0 p x   6 0 p x   6 0 p x ; 
+ 
+         g r i d - t e m p l a t e - c o l u m n s :   6 0 p x   6 0 p x   6 0 p x ; 
+ 
+         g a p :   5 p x ; 
+ 
+         
+ 
+         p o s i t i o n :   f i x e d ; 
+ 
+         b o t t o m :   2 0 p x ; 
+ 
+         r i g h t :   2 0 p x ; 
+ 
+         z - i n d e x :   1 0 0 0 0 ; 
+ 
+         
+ 
+         b a c k g r o u n d :   r g b a ( 0 ,   0 ,   0 ,   0 . 5 ) ; 
+ 
+         p a d d i n g :   1 0 p x ; 
+ 
+         b o r d e r - r a d i u s :   2 0 p x ; 
+ 
+         b a c k d r o p - f i l t e r :   b l u r ( 5 p x ) ; 
+ 
+         b o r d e r :   2 p x   s o l i d   r g b a ( 2 5 5 ,   2 5 5 ,   2 5 5 ,   0 . 1 ) ; 
+ 
+ } 
+ 
+ 
+ 
+ . m o b i l e - c o n t r o l s   b u t t o n   { 
+ 
+         w i d t h :   1 0 0 % ; 
+ 
+         h e i g h t :   1 0 0 % ; 
+ 
+         b a c k g r o u n d :   r g b a ( 2 5 5 ,   2 5 5 ,   2 5 5 ,   0 . 1 ) ; 
+ 
+         b o r d e r :   2 p x   s o l i d   r g b a ( 2 5 5 ,   2 5 5 ,   2 5 5 ,   0 . 3 ) ; 
+ 
+         b o r d e r - r a d i u s :   1 2 p x ; 
+ 
+         c o l o r :   r g b a ( 2 5 5 ,   2 5 5 ,   2 5 5 ,   0 . 8 ) ; 
+ 
+         f o n t - s i z e :   2 4 p x ; 
+ 
+         c u r s o r :   p o i n t e r ; 
+ 
+         t o u c h - a c t i o n :   m a n i p u l a t i o n ;   / *   P r e v e n t   z o o m   o n   d o u b l e   t a p   * / 
+ 
+         d i s p l a y :   f l e x ; 
+ 
+         j u s t i f y - c o n t e n t :   c e n t e r ; 
+ 
+         a l i g n - i t e m s :   c e n t e r ; 
+ 
+         t r a n s i t i o n :   a l l   0 . 1 s ; 
+ 
+ } 
+ 
+ 
+ 
+ . m o b i l e - c o n t r o l s   b u t t o n : a c t i v e   { 
+ 
+         b a c k g r o u n d :   r g b a ( 2 5 5 ,   2 5 5 ,   2 5 5 ,   0 . 4 ) ; 
+ 
+         t r a n s f o r m :   s c a l e ( 0 . 9 5 ) ; 
+ 
+ } 
+ 
+ 
+ 
+ / *   M a p   b u t t o n s   t o   g r i d   a r e a s   * / 
+ 
+ # u p - b t n         {   g r i d - a r e a :   u p ;   } 
+ 
+ # d o w n - b t n     {   g r i d - a r e a :   d o w n ;   } 
+ 
+ # l e f t - b t n     {   g r i d - a r e a :   l e f t ;   } 
+ 
+ # r i g h t - b t n   {   g r i d - a r e a :   r i g h t ;   } 
+ 
+ 
+ 
+ / *   R e s p o n s i v e   a d j u s t m e n t s   * / 
+ 
+ @ m e d i a   ( m a x - w i d t h :   6 0 0 p x )   { 
+ 
+         . m o b i l e - c o n t r o l s   { 
+ 
+                 b o t t o m :   1 0 p x ;   / *   L o w e r   o n   m o b i l e   * / 
+ 
+                 r i g h t :   1 0 p x ; 
+ 
+                 t r a n s f o r m :   s c a l e ( 0 . 8 ) ;   / *   S l i g h t l y   s m a l l e r   * / 
+ 
+                 t r a n s f o r m - o r i g i n :   b o t t o m   r i g h t ; 
+ 
+         } 
+ 
+ } 
+ 
+ 
+/* --- ARCADE LOBBY --- */
+.arcade-lobby-page .hero {
+    display: none !important;
+}
+
+.arcade-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 10;
+    background-color: var(--bg-dark);
+    background-image: url('https://media.discordapp.net/attachments/1476451566725763093/1476451567010971771/image.png?ex=69a12c2c&is=699fdaac&hm=12ca581e22345a591785585aaae443c314dbfc709f5da20b1872425a95caa218&=&format=webp&quality=lossless&width=1229&height=819');
+    background-size: 100% 100% !important;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.arcade-wrapper .map-zone {
+    position: absolute;
+    z-index: 20;
+    display: block;
+    /* DEBUG LAYOUT */
+    border: 2px solid red;
+    background: rgba(255, 0, 0, 0.2);
+}
+
+.arcade-wrapper .zone-hover {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transition: opacity 0.2s;
+    border: 2px solid var(--neon-green);
+    box-shadow: 0 0 10px var(--neon-green);
+    flex-direction: column;
+}
+
+.arcade-wrapper .map-zone:hover .zone-hover {
+    opacity: 1;
+}
+
+.arcade-wrapper .zone-label {
+    color: #fff;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.8rem;
+    text-shadow: 2px 2px 0 #000;
+    text-align: center;
+}
+
+
+/* --- ARCADE LOBBY OVERRIDES --- */
+.arcade-lobby-page {
+    display: block !important;
+    justify-content: flex-start !important;
+    align-items: flex-start !important;
+    flex-direction: column !important;
+    height: 100vh;
+    /* Reset background if needed */
+}
+
+.arcade-lobby-page .nav {
+    position: relative !important;
+    z-index: 100 !important;
+    width: 100% !important;
+}
