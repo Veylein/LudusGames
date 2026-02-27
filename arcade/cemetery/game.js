@@ -145,6 +145,79 @@ function getNoiseHeight(x, z) {
     return y;
 }
 
+// --- ENEMIES ---
+const enemies = [];
+
+class Enemy {
+    constructor(type, x, z) {
+        this.type = type;
+        this.group = new THREE.Group();
+        this.group.position.set(x, 0, z);
+        
+        // Visuals
+        if (type === 'angel') {
+            // Simplified Weeping Angel
+            const mat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.4 });
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.5, 1.6, 8), mat);
+            body.position.y = 0.8;
+            
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), mat);
+            head.position.y = 1.8;
+            
+            const wingGeo = new THREE.BoxGeometry(0.1, 1.2, 0.6);
+            const lWing = new THREE.Mesh(wingGeo, mat);
+            lWing.position.set(0.3, 1.2, 0.2); lWing.rotation.z = -0.5;
+            const rWing = new THREE.Mesh(wingGeo, mat);
+            rWing.position.set(-0.3, 1.2, 0.2); rWing.rotation.z = 0.5;
+            
+            this.group.add(body, head, lWing, rWing);
+            this.group.castShadow = true;
+        }
+        
+        scene.add(this.group);
+        
+        // State
+        this.lastSeenPosition = new THREE.Vector3(x, 0, z);
+        this.isActive = false;
+        this.moveSpeed = 8.0; // Fast when not looking!
+    }
+    
+    update(playerPos, camera, delta) {
+        // Weeping Angel Logic: Move only when not observed
+        
+        // Check if player is looking at angel
+        const toEnemy = new THREE.Vector3().subVectors(this.group.position, camera.position).normalize();
+        const lookDir = new THREE.Vector3();
+        camera.getWorldDirection(lookDir);
+        
+        // Dot product > 0 means generally in front. > 0.5 means within ~60 degrees FOV
+        const isLooking = lookDir.dot(toEnemy) > 0.5;
+        
+        // Raycast check to see if blocked by terrain/objects (Simplified distance check for now)
+        const dist = this.group.position.distanceTo(playerPos);
+        
+        if (!isLooking && dist < 50 && dist > 1.5) {
+            // Move towards player
+            const moveDir = new THREE.Vector3().subVectors(playerPos, this.group.position).normalize();
+            // Ground movement
+            const nextX = this.group.position.x + moveDir.x * this.moveSpeed * delta;
+            const nextZ = this.group.position.z + moveDir.z * this.moveSpeed * delta;
+            
+            // Should also check terrain height
+            const nextY = getNoiseHeight(nextX, nextZ);
+            
+            this.group.position.set(nextX, nextY, nextZ);
+            this.group.lookAt(playerPos.x, nextY, playerPos.z);
+        } else {
+            // Frozen
+        }
+    }
+    
+    dispose() {
+        scene.remove(this.group);
+    }
+}
+
 // Chunks
 const chunks = new Map(); // Key: 'x,z', Value: THREE.Group
 
