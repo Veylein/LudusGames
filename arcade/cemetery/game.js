@@ -156,22 +156,66 @@ class Enemy {
         
         // Visuals
         if (type === 'angel') {
-            // Simplified Weeping Angel
-            const mat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.4 });
-            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.5, 1.6, 8), mat);
-            body.position.y = 0.8;
+            // Detailed Weeping Angel (Procedural Statue)
+            const stoneMat = new THREE.MeshStandardMaterial({ 
+                color: 0x888888, 
+                roughness: 0.9,
+                metalness: 0.2,
+                map: stoneTex
+            });
+
+            // 1. Skirt/Robes (Cone)
+            const skirtGeo = new THREE.ConeGeometry(0.4, 1.2, 10, 1, true);
+            const skirt = new THREE.Mesh(skirtGeo, stoneMat);
+            skirt.position.y = 0.6;
+            this.group.add(skirt);
+
+            // 2. Torso
+            const torsoGeo = new THREE.CylinderGeometry(0.25, 0.35, 0.6, 8);
+            const torso = new THREE.Mesh(torsoGeo, stoneMat);
+            torso.position.y = 1.4;
+            this.group.add(torso);
+
+            // 3. Head
+            const headGeo = new THREE.SphereGeometry(0.22, 10, 10);
+            const head = new THREE.Mesh(headGeo, stoneMat);
+            head.position.y = 1.85;
+            this.group.add(head);
+
+            // 4. Wings (Angled)
+            const wingGeo = new THREE.BoxGeometry(0.05, 1.0, 0.5);
+            const lWing = new THREE.Mesh(wingGeo, stoneMat);
+            lWing.position.set(0.15, 1.5, 0.25);
+            lWing.rotation.x = 0.4;
+            lWing.rotation.z = -0.5;
+            lWing.rotation.y = -0.2;
             
-            const head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 8), mat);
-            head.position.y = 1.8;
+            const rWing = new THREE.Mesh(wingGeo, stoneMat);
+            rWing.position.set(-0.15, 1.5, 0.25);
+            rWing.rotation.x = 0.4;
+            rWing.rotation.z = 0.5;
+            rWing.rotation.y = 0.2;
             
-            const wingGeo = new THREE.BoxGeometry(0.1, 1.2, 0.6);
-            const lWing = new THREE.Mesh(wingGeo, mat);
-            lWing.position.set(0.3, 1.2, 0.2); lWing.rotation.z = -0.5;
-            const rWing = new THREE.Mesh(wingGeo, mat);
-            rWing.position.set(-0.3, 1.2, 0.2); rWing.rotation.z = 0.5;
+            this.group.add(lWing);
+            this.group.add(rWing);
+
+            // 5. Arms (Reaching out)
+            const armGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.7);
+            const lArm = new THREE.Mesh(armGeo, stoneMat);
+            lArm.position.set(0.25, 1.55, -0.3);
+            lArm.rotation.x = Math.PI / 2; // Point forward
+            lArm.rotation.z = -0.2;
             
-            this.group.add(body, head, lWing, rWing);
+            const rArm = new THREE.Mesh(armGeo, stoneMat);
+            rArm.position.set(-0.25, 1.55, -0.3);
+            rArm.rotation.x = Math.PI / 2;
+            rArm.rotation.z = 0.2;
+
+            this.group.add(lArm);
+            this.group.add(rArm);
+            
             this.group.castShadow = true;
+            this.group.traverse(o => { if(o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
         }
         
         scene.add(this.group);
@@ -179,38 +223,69 @@ class Enemy {
         // State
         this.lastSeenPosition = new THREE.Vector3(x, 0, z);
         this.isActive = false;
-        this.moveSpeed = 8.0; // Fast when not looking!
+        this.moveSpeed = 9.0; // Fast!
+        this.attackCooldown = 0;
     }
     
     update(playerPos, camera, delta) {
+        if (this.attackCooldown > 0) this.attackCooldown -= delta;
+
         // Weeping Angel Logic: Move only when not observed
         
         // Check if player is looking at angel
         const toEnemy = new THREE.Vector3().subVectors(this.group.position, camera.position).normalize();
+        
+        // Direction player is facing
         const lookDir = new THREE.Vector3();
         camera.getWorldDirection(lookDir);
         
-        // Dot product > 0 means generally in front. > 0.5 means within ~60 degrees FOV
-        const isLooking = lookDir.dot(toEnemy) > 0.5;
+        // Dot product > 0.55 means within ~55 degrees HALF-FOV (approx 110 total)
+        // If angle is behind walls, we still count as "looking" for now (hard mode)
+        // We really should check for raycast visibility eventually
+        const isLooking = lookDir.dot(toEnemy) > 0.6; 
         
-        // Raycast check to see if blocked by terrain/objects (Simplified distance check for now)
         const dist = this.group.position.distanceTo(playerPos);
         
-        if (!isLooking && dist < 50 && dist > 1.5) {
+        // ATTACK LOGIC
+        if (dist < 1.2 && this.attackCooldown <= 0) {
+            // Jumpscare damage
+            state.health -= 15;
+            state.sanity -= 10;
+            state.sanityEffects.shakeIntensity = 1.0; // Big shake
+            this.attackCooldown = 2.0;
+            
+            // "Teleport" slightly back or to side to confuse player
+            const offset = (Math.random() - 0.5) * 4;
+            this.group.position.x += offset;
+            this.group.position.z += offset;
+            
+            console.log("Angel Attack!");
+            updateUI();
+            
+            if (state.health <= 0) {
+                // Game Over logic placeholder
+                alert("You have been claimed.");
+                location.reload(); 
+            }
+            return; 
+        }
+
+        // MOVEMENT LOGIC
+        // Move if NOT looking, AND within range (spawn radius), AND not too close
+        if (!isLooking && dist < 60 && dist > 1.0) {
             // Move towards player
             const moveDir = new THREE.Vector3().subVectors(playerPos, this.group.position).normalize();
+            
             // Ground movement
             const nextX = this.group.position.x + moveDir.x * this.moveSpeed * delta;
             const nextZ = this.group.position.z + moveDir.z * this.moveSpeed * delta;
             
-            // Should also check terrain height
+            // Snap to terrain height
             const nextY = getNoiseHeight(nextX, nextZ);
             
             this.group.position.set(nextX, nextY, nextZ);
             this.group.lookAt(playerPos.x, nextY, playerPos.z);
-        } else {
-            // Frozen
-        }
+        } 
     }
     
     dispose() {
