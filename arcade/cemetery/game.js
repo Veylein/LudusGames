@@ -41,7 +41,9 @@ const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Softer shadows
+// Bias helps fix shadow acne (weird stripes)
+renderer.shadowMap.bias = -0.0001; 
 document.getElementById('game-container').appendChild(renderer.domElement);
 
 // --- LIGHTING ---
@@ -136,7 +138,7 @@ function getNoiseHeight(x, z) {
         y = (base - 0.2) * 15;
     }
 
-    // Add small detail everywhere so flat isn't PERFECTLY flat
+    // Add small detail everywhere
     y += noise.noise2D(x * 0.1, z * 0.1) * 0.5;
 
     // Deep pits/water
@@ -284,7 +286,9 @@ class Enemy {
             const nextY = getNoiseHeight(nextX, nextZ);
             
             this.group.position.set(nextX, nextY, nextZ);
-            this.group.lookAt(playerPos.x, nextY, playerPos.z);
+            this.group.lookAt(playerPos.x, playerPos.y, playerPos.z);
+            this.group.rotation.x = 0; // Keep upright
+            this.group.rotation.z = 0;
         } 
     }
     
@@ -550,6 +554,8 @@ function createGrave(x, y, z, parent) {
         const obelisk = new THREE.Mesh(obeliskGeo, stoneMat);
         obelisk.position.y = 1.0;
         obelisk.castShadow = true;
+        // Fix z-fighting by nudging random rotation
+        obelisk.rotation.y = Math.random();
         graveGroup.add(obelisk);
 
     } else if (type < 0.35) {
@@ -568,6 +574,10 @@ function createGrave(x, y, z, parent) {
         lid.castShadow = true;
         
         graveGroup.remove(base); // Replace base
+        // Ensure no z-fighting with ground
+        sarc.position.y = 0.35;
+        lid.position.y = 0.65;
+        
         graveGroup.add(sarc);
         graveGroup.add(lid);
 
@@ -818,8 +828,9 @@ function animate() {
         controls.moveRight(-velocity.x * delta);
         controls.moveForward(-velocity.z * delta);
         
-        // Snap to ground height (+ player height)
-        camera.position.y = currentY + 1.7;
+        // Snap to ground height (Smoothly)
+        const targetY = currentY + 1.7;
+        camera.position.y = THREE.MathUtils.lerp(camera.position.y, targetY, 10 * delta);
         
         updateChunks();
         
