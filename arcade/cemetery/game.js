@@ -1,12 +1,16 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { Noise } from './noise.js';
 
 // --- CONFIGURATION ---
 const CHUNK_SIZE = 100; // Size of one map chunk
 const RENDER_DISTANCE = 2; // Radius of chunks to load around player (2 = 5x5 grid)
 const FOG_DENSITY = 0.02; 
-const GRAVES_PER_CHUNK = 8; 
+const GRAVES_PER_CHUNK = 25; // Dense cemetery
 const TREES_PER_CHUNK = 12;
 
 // --- GAME STATE ---
@@ -30,36 +34,84 @@ const state = {
 
 // --- SCENE SETUP ---
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x050505);
-scene.fog = new THREE.FogExp2(0x050505, FOG_DENSITY);
+scene.background = new THREE.Color(0x020205); // Almost Pitch Black
+scene.fog = new THREE.FogExp2(0x020205, FOG_DENSITY * 1.5); // Thicker fog
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 // Initial position, will be corrected by terrain
 camera.position.set(0, 10, 0); 
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit pixel ratio for performance
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Softer shadows
-// Bias helps fix shadow acne (weird stripes)
+renderer.shadowMap.type = THREE.PCFSoftShadowMap; 
 renderer.shadowMap.bias = -0.0001; 
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 0.8; // Darker mood
 document.getElementById('game-container').appendChild(renderer.domElement);
 
-// --- LIGHTING ---
-const ambientLight = new THREE.AmbientLight(0x050510); // Very dark blue/black
-scene.add(ambientLight);
+// --- POST-PROCESSING ---
+const composer = new EffectComposer(renderer);
+const renderPass = new RenderPass(scene, camera);
+composer.addPass(renderPass);
 
-// Flashlight 
-const flashLight = new THREE.SpotLight(0xffffee, 5, 40, 0.4, 0.5, 1); // Brighter, tighter beam
+// Bloom (Glow) for moon/flashlight/eyes
+const bloomPass = new UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight), 
+    0.4, 0.4, 0.9 // strength, radius, threshold
+);
+composer.addPass(bloomPass);
+
+// Output Pass (Color Grading)
+const outputPass = new OutputPass();
+composer.addPass(outputPass);
+
+
+// --- PARTICLES (Atmosphere) ---
+const particleCount = 2000;
+const particleGeo = new THREE.BufferGeometry();
+const particlePos = [];
+for (let i = 0; i < particleCount; i++) {
+    const x = (Math.random() - 0.5) * 40;
+    const y = (Math.random() - 0.5) * 10 + 2;
+    const z = (Math.random() - 0.5) * 40;
+    particlePos.push(x, y, z);
+}
+particleGeo.setAttribute('position', new THREE.Float32BufferAttribute(particlePos, 3));
+const particleMat = new THREE.PointsMaterial({
+    color: 0x8899aa,
+    size: 0.05,
+    transparent: true,
+    opacity: 0.4,
+    sizeAttenuation: true
+});
+const particles = new THREE.Points(particleGeo, particleMat);
+scene.add(particles);
+
+
+// --- LIGHTING ---
+// Hemisphere Light: Sky vs Ground colors
+const hemiLight = new THREE.HemisphereLight(0x0d0d1a, 0x050510, 0.6); 
+scene.add(hemiLight);
+
+// Flashlight (Warmer, tighter)
+const flashLight = new THREE.SpotLight(0xfff0aa, 10, 50, 0.5, 0.5, 2); 
 flashLight.position.set(0, 0, 0);
 flashLight.target.position.set(0, 0, -1);
+flashLight.castShadow = true; 
+// Flashlight shadows are expensive, but look cool. Remove if slow.
+flashLight.shadow.mapSize.width = 512;
+flashLight.shadow.mapSize.height = 512;
+flashLight.shadow.camera.near = 0.1;
+flashLight.shadow.camera.far = 50;
+
 camera.add(flashLight);
 camera.add(flashLight.target);
 scene.add(camera);
 
-// Moon
-const moonLight = new THREE.DirectionalLight(0x223355, 0.5); // Slightly brighter moon for silhouettes
+// Moon (Cold, distant)
+const moonLight = new THREE.DirectionalLight(0x445577, 0.4); 
 moonLight.position.set(50, 100, 50);
 moonLight.castShadow = true;
 // Optimize shadows for open world
@@ -67,6 +119,7 @@ moonLight.shadow.mapSize.width = 2048;
 moonLight.shadow.mapSize.height = 2048;
 moonLight.shadow.camera.near = 0.5;
 moonLight.shadow.camera.far = 500;
+moonLight.shadow.normalBias = 0.05; // Helps with self-shadowing artifacts
 moonLight.shadow.camera.left = -100;
 moonLight.shadow.camera.right = 100;
 moonLight.shadow.camera.top = 100;
@@ -160,58 +213,99 @@ class Enemy {
         if (type === 'angel') {
             // Detailed Weeping Angel (Procedural Statue)
             const stoneMat = new THREE.MeshStandardMaterial({ 
-                color: 0x888888, 
-                roughness: 0.9,
+                color: 0x999999, // Lighter stone
+                roughness: 0.8,
                 metalness: 0.2,
                 map: stoneTex
             });
 
-            // 1. Skirt/Robes (Cone)
-            const skirtGeo = new THREE.ConeGeometry(0.4, 1.2, 10, 1, true);
-            const skirt = new THREE.Mesh(skirtGeo, stoneMat);
-            skirt.position.y = 0.6;
-            this.group.add(skirt);
+            const darkStoneMat = new THREE.MeshStandardMaterial({ // For contrast
+                color: 0x555555,
+                roughness: 0.9,
+                map: stoneTex
+            });
 
-            // 2. Torso
-            const torsoGeo = new THREE.CylinderGeometry(0.25, 0.35, 0.6, 8);
-            const torso = new THREE.Mesh(torsoGeo, stoneMat);
-            torso.position.y = 1.4;
+            // 1. Skirt/Robes (Fluid shape using multiple cones)
+            const skirtBase = new THREE.Mesh(new THREE.ConeGeometry(0.5, 1.4, 12, 1, true), stoneMat);
+            skirtBase.position.y = 0.7;
+            this.group.add(skirtBase);
+
+            // 2. Torso (Slimmer fitting)
+            const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.35, 0.7, 8), stoneMat);
+            torso.position.y = 1.6;
             this.group.add(torso);
 
-            // 3. Head
-            const headGeo = new THREE.SphereGeometry(0.22, 10, 10);
-            const head = new THREE.Mesh(headGeo, stoneMat);
-            head.position.y = 1.85;
+            // 3. Head & Hood
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 12), stoneMat);
+            head.position.y = 2.1;
             this.group.add(head);
 
-            // 4. Wings (Angled)
-            const wingGeo = new THREE.BoxGeometry(0.05, 1.0, 0.5);
-            const lWing = new THREE.Mesh(wingGeo, stoneMat);
-            lWing.position.set(0.15, 1.5, 0.25);
-            lWing.rotation.x = 0.4;
-            lWing.rotation.z = -0.5;
-            lWing.rotation.y = -0.2;
-            
-            const rWing = new THREE.Mesh(wingGeo, stoneMat);
-            rWing.position.set(-0.15, 1.5, 0.25);
-            rWing.rotation.x = 0.4;
-            rWing.rotation.z = 0.5;
-            rWing.rotation.y = 0.2;
-            
-            this.group.add(lWing);
-            this.group.add(rWing);
+            // Hood/Hair (Half sphere larger than head)
+            const hoodGeo = new THREE.SphereGeometry(0.26, 12, 12, 0, Math.PI * 2, 0, Math.PI * 0.4);
+            const hood = new THREE.Mesh(hoodGeo, darkStoneMat); // Darker hood
+            hood.position.y = 2.15;
+            hood.rotation.x = Math.PI; 
+            this.group.add(hood);
 
-            // 5. Arms (Reaching out)
-            const armGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.7);
+            // 4. Wings (Feathered Look - Layers of scaled cubes/planes)
+            const wingGroup = new THREE.Group();
+            wingGroup.position.set(0, 1.8, 0.2); 
+            
+            const createWing = (mirror) => {
+                const w = new THREE.Group();
+                const featherMat = stoneMat; 
+                
+                // Main bone structure
+                const bone = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.8, 0.05), featherMat);
+                bone.position.y = 0.4;
+                bone.rotation.z = mirror ? -0.5 : 0.5;
+                w.add(bone);
+
+                // Feathers (Loop to create layers)
+                for(let i=0; i<5; i++) {
+                     const fGeo = new THREE.BoxGeometry(0.6 - i*0.05, 0.15, 0.02);
+                     const f = new THREE.Mesh(fGeo, featherMat);
+                     
+                     // Position along the "bone"
+                     f.position.x = mirror ? (0.3 - i*0.02) : (-0.3 + i*0.02);
+                     f.position.y = 0.8 - i * 0.15; 
+                     f.rotation.z = mirror ? 0.2 : -0.2;
+                     w.add(f);
+                }
+                return w;
+            };
+
+            const lWing = createWing(false);
+            lWing.position.x = 0.1;
+            const rWing = createWing(true);
+            rWing.position.x = -0.1;
+
+            wingGroup.add(lWing);
+            wingGroup.add(rWing);
+            this.group.add(wingGroup);
+
+            // 5. Arms (Reaching out aggressively)
+            const armGeo = new THREE.CylinderGeometry(0.05, 0.06, 0.8);
+            
             const lArm = new THREE.Mesh(armGeo, stoneMat);
-            lArm.position.set(0.25, 1.55, -0.3);
-            lArm.rotation.x = Math.PI / 2; // Point forward
-            lArm.rotation.z = -0.2;
+            lArm.position.set(0.25, 1.75, -0.4);
+            lArm.rotation.x = Math.PI / 2 - 0.2; // Point slightly down towards player neck?
+            lArm.rotation.z = -0.3;
             
             const rArm = new THREE.Mesh(armGeo, stoneMat);
-            rArm.position.set(-0.25, 1.55, -0.3);
-            rArm.rotation.x = Math.PI / 2;
-            rArm.rotation.z = 0.2;
+            rArm.position.set(-0.25, 1.75, -0.4);
+            rArm.rotation.x = Math.PI / 2 - 0.2;
+            rArm.rotation.z = 0.3;
+
+            // Hands (Claws?)
+            const handGeo = new THREE.BoxGeometry(0.1, 0.15, 0.05);
+            const lHand = new THREE.Mesh(handGeo, stoneMat);
+            lHand.position.y = -0.4; // Local to arm
+            lArm.add(lHand);
+            
+            const rHand = new THREE.Mesh(handGeo, stoneMat);
+            rHand.position.y = -0.4;
+            rArm.add(rHand);
 
             this.group.add(lArm);
             this.group.add(rArm);
@@ -248,16 +342,31 @@ class Enemy {
         
         const dist = this.group.position.distanceTo(playerPos);
         
+        // --- SANITY AURA ---
+        // If close (within 15m), drain sanity rapidly
+        if (dist < 15) {
+            // Closer = Faster drain
+            // at 15m: almost 0
+            // at 0m: max drain
+            const intensity = 1.0 - (dist / 15.0);
+            state.sanity -= intensity * 15.0 * delta; // Up to 15 sanity per second if touching
+            
+            // Visual/Audio cue for sanity drain?
+            // Maybe slight shake or FOV warp?
+            if (intensity > 0.5) state.sanityEffects.shakeIntensity = Math.max(state.sanityEffects.shakeIntensity, intensity * 0.1);
+        }
+
         // ATTACK LOGIC
-        if (dist < 1.2 && this.attackCooldown <= 0) {
-            // Jumpscare damage
-            state.health -= 15;
-            state.sanity -= 10;
-            state.sanityEffects.shakeIntensity = 1.0; // Big shake
-            this.attackCooldown = 2.0;
+        // Increased damage (25) for faster death, but not instant (4 hits = death)
+        if (dist < 1.5 && this.attackCooldown <= 0) {
+            // Jumpscare
+            state.health -= 25; 
+            state.sanity -= 20; // Big sanity hit on catch
+            state.sanityEffects.shakeIntensity = 2.0; // Violent shake
+            this.attackCooldown = 1.5; // Slightly faster cooldown
             
             // "Teleport" slightly back or to side to confuse player
-            const offset = (Math.random() - 0.5) * 4;
+            const offset = (Math.random() - 0.5) * 6;
             this.group.position.x += offset;
             this.group.position.z += offset;
             
@@ -265,9 +374,9 @@ class Enemy {
             updateUI();
             
             if (state.health <= 0) {
-                // Game Over logic placeholder
-                alert("You have been claimed.");
-                location.reload(); 
+                 document.exitPointerLock();
+                 alert("You have been claimed by the stone.");
+                 location.reload(); 
             }
             return; 
         }
@@ -845,10 +954,13 @@ function animate() {
             state.sanityEffects.shakeIntensity = Math.max(0, s - delta * 2);
         }
 
+        // Center ambient particles on player
+        particles.position.set(camera.position.x, camera.position.y, camera.position.z);
+        
         updateUI();
     }
 
-    renderer.render(scene, camera);
+    composer.render();
 }
 
 // Window Resize
@@ -856,6 +968,7 @@ window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+    composer.setSize(window.innerWidth, window.innerHeight);
 });
 
 animate();
