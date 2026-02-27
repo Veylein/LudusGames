@@ -19,17 +19,28 @@ const state = {
     sanity: 100,
     maxSanity: 100,
     inventory: {
-        leftHand: null,
-        rightHand: null,
-        backpack: []
+        weight: 0,
+        maxWeight: 20, // lbs
+        backpack: [
+            { name: "Old Photo", id: "photo", weight: 0.1, desc: "A blurry photo of a family.", type: "item" },
+            { name: "Battery", id: "battery", weight: 0.3, desc: "Standard AA battery.", type: "resource" } 
+        ]
+    },
+    discoveries: {
+        hasBook: false,
+        monsters: [],
+        graves: [],
+        items: []
     },
     isGameActive: false,
-    time: 18, // Start at 6 PM
+    inventoryOpen: false,
+    time: 18, 
     sanityEffects: {
         hallucinationActive: false,
         shakeIntensity: 0
     },
-    playerGrid: { x: 0, z: 0 }
+    playerGrid: { x: 0, z: 0 },
+    distanceFromManor: 5.0 // km
 };
 
 // --- SCENE SETUP ---
@@ -806,6 +817,104 @@ function createTree(x, y, z, parent) {
     parent.add(treeGroup);
 }
 
+// --- ITEMS & INTERACTION ---
+const worldItems = [];
+const itemGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+
+class WorldItem {
+    constructor(type, x, z) {
+        this.type = type;
+        this.mesh = new THREE.Mesh(itemGeometry, new THREE.MeshStandardMaterial({ color: 0xffff00 }));
+        
+        // Define properties based on type
+        if (type === 'battery') {
+            this.data = { name: "Battery", weight: 0.3, desc: "A standard 9V battery. Useful for electronics." };
+            this.mesh.material.color.setHex(0x5555ff);
+            this.mesh.scale.set(0.4, 0.6, 0.4);
+        } else if (type === 'shovel') {
+            this.data = { name: "Shovel", weight: 3.0, desc: "Sturdy shovel for digging." };
+            this.mesh.material.color.setHex(0x8b4513);
+            this.mesh.scale.set(0.3, 2.0, 0.3);
+        } else if (type === 'book') {
+            this.data = { name: "Old Book", weight: 1.5, desc: "Contains strange symbols and maps." };
+            this.mesh.material.color.setHex(0x880000);
+            this.mesh.scale.set(0.8, 0.2, 1.0);
+        }
+
+        const y = getNoiseHeight(x, z) + 0.5;
+        this.mesh.position.set(x, y, z);
+        this.mesh.castShadow = true;
+        
+        scene.add(this.mesh);
+        worldItems.push(this);
+    }
+    
+    pickup() {
+        if (state.inventory.weight + this.data.weight > state.inventory.maxWeight) {
+            showNotification("Too heavy!", "red");
+            return;
+        }
+
+        state.inventory.backpack.push(this.data);
+        scene.remove(this.mesh);
+        worldItems.splice(worldItems.indexOf(this), 1);
+        
+        showNotification(`Picked up ${this.data.name}`);
+        
+        // Special logic for Book
+        if (this.type === 'book') {
+            state.discoveries.hasBook = true;
+            document.getElementById('tab-btn-discoveries').classList.remove('hidden'); // Show tab button
+            showNotification("New Discovery Unlocked!", "gold");
+        }
+        
+        updateInventoryUI();
+    }
+}
+
+// Spawn some items
+function spawnItems() {
+    // Book near start
+    new WorldItem('book', 5, 5); 
+    
+    // Random batteries
+    for(let i=0; i<5; i++) {
+        new WorldItem('battery', (Math.random()-0.5)*100, (Math.random()-0.5)*100);
+    }
+    // A shovel
+    new WorldItem('shovel', -10, -20);
+}
+spawnItems();
+
+// Interaction Raycaster
+const raycaster = new THREE.Raycaster();
+const center = new THREE.Vector2(0, 0);
+let interactableItem = null;
+
+function checkInteraction() {
+    raycaster.setFromCamera(center, camera);
+    const intersects = raycaster.intersectObjects(worldItems.map(i => i.mesh));
+    
+    const prompt = document.getElementById('interaction-prompt');
+    
+    if (intersects.length > 0 && intersects[0].distance < 5) {
+        interactableItem = worldItems.find(i => i.mesh === intersects[0].object);
+        prompt.style.opacity = 1;
+        prompt.innerText = `[E] Pick up ${interactableItem.data.name}`;
+    } else {
+        interactableItem = null;
+        prompt.style.opacity = 0;
+    }
+}
+
+function showNotification(text, color='#fff') {
+    const notify = document.getElementById('interaction-prompt');
+    notify.innerText = text;
+    notify.style.color = color;
+    notify.style.opacity = 1;
+    setTimeout(() => { notify.style.opacity = 0; notify.style.color = '#fff'; }, 2000);
+}
+
 
 // --- SCENERY (Global) ---
 const mansionGeo = new THREE.BoxGeometry(30, 20, 30);
@@ -835,14 +944,106 @@ const startScreen = document.getElementById('start-screen');
 startBtn.addEventListener('click', () => {
     controls.lock();
 });
+
 controls.addEventListener('lock', () => {
     startScreen.style.display = 'none';
     state.isGameActive = true;
+    state.inventoryOpen = false;
+    document.getElementById('inventory-modal').style.display = 'none';
 });
+
 controls.addEventListener('unlock', () => {
-    startScreen.style.display = 'flex';
-    state.isGameActive = false;
+    // If not opening inventory, show pause/start
+    if (!state.inventoryOpen) {
+        startScreen.style.display = 'flex';
+        state.isGameActive = false;
+    }
 });
+
+function toggleInventory() {
+    state.inventoryOpen = !state.inventoryOpen;
+    const modal = document.getElementById('inventory-modal');
+    
+    if (state.inventoryOpen) {
+        controls.unlock(); // Unlock pointer to use mouse
+        modal.style.display = 'flex';
+        updateInventoryUI();
+    } else {
+        modal.style.display = 'none';
+        controls.lock(); // Back to game
+    }
+}
+
+// Map Rendering (Simple)
+function updateMap() {
+    const mapContainer = document.getElementById('world-map');
+    // Clear old markers (except player)
+    const oldMarkers = mapContainer.querySelectorAll('.map-marker');
+    oldMarkers.forEach(m => m.remove());
+
+    // Scale world coords to map pixels (example scale)
+    const scale = 0.5; // pixel per meter
+    const centerX = mapContainer.clientWidth / 2;
+    const centerY = mapContainer.clientHeight / 2;
+
+    // Draw known graves (relative to player to center map on player?)
+    // Or center map on 0,0 and move player... lets Center Map on Player
+    state.discoveries.graves.forEach(grave => {
+        const dx = (grave.x - camera.position.x) * scale;
+        const dy = (grave.z - camera.position.z) * scale;
+        
+        // Only draw if within map bounds
+        if (Math.abs(dx) < centerX && Math.abs(dy) < centerY) {
+            const marker = document.createElement('div');
+            marker.className = 'map-marker grave-marker';
+            marker.style.left = `${centerX + dx}px`;
+            marker.style.top = `${centerY + dy}px`;
+            mapContainer.appendChild(marker);
+        }
+    });
+}
+    
+// Helper to update Inventory HTML
+function updateInventoryUI() {
+    const grid = document.getElementById('backpack-grid');
+    grid.innerHTML = '';
+    
+    let currentWeight = 0;
+    
+    state.inventory.backpack.forEach((item, index) => {
+        const slot = document.createElement('div');
+        slot.className = 'inv-slot';
+        slot.innerText = item.name.substring(0, 2).toUpperCase();
+        slot.title = item.name;
+        slot.onclick = () => selectItem(index);
+        grid.appendChild(slot);
+        currentWeight += item.weight;
+    });
+    
+    state.inventory.weight = currentWeight;
+    document.getElementById('current-weight').innerText = currentWeight.toFixed(1);
+    
+    // Select first item by default if exists
+    if (state.inventory.backpack.length > 0) selectItem(0);
+
+    // Update Tabs visibility
+    if (state.discoveries.hasBook) {
+        document.getElementById('tab-discoveries').classList.remove('hidden');
+    }
+}
+
+function selectItem(index) {
+    const item = state.inventory.backpack[index];
+    document.getElementById('selected-item-name').innerText = item.name;
+    document.getElementById('selected-item-desc').innerText = item.desc;
+    document.getElementById('selected-item-weight').innerText = `${item.weight} lbs`;
+    
+    // Highlight slot
+    const slots = document.querySelectorAll('.inv-slot');
+    slots.forEach(s => s.classList.remove('selected'));
+    if (slots[index]) slots[index].classList.add('selected');
+}
+
 
 // Movement Logic
 const moveState = { forward: false, backward: false, left: false, right: false, sprint: false };
@@ -860,6 +1061,14 @@ document.addEventListener('keydown', (event) => {
         case 'KeyF': 
             flashLight.visible = !flashLight.visible; 
             break;
+        case 'KeyB':
+            toggleInventory();
+            break;
+        case 'KeyE':
+            if (interactableItem) {
+                interactableItem.pickup();
+            }
+            break;
     }
 });
 document.addEventListener('keyup', (event) => {
@@ -874,14 +1083,20 @@ document.addEventListener('keyup', (event) => {
 
 // --- UI UPDATES ---
 const healthFill = document.getElementById('health-bar-fill');
+const healthVal = document.getElementById('health-val');
 const sanityFill = document.getElementById('sanity-bar-fill');
+const sanityVal = document.getElementById('sanity-val');
 const compassStrip = document.getElementById('compass-strip');
 const minimapDot = document.getElementById('player-dot');
 const timeDisplay = document.getElementById('time-display');
+const distanceDisplay = document.getElementById('distance-km');
 
 function updateUI() {
     healthFill.style.height = `${state.health}%`;
+    healthVal.innerText = `${Math.ceil(state.health)}%`;
+    
     sanityFill.style.height = `${state.sanity}%`;
+    sanityVal.innerText = `${Math.ceil(state.sanity)}%`;
     
     // Compass
     const dir = new THREE.Vector3();
@@ -891,6 +1106,14 @@ function updateUI() {
     if (degrees < 0) degrees += 360;
     if (state.sanity < 20) degrees += (Math.random() - 0.5) * 40;
     compassStrip.style.transform = `translateX(-${degrees * 5}px)`;
+    
+    // Distance from start (Manor?)
+    // Assuming start is 0,0 and Manor is 0, -4000
+    // Actually user said KM from Manor. Let's assume start is 5KM away (5000 units)
+    const manorZ = -5000;
+    const dist = Math.abs(camera.position.z - manorZ) / 1000;
+    state.distanceFromManor = dist;
+    distanceDisplay.innerText = dist.toFixed(2);
     
     // Minimap (Local to chunk)
     // Display area: +/- 100 meters
@@ -905,6 +1128,45 @@ function updateUI() {
     const displayHours = hours % 12 || 12;
     timeDisplay.innerText = `${displayHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
 }
+
+// --- UI TABS --- (Add listeners)
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        // Toggle tabs
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+        document.getElementById(`content-${e.target.dataset.tab}`).classList.remove('hidden');
+        
+        if (e.target.dataset.tab === 'map') updateMap();
+        if (e.target.dataset.tab === 'discoveries') updateDiscoveries();
+    });
+});
+document.getElementById('close-inventory').addEventListener('click', toggleInventory);
+document.getElementById('slot-backpack').addEventListener('click', toggleInventory);
+
+function updateDiscoveries() {
+    const list = document.getElementById('discovery-list');
+    list.innerHTML = '';
+
+    // If we have the book, show default entries
+    if (state.discoveries.hasBook) {
+        let entry = document.createElement('div');
+        entry.className = 'discovery-entry';
+        entry.innerHTML = `<h4>Journal Start</h4><p>Current Time: ${state.time.toFixed(1)} hours. The manor is distant. Strange noises...</p>`;
+        list.appendChild(entry);
+    }
+    
+    // List graves found
+    if (state.discoveries.graves.length > 0) {
+        let entry = document.createElement('div');
+        entry.className = 'discovery-entry';
+        entry.innerHTML = `<h4>Graves Located</h4><p>Found ${state.discoveries.graves.length} significant graves.</p>`;
+        list.appendChild(entry);
+    }
+}
+
 
 // --- MAIN LOOP ---
 function animate() {
@@ -957,6 +1219,7 @@ function animate() {
         // Center ambient particles on player
         particles.position.set(camera.position.x, camera.position.y, camera.position.z);
         
+        checkInteraction(); // Check for items to pickup
         updateUI();
     }
 

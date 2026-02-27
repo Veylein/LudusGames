@@ -39,6 +39,24 @@ body, html {
     border: 2px solid #555;
     text-align: center;
 }
+
+/* Distance Display */
+#distance-display {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-shadow: 0 0 10px #000;
+    pointer-events: none;
+    background: rgba(0,0,0,0.4);
+    padding: 5px 15px;
+    border-radius: 5px;
+    border: 1px solid #333;
+}
+
 #minimap {
     width: 150px;
     height: 150px;
@@ -157,42 +175,191 @@ body, html {
 /* Bottom HUD: Inventory & Compass */
 #bottom-hud {
     position: absolute;
-    bottom: 20px;
+    bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
-    width: 60%;
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 15px;
+    pointer-events: none; /* Let ground clicks pass through? */
+    width: auto;
 }
 
-/* Inventory Slots */
+/* Inventory Slots (HUD) */
 #inventory-slots {
     display: flex;
-    gap: 15px;
-    margin-bottom: 10px;
+    gap: 10px;
+    pointer-events: auto;
 }
+
 .slot {
     width: 60px;
     height: 60px;
-    border: 2px solid #777;
-    background: rgba(0, 0, 0, 0.7);
+    background-color: rgba(20, 20, 20, 0.8);
+    border: 2px solid #555;
+    position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
-    position: relative;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.2s;
 }
+.slot:hover { border-color: #aaa; background-color: rgba(40,40,40, 0.9); }
+.slot.active { border-color: #ffd700; box-shadow: 0 0 10px #ffd700; }
+
 .key-hint {
     position: absolute;
     top: 2px;
     left: 4px;
-    font-size: 10px;
-    color: #aaa;
+    font-size: 0.7rem;
+    color: #888;
 }
+
 .item-icon {
-    font-size: 12px;
+    font-size: 1.5rem; 
+    color: #ccc;
     text-align: center;
+    line-height: 1;
 }
+
+/* === INVENTORY MODAL STYLES === */
+#inventory-modal {
+    display: none; /* Flex when active */
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 800px;
+    height: 500px;
+    background-color: rgba(10, 10, 15, 0.95);
+    border: 2px solid #444;
+    border-radius: 8px;
+    box-shadow: 0 0 30px #000;
+    flex-direction: column;
+    z-index: 2000;
+    color: #ddd;
+    pointer-events: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background-color: rgba(255,255,255,0.05);
+    border-bottom: 2px solid #333;
+}
+.modal-header h2 { margin: 0; font-size: 1.5rem; letter-spacing: 2px; }
+.weight-display { color: #aaa; font-weight: bold; }
+#close-inventory {
+    background: transparent; border: 1px solid #555;
+    color: #fff; padding: 5px 10px; cursor: pointer;
+}
+#close-inventory:hover { background: #331111; border-color: #f55; }
+
+.modal-content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.inventory-tabs {
+    width: 200px;
+    background-color: rgba(0,0,0,0.3);
+    border-right: 2px solid #333;
+    display: flex;
+    flex-direction: column;
+}
+.tab-btn {
+    background: none; border: none;
+    color: #888; padding: 15px;
+    text-align: left; cursor: pointer;
+    font-family: inherit; font-size: 1.1rem;
+    border-bottom: 1px solid #222;
+}
+.tab-btn:hover { color: #fff; background: rgba(255,255,255,0.05); }
+.tab-btn.active { color: #fd0; background: rgba(255, 200, 0, 0.1); border-left: 4px solid #fd0; }
+.tab-btn.hidden { display: none; }
+
+.tab-content {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    gap: 20px;
+    flex-direction: column; /* Changed for map layout */
+    overflow-y: auto;
+    display: none; /* Hide by default, JS toggles */
+}
+.tab-content.active { display: flex; }
+
+/* Item Grid */
+#backpack-tab { flex-direction: row; }
+#content-items { display: flex; gap: 20px; width: 100%; height: 100%; }
+
+.inventory-grid {
+    flex: 2;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    grid-auto-rows: 60px;
+    gap: 10px;
+    align-content: start;
+    padding: 10px;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid #333;
+    overflow-y: auto;
+}
+.inv-slot {
+    background: #222; border: 1px solid #444;
+    display: flex; justify-content: center; align-items: center;
+    cursor: pointer; color: #fff; font-size: 0.8rem;
+    transition: all 0.1s;
+    position: relative;
+}
+.inv-slot:hover { border-color: #888; background: #333; }
+.inv-slot.selected { border-color: #fd0; box-shadow: 0 0 5px #fd0; }
+.inv-slot .count { position: absolute; bottom: 2px; right: 2px; font-size: 0.7rem; color: #aaa; }
+
+.item-details {
+    flex: 1;
+    border: 1px solid #444;
+    padding: 15px;
+    background: rgba(0,0,0,0.2);
+    display: flex; flex-direction: column;
+}
+.item-actions { margin-top: auto; display: flex; gap: 10px; }
+.item-actions button {
+    flex: 1; padding: 10px; background: #333;
+    color: #fff; border: 1px solid #555;
+    cursor: pointer; font-family: inherit;
+}
+.item-actions button:hover { background: #555; }
+
+/* Map & Discoveries */
+#world-map { 
+    width: 100%; 
+    height: 350px; 
+    border: 2px dashed #444; 
+    background: #050510;
+    position: relative; 
+    overflow: hidden; 
+}
+.map-hint { font-style: italic; color: #666; font-size: 0.9rem; text-align: center; margin-top: 10px; }
+.map-marker { width: 6px; height: 6px; border-radius: 50%; position: absolute; transform: translate(-50%, -50%); }
+#map-player { width: 8px; height: 8px; background: #0f0; left: 50%; top: 50%; box-shadow: 0 0 5px #0f0; position: absolute; border-radius: 50%; z-index: 10; }
+.grave-marker { background: #888; width: 4px; height: 4px; }
+.tree-marker { background: #050; width: 3px; height: 3px; }
+
+/* Discoveries List */
+.discovery-entry {
+    background: rgba(0,0,0,0.3);
+    padding: 10px;
+    margin-bottom: 10px;
+    border-left: 3px solid #666;
+}
+.discovery-entry h4 { margin: 0 0 5px 0; color: #ccc; }
+.discovery-entry p { margin: 0; color: #888; font-size: 0.9rem; }
+
 
 /* Compass */
 #compass-container {
