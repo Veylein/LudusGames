@@ -4,23 +4,68 @@ import * as THREE from 'three';
 const MAP_SIZE = 120; 
 const WALL_HEIGHT = 8;
 
-// --- CHAMPION DATA (15 Classes) ---
+// --- CHAMPION DATA (15 Classes with Abilities) ---
 const CLASSES = [
-    { id: 'knight', name: 'Knight', role: 'Tank', hp: 200, speed: 0.18, color: 0x3366cc, icon: '⚔️', desc: 'High durability, melee attacks.' },
-    { id: 'rogue', name: 'Rogue', role: 'Assassin', hp: 120, speed: 0.25, color: 0xcc3333, icon: '🗡️', desc: 'Fast, high burst damage.' },
-    { id: 'wizard', name: 'Wizard', role: 'Mage', hp: 100, speed: 0.2, color: 0x9933cc, icon: '🔮', desc: 'Ranged magical attacks.' },
-    { id: 'cleric', name: 'Cleric', role: 'Support', hp: 150, speed: 0.19, color: 0xffcc33, icon: '✝️', desc: 'Heals allies, moderate damage.' },
-    { id: 'ranger', name: 'Ranger', role: 'Marksman', hp: 110, speed: 0.22, color: 0x33cc33, icon: '🏹', desc: 'Ranged physical attacks.' },
-    { id: 'barbarian', name: 'Barbarian', role: 'Fighter', hp: 180, speed: 0.2, color: 0x990000, icon: '🪓', desc: 'Melee damage dealer.' },
-    { id: 'necromancer', name: 'Necromancer', role: 'Mage', hp: 90, speed: 0.18, color: 0x330033, icon: '💀', desc: 'Summons minions.' },
-    { id: 'paladin', name: 'Paladin', role: 'Tank', hp: 190, speed: 0.18, color: 0xcccc00, icon: '🛡️', desc: 'Holy warrior, defensive.' },
-    { id: 'monk', name: 'Monk', role: 'Fighter', hp: 140, speed: 0.24, color: 0xff9933, icon: '👊', desc: 'Fast melee, martial arts.' },
-    { id: 'druid', name: 'Druid', role: 'Support', hp: 130, speed: 0.2, color: 0x006600, icon: '🌿', desc: 'Nature magic, shapeshifting.' },
-    { id: 'bard', name: 'Bard', role: 'Support', hp: 120, speed: 0.21, color: 0xff66cc, icon: '🎵', desc: 'Buffs allies with music.' },
-    { id: 'sorcerer', name: 'Sorcerer', role: 'Mage', hp: 95, speed: 0.2, color: 0xff3300, icon: '🔥', desc: 'Raw magic power.' },
-    { id: 'warlock', name: 'Warlock', role: 'Mage', hp: 105, speed: 0.19, color: 0x660066, icon: '👁️', desc: 'Eldritch blasts.' },
-    { id: 'fighter', name: 'Fighter', role: 'Fighter', hp: 160, speed: 0.2, color: 0x666666, icon: '⚔️', desc: 'Versatile warrior.' },
-    { id: 'artificer', name: 'Artificer', role: 'Specialist', hp: 130, speed: 0.2, color: 0x009999, icon: '🔧', desc: 'Gadgets and magic items.' }
+    { 
+        id: 'knight', name: 'Knight', role: 'Tank', hp: 200, speed: 0.18, color: 0x3366cc, icon: '⚔️', 
+        abilities: [ 'Slash', 'Shield Bash', 'Charge', 'Holy Sword' ]
+    },
+    { 
+        id: 'rogue', name: 'Rogue', role: 'Assassin', hp: 120, speed: 0.25, color: 0xcc3333, icon: '🗡️', 
+        abilities: [ 'Stab', 'Dash', 'Poison', 'Assassinate' ]
+    },
+    { 
+        id: 'wizard', name: 'Wizard', role: 'Mage', hp: 100, speed: 0.2, color: 0x9933cc, icon: '🔮', 
+        abilities: [ 'Fireball', 'Freeze', 'Blink', 'Meteor' ]
+    },
+    { 
+        id: 'cleric', name: 'Cleric', role: 'Support', hp: 150, speed: 0.19, color: 0xffcc33, icon: '✝️', 
+        abilities: [ 'Smite', 'Heal', 'Shield', 'Resurrect' ]
+    },
+    { 
+        id: 'ranger', name: 'Ranger', role: 'Marksman', hp: 110, speed: 0.22, color: 0x33cc33, icon: '🏹', 
+        abilities: [ 'Shoot', 'Trap', 'Roll', 'Volley' ]
+    },
+    { 
+        id: 'barbarian', name: 'Barbarian', role: 'Fighter', hp: 180, speed: 0.2, color: 0x990000, icon: '🪓', 
+        abilities: [ 'Chop', 'Shout', 'Spin', 'Rage' ]
+    },
+    { 
+        id: 'necromancer', name: 'Necromancer', role: 'Mage', hp: 90, speed: 0.18, color: 0x330033, icon: '💀', 
+        abilities: [ 'Bolt', 'Summon', 'Fear', 'Grave' ]
+    },
+    { 
+        id: 'paladin', name: 'Paladin', role: 'Tank', hp: 190, speed: 0.18, color: 0xcccc00, icon: '🛡️', 
+        abilities: [ 'Hammer', 'Blessing', 'Aura', 'Judgement' ]
+    },
+    { 
+        id: 'monk', name: 'Monk', role: 'Fighter', hp: 140, speed: 0.24, color: 0xff9933, icon: '👊', 
+        abilities: [ 'Punch', 'Kick', 'Meditation', 'Palm' ]
+    },
+    { 
+        id: 'druid', name: 'Druid', role: 'Support', hp: 130, speed: 0.2, color: 0x006600, icon: '🌿', 
+        abilities: [ 'Thorn', 'Regen', 'Roots', 'Bear Form' ]
+    },
+    { 
+        id: 'bard', name: 'Bard', role: 'Support', hp: 120, speed: 0.21, color: 0xff66cc, icon: '🎵', 
+        abilities: [ 'Note', 'Speed Song', 'Heal Song', 'Crescendo' ]
+    },
+    { 
+        id: 'sorcerer', name: 'Sorcerer', role: 'Mage', hp: 95, speed: 0.2, color: 0xff3300, icon: '🔥', 
+        abilities: [ 'Spark', 'Burn', 'Teleport', 'Inferno' ]
+    },
+    { 
+        id: 'warlock', name: 'Warlock', role: 'Mage', hp: 105, speed: 0.19, color: 0x660066, icon: '👁️', 
+        abilities: [ 'Blast', 'Curse', 'Drain', 'Portal' ]
+    },
+    { 
+        id: 'fighter', name: 'Fighter', role: 'Fighter', hp: 160, speed: 0.2, color: 0x666666, icon: '⚔️', 
+        abilities: [ 'Strike', 'Block', 'Parry', 'Omnislash' ]
+    },
+    { 
+        id: 'artificer', name: 'Artificer', role: 'Specialist', hp: 130, speed: 0.2, color: 0x009999, icon: '🔧', 
+        abilities: [ 'Wrench', 'Turret', 'Potion', 'Mech' ]
+    }
 ];
 
 // --- STATE ---
@@ -238,62 +283,352 @@ function spawnBot(classData, team, index) {
 
 function updateBots() {
     state.enemies.forEach(bot => {
-        // Simple AI: Move towards nearest opposite team member
-        // Find target if none
-        if (!bot.target || Math.random() < 0.05) {
+        if (!bot.group || bot.hp <= 0) return;
+
+        // Verify target is still valid
+        if (bot.target) {
+            // Check if target is destroyed (removed from scene or hp <= 0)
+            const targetEntity = state.enemies.find(e => e.group === bot.target) 
+                || (state.player.group === bot.target ? state.player : null);
+            
+            if (!targetEntity || targetEntity.hp <= 0) {
+                bot.target = null;
+            }
+        }
+
+        // Find Target if none
+        if (!bot.target) {
             let closest = null;
             let minDist = Infinity;
             
-            // Check against Player
-            if (bot.team === 'enemy' && state.player.group) {
-                const d = bot.group.position.distanceTo(state.player.group.position);
-                if (d < minDist) { minDist = d; closest = state.player.group; }
+            // Identify potential targets
+            const potentialTargets = [];
+            if (bot.team === 'enemy') {
+                if (state.player.group && state.player.hp > 0) potentialTargets.push(state.player.group);
+                state.enemies.forEach(e => { if (e.team === 'ally' && e.hp > 0) potentialTargets.push(e.group); });
+            } else {
+                state.enemies.forEach(e => { if (e.team === 'enemy' && e.hp > 0) potentialTargets.push(e.group); });
             }
-            
-            // Check against other bots
-            state.enemies.forEach(other => {
-                if (bot.team !== other.team) {
-                    const d = bot.group.position.distanceTo(other.group.position);
-                    if (d < minDist) { minDist = d; closest = other.group; }
-                }
+
+            potentialTargets.forEach(t => {
+                const d = bot.group.position.distanceTo(t.position);
+                if (d < minDist) { minDist = d; closest = t; }
             });
             
             bot.target = closest;
         }
         
-        // Move towards target
+        // Action
         if (bot.target) {
-            const range = 5; // Attack range
+            const range = bot.class.role.includes('Mage') || bot.class.role.includes('Marksman') ? 15 : 4;
             const dist = bot.group.position.distanceTo(bot.target.position);
             
+            // Look at target
+            bot.group.lookAt(bot.target.position);
+
             if (dist > range) {
+                // Move
                 const dir = new THREE.Vector3().subVectors(bot.target.position, bot.group.position).normalize();
-                bot.group.position.add(dir.multiplyScalar(bot.class.speed * 0.8)); // Bots slightly slower
-                bot.group.lookAt(bot.target.position);
+                bot.group.position.add(dir.multiplyScalar(bot.class.speed * 0.6)); // Slower AI
             } else {
-                // In range, "attack" (wiggle for now)
-                bot.group.rotation.y += Math.sin(Date.now() * 0.1) * 0.1;
+                // Attack (Rate Limited)
+                if (!bot.lastAttack || Date.now() - bot.lastAttack > 2000) {
+                    bot.lastAttack = Date.now();
+                    
+                    // Attack Animation
+                    bot.group.rotation.x = -0.2;
+                    setTimeout(() => bot.group.rotation.x = 0, 200);
+
+                    // Deal Damage
+                    if (bot.target === state.player.group) {
+                         state.player.hp -= 10;
+                         updateHUD();
+                         // Screen red flash?
+                         document.body.style.backgroundColor = '#300';
+                         setTimeout(() => document.body.style.backgroundColor = '#111', 100);
+                         if (state.player.hp <= 0) {
+                             // Game Over Logic
+                             state.player.hp = 0;
+                             state.gameActive = false;
+                             alert("YOU DIED");
+                             location.reload(); 
+                         }
+                    } else {
+                        // Find entity wrapper for target group
+                        const enemyEntity = state.enemies.find(e => e.group === bot.target);
+                        if (enemyEntity) {
+                            damageEntity(enemyEntity, 10);
+                        }
+                    }
+
+                    // Projectile check for ranged bots
+                    if (range > 5) {
+                        spawnProjectile(bot.group, bot.team, 10);
+                    }
+                }
             }
         }
     });
 }
 
+function updateProjectiles() {
+    for (let i = PROJECTILES.length - 1; i >= 0; i--) {
+        const proj = PROJECTILES[i];
+        proj.life--;
+        proj.mesh.position.add(proj.dir.clone().multiplyScalar(proj.speed));
+        
+        // Remove if dead
+        if (proj.life <= 0) {
+            scene.remove(proj.mesh);
+            PROJECTILES.splice(i, 1);
+            continue;
+        }
+        
+        // Hit check
+        let hit = false;
+        // Check Player
+        if (proj.team === 'enemy') {
+            if (state.player.group && proj.mesh.position.distanceTo(state.player.group.position) < 2) {
+                state.player.hp -= proj.damage;
+                updateHUD();
+                hit = true;
+                if (state.player.hp <= 0) {
+                     state.gameActive = false; alert("YOU DIED"); location.reload();
+                }
+            }
+        } 
+        // Check bots
+        if (!hit) {
+            for (const bot of state.enemies) {
+                if (bot.team !== proj.team && bot.hp > 0) {
+                    if (proj.mesh.position.distanceTo(bot.group.position) < 2) {
+                        damageEntity(bot, proj.damage);
+                        hit = true;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        if (hit) {
+            scene.remove(proj.mesh);
+            PROJECTILES.splice(i, 1);
+        }
+    }
+}
+
 // --- INPUT & UI LOGIC ---
 const keys = { w: false, a: false, s: false, d: false, space: false };
-document.addEventListener('keydown', (e) => {
-    if(e.key === 'w') keys.w = true;
-    if(e.key === 'a') keys.a = true;
-    if(e.key === 's') keys.s = true;
-    if(e.key === 'd') keys.d = true;
-    if(e.code === 'Space') keys.space = true;
+const cooldowns = { 1: 0, 2: 0, 3: 0, 4: 0, attack: 0 };
+
+function handleInput(key, pressed) {
+    if (key === 'w') keys.w = pressed;
+    if (key === 'a') keys.a = pressed;
+    if (key === 's') keys.s = pressed;
+    if (key === 'd') keys.d = pressed;
+    if (key === ' ' || key === 'attack') {
+        if (pressed && Date.now() > cooldowns.attack) {
+            performAttack(); // Trigger on press
+        }
+        keys.space = pressed; // Still track state
+    }
+    else if (['1','2','3','4'].includes(key)) {
+        if (pressed && !keys[key]) useAbility(key); // Trigger once on press
+        keys[key] = pressed;
+    }
+}
+
+document.addEventListener('keydown', (e) => handleInput(e.key.toLowerCase(), true));
+document.addEventListener('keyup', (e) => handleInput(e.key.toLowerCase(), false)); // Fix: Ensure keyup clears
+
+// Mobile / On-Screen Controls
+['w', 'a', 's', 'd'].forEach(k => {
+    const btn = document.getElementById(`btn-${k}`);
+    if (btn) {
+        // Prevent default to stop scrolling/selection on mobile
+        btn.addEventListener('pointerdown', (e) => { e.preventDefault(); handleInput(k, true); btn.classList.add('pressed'); });
+        btn.addEventListener('pointerup', (e) => { e.preventDefault(); handleInput(k, false); btn.classList.remove('pressed'); });
+        btn.addEventListener('pointerleave', (e) => { e.preventDefault(); handleInput(k, false); btn.classList.remove('pressed'); });
+    }
 });
-document.addEventListener('keyup', (e) => {
-    if(e.key === 'w') keys.w = false;
-    if(e.key === 'a') keys.a = false;
-    if(e.key === 's') keys.s = false;
-    if(e.key === 'd') keys.d = false;
-    if(e.code === 'Space') keys.space = false;
+
+['1', '2', '3', '4', 'attack'].forEach(k => {
+    const btn = document.getElementById(`btn-${k}`);
+    if (btn) {
+        btn.addEventListener('pointerdown', (e) => { 
+            e.preventDefault(); 
+            if(k === 'attack') {
+                handleInput(' ', true);
+            } else {
+                handleInput(k, true);
+            }
+            btn.classList.add('pressed'); 
+        });
+        btn.addEventListener('pointerup', (e) => { 
+            e.preventDefault(); 
+            if(k === 'attack') handleInput(' ', false);
+            else handleInput(k, false);
+            btn.classList.remove('pressed'); 
+        });
+        btn.addEventListener('pointerleave', (e) => {
+             e.preventDefault(); 
+             if(k === 'attack') handleInput(' ', false);
+             else handleInput(k, false);
+             btn.classList.remove('pressed'); 
+        });
+    }
 });
+
+// Helper to update hotbar UI
+function updateHotbarUI(classData) {
+    const hotbar = document.getElementById('hotbar-container');
+    if (hotbar) hotbar.style.display = 'flex';
+    
+    // Update individual slots if needed (e.g. tooltips)
+    // For now just ensuring it's visible
+}
+
+// --- COMBAT LOGIC ---
+const PROJECTILES = [];
+const COOLDOWNS = { 1: 5000, 2: 8000, 3: 12000, 4: 30000 }; // Generic CD times
+let lastAttackTime = 0;
+
+function performAttack() {
+    if (Date.now() - lastAttackTime < 500) return; // Global Attack CD (Wait for animation)
+    lastAttackTime = Date.now();
+    
+    const player = state.player.group;
+    if (!player) return;
+
+    // Visual Swing Animation (Simple Rotation)
+    // Assume the weapon group is the second child (after mesh)
+    // Actually we stored it in userData
+    const weaponGroup = player.userData.weapon;
+    if (weaponGroup) {
+        // Simple "Strike" animation
+        const initialRot = weaponGroup.rotation.x;
+        weaponGroup.rotation.x = initialRot - Math.PI / 2; 
+        setTimeout(() => {
+            if(weaponGroup) weaponGroup.rotation.x = initialRot;
+        }, 200);
+    }
+    
+    // Determine Attack Type based on Class Role
+    const role = state.selectedClass.role;
+    if (role === 'Mage' || role === 'Marksman' || role === 'Support') {
+        spawnProjectile(player, 'ally', 20);
+    } else {
+        // Melee Hit Check
+        const range = 5;
+        let hit = false;
+        state.enemies.forEach(enemy => {
+            if (enemy.hp <= 0 || enemy.team === 'ally') return; // Don't hit allies
+            
+            const dist = player.position.distanceTo(enemy.group.position);
+            if (dist < range) {
+                // Check Angle
+                const enemyPos = enemy.group.position.clone();
+                const playerPos = player.position.clone();
+                const dirToEnemy = enemyPos.sub(playerPos).normalize();
+                
+                const playerDir = new THREE.Vector3(0, 0, -1); // Forward is -Z in initial set up?
+                // Wait, logic says movement is: z-1 is W. So -Z is forward.
+                // We rotate the player mesh group.
+                playerDir.applyEuler(player.rotation); 
+                
+                // Dot product 0.5 is 60 degrees cone
+                if (dirToEnemy.dot(playerDir) > 0.5) {
+                   damageEntity(enemy, 25);
+                   hit = true;
+                }
+            }
+        });
+    }
+}
+
+function spawnProjectile(sourceEntity, team, damage) {
+    const projGeo = new THREE.SphereGeometry(0.5);
+    const projMat = new THREE.MeshBasicMaterial({ color: team === 'ally' ? 0x00ffff : 0xff0000 });
+    const proj = new THREE.Mesh(projGeo, projMat);
+    
+    proj.position.copy(sourceEntity.position);
+    proj.position.y = 2; // Chest height
+    
+    // Direction: Forward based on rotation
+    const dir = new THREE.Vector3(0, 0, -1);
+    // If source is player group
+    if (sourceEntity.rotation) dir.applyEuler(sourceEntity.rotation);
+    // Start slightly in front
+    proj.position.add(dir.clone().multiplyScalar(2));
+    
+    scene.add(proj);
+    
+    PROJECTILES.push({
+        mesh: proj,
+        dir: dir,
+        speed: 0.8,
+        team: team,
+        damage: damage,
+        life: 100 // Frames to live
+    });
+}
+
+function useAbility(slot) {
+    // Check CD
+    // Find skill name: state.selectedClass.abilities[slot-1]
+    console.log(`Casting ability ${slot}`);
+    
+    // For prototype: Just heal on 2, AOE on 3
+    if (slot === '2') {
+        state.player.hp = Math.min(state.player.hp + 30, state.player.maxHp);
+        updateHUD();
+        // Visual
+        const aura = new THREE.Mesh(new THREE.RingGeometry(2, 2.5), new THREE.MeshBasicMaterial({ color: 0x00ff00 }));
+        aura.rotation.x = -Math.PI / 2;
+        aura.position.copy(state.player.group.position);
+        scene.add(aura);
+        setTimeout(() => scene.remove(aura), 500);
+    }
+}
+
+function damageEntity(entity, amount) {
+    entity.hp -= amount;
+    
+    // Flash Material
+    entity.group.traverse((child) => {
+        if (child.isMesh) {
+            // Simple visual feedback
+            child.material.emissive = new THREE.Color(0xff0000);
+            setTimeout(() => { child.material.emissive = new THREE.Color(0x000000); }, 100);
+        }
+    });
+
+    if (entity.hp <= 0) {
+        scene.remove(entity.group);
+        // Remove from enemies array
+        const idx = state.enemies.indexOf(entity);
+        if (idx > -1) {
+            state.enemies.splice(idx, 1);
+            if (entity.team !== 'ally') {
+                state.player.score += 100;
+                updateHUD();
+            }
+        }
+    }
+}
+
+function updateHUD() {
+    const scoreEl = document.getElementById('score');
+    if(scoreEl) scoreEl.innerText = `SCORE: ${state.player.score}`;
+    
+    const hpBar = document.getElementById('health-bar');
+    if(hpBar) {
+        const pct = Math.max(0, (state.player.hp / state.player.maxHp) * 100);
+        hpBar.style.width = `${pct}%`;
+        hpBar.style.backgroundColor = pct > 50 ? '#0f0' : pct > 20 ? '#ff0' : '#f00';
+    }
+}
+
 
 // Populate Selection Grid
 const grid = document.getElementById('class-grid');
@@ -354,6 +689,7 @@ function animate() {
     
     // Update AI
     updateBots();
+    updateProjectiles();
     
     // Movement
     const moveDir = new THREE.Vector3(0, 0, 0);
@@ -387,6 +723,12 @@ function animate() {
     camera.lookAt(player.position.x, 0, player.position.z);
 
     renderer.render(scene, camera);
+    
+    // Simple UI sync for Cooldowns (Visual overlay decay)
+    for(let i=1; i<=4; i++) {
+        const slotEl = document.getElementById(`slot-${i}`);
+        // If I had overlay elements, I'd update height here based on cooldowns[i] vs Date.now()
+    }
 }
 
 // Window Resize Handling

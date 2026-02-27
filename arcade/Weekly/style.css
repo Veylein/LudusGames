@@ -120,3 +120,134 @@ button:hover {
     border-color: #f00;
     box-shadow: 0 0 20px #800;
 }
+
+/* --- HOTBAR & MOBILE CONTROLS --- */
+
+/* Hotbar Container at bottom */
+#hotbar-container {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    pointer-events: auto;
+    z-index: 100;
+}
+
+.hotbar-slot {
+    width: 60px;
+    height: 60px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 2px solid #555;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-family: inherit;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.hotbar-slot:active {
+    transform: scale(0.95);
+}
+
+.hotbar-slot.active {
+    border-color: #ffd700;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+}
+
+.hotbar-slot .key-hint {
+    font-size: 10px;
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    color: #aaa;
+    font-weight: bold;
+}
+
+.hotbar-slot .icon {
+    font-size: 24px;
+}
+
+/* Mobile Controls Overlay */
+#mobile-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    height: 160px;
+    display: flex; /* Always flex but hidden by media query if needed, or JS toggle */
+    justify-content: space-between;
+    align-items: flex-end;
+    pointer-events: none; /* Let clicks pass through empty space */
+    z-index: 200;
+}
+
+.control-group {
+    pointer-events: auto;
+    background: rgba(0,0,0,0.2);
+    padding: 10px;
+    border-radius: 15px;
+}
+
+.dpad-grid {
+    display: grid;
+    grid-template-areas: 
+        '. w .'
+        'a s d';
+    gap: 8px;
+}
+
+.action-grid {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.control-btn {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 50%; /* Circle for D-pad */
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.control-btn:active, .control-btn.pressed {
+    background: rgba(255, 255, 255, 0.4);
+    transform: scale(0.95);
+}
+
+/* Specific styling */
+#btn-w { grid-area: w; }
+#btn-a { grid-area: a; }
+#btn-s { grid-area: s; }
+#btn-d { grid-area: d; }
+
+#btn-attack {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 50, 50, 0.25);
+    border-color: #ff4444;
+    font-size: 32px;
+}
+
+/* Hide mobile controls on desktop by default? Or leave them as suggested by user? 
+   User asked for 'buttons on webpage AND keyboard', implying visible buttons. 
+   I will make them visible. */ 
+

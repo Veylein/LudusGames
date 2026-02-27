@@ -25,7 +25,45 @@
             <div id="health-container">
                 <div id="health-bar"></div>
             </div>
-            <div id="ability-cd">ABILITY: READY</div>
+            <!-- Hotbar inside HUD Top logic or separate? Putting below for layout -->
+        </div>
+
+        <!-- Hotbar (Also hidden initially) -->
+        <div id="hotbar-container" style="display: none;">
+            <!-- Slots 1-4 -->
+            <div class="hotbar-slot" id="slot-1" data-key="1">
+                <span class="key-hint">1</span>
+                <span class="icon" id="icon-1">⚔️</span>
+            </div>
+            <div class="hotbar-slot" id="slot-2" data-key="2">
+                <span class="key-hint">2</span>
+                <span class="icon" id="icon-2">✨</span>
+            </div>
+            <div class="hotbar-slot" id="slot-3" data-key="3">
+                <span class="key-hint">3</span>
+                <span class="icon" id="icon-3">🛡️</span>
+            </div>
+            <div class="hotbar-slot" id="slot-4" data-key="4">
+                <span class="key-hint">4</span>
+                <span class="icon" id="icon-4">⚡</span>
+            </div>
+        </div>
+
+        <!-- On-Screen Controls (Visible on start) -->
+        <div id="mobile-controls" style="display: none;">
+            <div class="control-group dpad-grid">
+                <div class="control-btn" id="btn-w">W</div>
+                <div class="control-btn" id="btn-a">A</div>
+                <div class="control-btn" id="btn-s">S</div>
+                <div class="control-btn" id="btn-d">D</div>
+            </div>
+            <div class="control-group action-grid">
+                <div class="control-btn" id="btn-1">1</div>
+                <div class="control-btn" id="btn-2">2</div>
+                <div class="control-btn" id="btn-3">3</div>
+                <div class="control-btn" id="btn-4">4</div>
+                <div class="control-btn big-btn" id="btn-attack">⚔️</div>
+            </div>
         </div>
         
         <div id="character-select">
