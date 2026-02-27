@@ -102,12 +102,12 @@ scene.add(particles);
 
 
 // --- LIGHTING ---
-// Hemisphere Light: Sky vs Ground colors
-const hemiLight = new THREE.HemisphereLight(0x0d0d1a, 0x050510, 0.6); 
+// Hemisphere Light: Sky vs Ground colors - BOOSTED FOR VISIBILITY
+const hemiLight = new THREE.HemisphereLight(0x2a334a, 0x151520, 1.5); 
 scene.add(hemiLight);
 
-// Flashlight (Warmer, tighter)
-const flashLight = new THREE.SpotLight(0xfff0aa, 10, 50, 0.5, 0.5, 2); 
+// Flashlight (Warmer, brighter, wider)
+const flashLight = new THREE.SpotLight(0xfff5cc, 20, 80, 0.6, 0.5, 1); 
 flashLight.position.set(0, 0, 0);
 flashLight.target.position.set(0, 0, -1);
 flashLight.castShadow = true; 
@@ -119,10 +119,15 @@ flashLight.shadow.camera.far = 50;
 
 camera.add(flashLight);
 camera.add(flashLight.target);
+
+// Player Point Light (Fill light so player isn't blind)
+const playerFillLight = new THREE.PointLight(0xaaccff, 0.5, 10);
+camera.add(playerFillLight);
+
 scene.add(camera);
 
-// Moon (Cold, distant)
-const moonLight = new THREE.DirectionalLight(0x445577, 0.4); 
+// Moon (Cold, distant) - BOOSTED
+const moonLight = new THREE.DirectionalLight(0x667799, 0.8); 
 moonLight.position.set(50, 100, 50);
 moonLight.castShadow = true;
 // Optimize shadows for open world
@@ -224,14 +229,14 @@ class Enemy {
         if (type === 'angel') {
             // Detailed Weeping Angel (Procedural Statue)
             const stoneMat = new THREE.MeshStandardMaterial({ 
-                color: 0x999999, // Lighter stone
-                roughness: 0.8,
-                metalness: 0.2,
+                color: 0xaaaaaa, // Lighter stone for visibility
+                roughness: 0.7,
+                metalness: 0.1,
                 map: stoneTex
             });
 
             const darkStoneMat = new THREE.MeshStandardMaterial({ // For contrast
-                color: 0x555555,
+                color: 0x444444,
                 roughness: 0.9,
                 map: stoneTex
             });
@@ -244,78 +249,97 @@ class Enemy {
             // 2. Torso (Slimmer fitting)
             const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.35, 0.7, 8), stoneMat);
             torso.position.y = 1.6;
+            torso.castShadow = true;
             this.group.add(torso);
 
             // 3. Head & Hood
-            const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 12), stoneMat);
-            head.position.y = 2.1;
-            this.group.add(head);
+            const headGroup = new THREE.Group();
+            headGroup.position.y = 2.1;
+            
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 16), stoneMat);
+            headGroup.add(head);
+
+            // Glowing Eyes (Scary Factor)
+            const eyeGeo = new THREE.SphereGeometry(0.04, 8, 8);
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // Red glow
+            const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+            leftEye.position.set(0.08, 0.05, 0.18);
+            headGroup.add(leftEye);
+            
+            const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+            rightEye.position.set(-0.08, 0.05, 0.18);
+            headGroup.add(rightEye);
 
             // Hood/Hair (Half sphere larger than head)
-            const hoodGeo = new THREE.SphereGeometry(0.26, 12, 12, 0, Math.PI * 2, 0, Math.PI * 0.4);
+            const hoodGeo = new THREE.SphereGeometry(0.27, 12, 12, 0, Math.PI * 2, 0, Math.PI * 0.5);
             const hood = new THREE.Mesh(hoodGeo, darkStoneMat); // Darker hood
-            hood.position.y = 2.15;
-            hood.rotation.x = Math.PI; 
-            this.group.add(hood);
+            hood.position.y = 0.05;
+            hood.rotation.x = Math.PI / 1.8; 
+            headGroup.add(hood);
+            
+            this.group.add(headGroup);
 
             // 4. Wings (Feathered Look - Layers of scaled cubes/planes)
             const wingGroup = new THREE.Group();
-            wingGroup.position.set(0, 1.8, 0.2); 
+            wingGroup.position.set(0, 1.8, -0.1); 
             
             const createWing = (mirror) => {
                 const w = new THREE.Group();
                 const featherMat = stoneMat; 
                 
                 // Main bone structure
-                const bone = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.8, 0.05), featherMat);
+                const bone = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.2, 0.05), featherMat);
                 bone.position.y = 0.4;
                 bone.rotation.z = mirror ? -0.5 : 0.5;
                 w.add(bone);
 
                 // Feathers (Loop to create layers)
-                for(let i=0; i<5; i++) {
-                     const fGeo = new THREE.BoxGeometry(0.6 - i*0.05, 0.15, 0.02);
+                for(let i=0; i<8; i++) {
+                     const fGeo = new THREE.BoxGeometry(0.8 - i*0.08, 0.15, 0.02);
                      const f = new THREE.Mesh(fGeo, featherMat);
                      
                      // Position along the "bone"
-                     f.position.x = mirror ? (0.3 - i*0.02) : (-0.3 + i*0.02);
-                     f.position.y = 0.8 - i * 0.15; 
+                     f.position.x = mirror ? (0.4 - i*0.04) : (-0.4 + i*0.04);
+                     f.position.y = 0.9 - i * 0.12; 
                      f.rotation.z = mirror ? 0.2 : -0.2;
+                     f.castShadow = true;
                      w.add(f);
                 }
                 return w;
             };
 
             const lWing = createWing(false);
-            lWing.position.x = 0.1;
+            lWing.position.x = 0.2;
+            lWing.rotation.y = -0.2; // Angle back
             const rWing = createWing(true);
-            rWing.position.x = -0.1;
+            rWing.position.x = -0.2;
+            rWing.rotation.y = 0.2;
 
             wingGroup.add(lWing);
             wingGroup.add(rWing);
             this.group.add(wingGroup);
 
             // 5. Arms (Reaching out aggressively)
-            const armGeo = new THREE.CylinderGeometry(0.05, 0.06, 0.8);
+            const armGeo = new THREE.CylinderGeometry(0.05, 0.07, 0.9);
             
             const lArm = new THREE.Mesh(armGeo, stoneMat);
-            lArm.position.set(0.25, 1.75, -0.4);
-            lArm.rotation.x = Math.PI / 2 - 0.2; // Point slightly down towards player neck?
-            lArm.rotation.z = -0.3;
+            lArm.position.set(0.35, 1.7, 0.1);
+            lArm.rotation.x = Math.PI / 2 + 0.2; // Point forward
+            lArm.rotation.z = -0.2;
             
             const rArm = new THREE.Mesh(armGeo, stoneMat);
-            rArm.position.set(-0.25, 1.75, -0.4);
-            rArm.rotation.x = Math.PI / 2 - 0.2;
-            rArm.rotation.z = 0.3;
+            rArm.position.set(-0.35, 1.7, 0.1);
+            rArm.rotation.x = Math.PI / 2 + 0.2;
+            rArm.rotation.z = 0.2;
 
             // Hands (Claws?)
-            const handGeo = new THREE.BoxGeometry(0.1, 0.15, 0.05);
+            const handGeo = new THREE.BoxGeometry(0.12, 0.18, 0.05);
             const lHand = new THREE.Mesh(handGeo, stoneMat);
-            lHand.position.y = -0.4; // Local to arm
+            lHand.position.y = -0.45; // Local to arm
             lArm.add(lHand);
             
             const rHand = new THREE.Mesh(handGeo, stoneMat);
-            rHand.position.y = -0.4;
+            rHand.position.y = -0.45;
             rArm.add(rHand);
 
             this.group.add(lArm);
