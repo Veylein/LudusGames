@@ -828,15 +828,15 @@ class WorldItem {
         
         // Define properties based on type
         if (type === 'battery') {
-            this.data = { name: "Battery", weight: 0.3, desc: "A standard 9V battery. Useful for electronics." };
+            this.data = { name: "Battery", weight: 0.3, icon: "Battery.png", desc: "A standard 9V battery. Useful for electronics." };
             this.mesh.material.color.setHex(0x5555ff);
             this.mesh.scale.set(0.4, 0.6, 0.4);
         } else if (type === 'shovel') {
-            this.data = { name: "Shovel", weight: 3.0, desc: "Sturdy shovel for digging." };
+            this.data = { name: "Shovel", weight: 3.0, icon: "Shovel.png", desc: "Sturdy shovel for digging." };
             this.mesh.material.color.setHex(0x8b4513);
             this.mesh.scale.set(0.3, 2.0, 0.3);
         } else if (type === 'book') {
-            this.data = { name: "Old Book", weight: 1.5, desc: "Contains strange symbols and maps." };
+            this.data = { name: "Old Book", weight: 1.5, icon: "Book.png", desc: "Contains strange symbols and maps." };
             this.mesh.material.color.setHex(0x880000);
             this.mesh.scale.set(0.8, 0.2, 1.0);
         }
@@ -1013,9 +1013,18 @@ function updateInventoryUI() {
     state.inventory.backpack.forEach((item, index) => {
         const slot = document.createElement('div');
         slot.className = 'inv-slot';
-        slot.innerText = item.name.substring(0, 2).toUpperCase();
         slot.title = item.name;
         slot.onclick = () => selectItem(index);
+
+        if (item.icon) {
+            const img = document.createElement('img');
+            img.src = `../../assets/items/${item.icon}`;
+            img.className = 'item-icon-img';
+            slot.appendChild(img);
+        } else {
+            slot.innerText = item.name.substring(0, 2).toUpperCase();
+        }
+
         grid.appendChild(slot);
         currentWeight += item.weight;
     });
