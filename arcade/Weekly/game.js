@@ -187,6 +187,8 @@ function generateArena() {
 }
 
 function createNameTag(name, color) {
+    if (!name) return new THREE.Object3D();
+    
     const canvas = document.createElement('canvas');
     canvas.width = 256;
     canvas.height = 64;
@@ -251,6 +253,9 @@ function spawnPlayer(classId) {
     weapon.rotation.x = Math.PI / 2;
     weaponGroup.add(weapon);
     group.add(weaponGroup);
+    
+    // Store reference for animations
+    group.userData = { weapon: weaponGroup };
     
     scene.add(group);
     state.player.group = group;
