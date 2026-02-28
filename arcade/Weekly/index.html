@@ -20,6 +20,15 @@
     
     <!-- UI Overlay -->
     <div id="ui-layer">
+        
+        <!-- Instructions Overlay -->
+        <div id="instructions" style="position: absolute; top: 10px; right: 10px; text-align: right; color: #fff; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px; pointer-events: none;">
+            <h3>CONTROLS</h3>
+            <p><b>WASD</b> - Move</p>
+            <p><b>CLICK</b> or <b>SPACE</b> - Attack</p>
+            <p><b>1, 2, 3, 4</b> - Abilities</p>
+        </div>
+
         <div id="hud-top" style="display: none;">
             <div id="score">SCORE: 0</div>
             <div id="health-container">
@@ -50,7 +59,7 @@
         </div>
 
         <!-- On-Screen Controls (Visible on start) -->
-        <div id="mobile-controls" style="display: none;">
+        <div id="mobile-controls">
             <div class="control-group dpad-grid">
                 <div class="control-btn" id="btn-w">W</div>
                 <div class="control-btn" id="btn-a">A</div>

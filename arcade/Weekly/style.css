@@ -255,11 +255,18 @@ button:hover {
     left: 20px;
     right: 20px;
     height: 160px;
-    display: flex; /* Always flex but hidden by media query if needed, or JS toggle */
+    display: none; /* Hidden by default on desktop */
     justify-content: space-between;
     align-items: flex-end;
     pointer-events: none; /* Let clicks pass through empty space */
     z-index: 200;
+}
+
+/* Show on touch devices or small screens */
+@media (pointer: coarse), (max-width: 1024px) {
+    #mobile-controls {
+        display: flex;
+    }
 }
 
 .control-group {
@@ -312,6 +319,11 @@ button:hover {
 #btn-a { grid-area: a; }
 #btn-s { grid-area: s; }
 #btn-d { grid-area: d; }
+/* Make D-Pad larger for thumbs */
+.dpad-grid .control-btn {
+    width: 60px;
+    height: 60px;
+}
 
 #btn-attack {
     width: 80px;
@@ -319,6 +331,25 @@ button:hover {
     background: rgba(255, 50, 50, 0.25);
     border-color: #ff4444;
     font-size: 32px;
+}
+
+/* Landscape Mobile Tweaks */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+    #mobile-controls {
+        bottom: 15px;
+        height: auto;
+    }
+    .control-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 16px;
+    }
+    #btn-attack {
+        width: 70px;
+        height: 70px;
+    }
+    .dpad-grid { gap: 4px; }
+    .action-grid { gap: 10px; }
 }
 
 /* Hide mobile controls on desktop by default? Or leave them as suggested by user? 

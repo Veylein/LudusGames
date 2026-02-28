@@ -102,16 +102,20 @@ document.getElementById('game-container').appendChild(renderer.domElement);
 
 // --- LIGHTING ---
 // Main Arena Light
-const spotLight = new THREE.SpotLight(0xffffff, 1.5);
-spotLight.position.set(0, 60, 0);
-spotLight.angle = Math.PI / 4;
-spotLight.penumbra = 0.5;
-spotLight.castShadow = true;
-spotLight.shadow.mapSize.width = 2048;
-spotLight.shadow.mapSize.height = 2048;
-scene.add(spotLight);
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+dirLight.position.set(20, 50, 20);
+dirLight.castShadow = true;
+dirLight.shadow.mapSize.width = 2048;
+dirLight.shadow.mapSize.height = 2048;
+dirLight.shadow.camera.near = 1;
+dirLight.shadow.camera.far = 100;
+dirLight.shadow.camera.left = -50;
+dirLight.shadow.camera.right = 50;
+dirLight.shadow.camera.top = 50;
+dirLight.shadow.camera.bottom = -50;
+scene.add(dirLight);
 
-const ambientLight = new THREE.AmbientLight(0x404060, 0.6); // Cool ambient
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.6); 
 scene.add(ambientLight);
 
 // --- ARENA GENERATION ---
@@ -464,6 +468,18 @@ function handleInput(key, pressed) {
     }
 }
 
+// Mouse Click Support
+document.addEventListener('mousedown', () => {
+    if (state.gameActive) {
+        handleInput('attack', true);
+    }
+});
+document.addEventListener('mouseup', () => {
+    if (state.gameActive) {
+        handleInput('attack', false);
+    }
+});
+
 document.addEventListener('keydown', (e) => handleInput(e.key.toLowerCase(), true));
 document.addEventListener('keyup', (e) => handleInput(e.key.toLowerCase(), false)); // Fix: Ensure keyup clears
 
@@ -487,6 +503,11 @@ document.addEventListener('keyup', (e) => handleInput(e.key.toLowerCase(), false
                 handleInput(' ', true);
             } else {
                 handleInput(k, true);
+                if (['1','2','3','4'].includes(k)) {
+                   // Ensure it triggers immediately for skills that rely on 'click' behavior
+                   // handleInput for 1-4 sets keys[k] = true, and calls useAbility if !pressed before
+                   // So it should work fine.
+                }
             }
             btn.classList.add('pressed'); 
         });
