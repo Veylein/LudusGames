@@ -380,8 +380,7 @@ function updateBots() {
                              // Game Over Logic
                              state.player.hp = 0;
                              state.gameActive = false;
-                             alert("YOU DIED");
-                             location.reload(); 
+                             showGameOver();
                          }
                     } else {
                         // Find entity wrapper for target group
@@ -423,7 +422,8 @@ function updateProjectiles() {
                 updateHUD();
                 hit = true;
                 if (state.player.hp <= 0) {
-                     state.gameActive = false; alert("YOU DIED"); location.reload();
+                     state.gameActive = false;
+                     showGameOver();
                 }
             }
         } 
@@ -860,10 +860,69 @@ function updateHUD() {
 }
 
 
+function showGameOver() {
+    const screen = document.getElementById('game-over-screen');
+    const stats = document.getElementById('game-over-stats');
+    if(screen) {
+        screen.style.display = 'flex';
+        // Force reflow for animation
+        screen.classList.remove('active');
+        void screen.offsetWidth; 
+        
+        if(stats) stats.innerText = `FINAL SCORE: ${state.player.score}`;
+    }
+}
+
+function resetGame() {
+    // 1. Clear Entities
+    if (state.player.group) {
+        scene.remove(state.player.group);
+        state.player.group = null;
+    }
+    state.enemies.forEach(e => scene.remove(e.group));
+    state.enemies = [];
+    PROJECTILES.forEach(p => scene.remove(p.mesh));
+    PROJECTILES.length = 0;
+    
+    // Clear World (Walls/Floor)
+    // Actually, we can keep the world if we want, but "generateArena" adds to worldGroup
+    // which is already in scene. We should clear worldGroup children.
+    while(worldGroup.children.length > 0){ 
+        worldGroup.remove(worldGroup.children[0]); 
+    }
+    
+    // 2. Reset State
+    state.gameActive = false;
+    state.player.hp = state.player.maxHp;
+    state.player.score = 0;
+    
+    // 3. UI Reset
+    const screen = document.getElementById('game-over-screen');
+    if(screen) screen.style.display = 'none';
+    
+    const selectScreen = document.getElementById('character-select');
+    if(selectScreen) selectScreen.style.display = 'flex';
+    
+    const hud = document.getElementById('hud-top');
+    if(hud) hud.style.display = 'none';
+    
+    // Camera Reset
+    camera.position.set(20, 30, 20);
+    camera.lookAt(0, 0, 0);
+    
+    updateHUD();
+}
+
 // Populate Selection Grid
 const grid = document.getElementById('class-grid');
 const startBtn = document.getElementById('start-btn');
-let chosenClass = null;
+const restartBtn = document.getElementById('restart-btn');
+
+if (restartBtn) {
+    restartBtn.onclick = () => {
+        resetGame();
+    };
+}
 
 // Clear existing items just in case
 if (grid) {
@@ -897,10 +956,26 @@ if (startBtn) {
         if (selectScreen) selectScreen.style.display = 'none';
         if (hud) hud.style.display = 'flex'; // Show game HUD
         
+        // Ensure clean slate before generating
+        while(worldGroup.children.length > 0){ 
+            worldGroup.remove(worldGroup.children[0]); 
+        }
+
         generateArena();
         spawnPlayer(chosenClass);
         spawnBots(); // Added Bot Spawning
         state.gameActive = true;
+    };
+}
+
+if (restartBtn) {
+    restartBtn.onclick = () => {
+         // UI Clean up
+         const screen = document.getElementById('game-over-screen');
+         if(screen) screen.style.display = 'none';
+
+         // Full Reset Logic
+         resetGame();
     };
 }
 
