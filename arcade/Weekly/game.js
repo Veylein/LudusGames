@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 
 // --- CONFIGURATION ---
+window.GAME_LOADED = true; // Signal for error handler
 const MAP_SIZE = 120; 
 const WALL_HEIGHT = 8;
 
@@ -951,20 +952,29 @@ if (grid) {
 if (startBtn) {
     startBtn.onclick = () => {
         if (!chosenClass) return;
-        const selectScreen = document.getElementById('character-select');
-        const hud = document.getElementById('hud-top');
-        if (selectScreen) selectScreen.style.display = 'none';
-        if (hud) hud.style.display = 'flex'; // Show game HUD
         
-        // Ensure clean slate before generating
-        while(worldGroup.children.length > 0){ 
-            worldGroup.remove(worldGroup.children[0]); 
-        }
+        try {
+            const selectScreen = document.getElementById('character-select');
+            const hud = document.getElementById('hud-top');
+            if (selectScreen) selectScreen.style.display = 'none';
+            if (hud) hud.style.display = 'flex'; // Show game HUD
+            
+            // Ensure clean slate before generating
+            // Use reverse loop for safer removal or simplify
+            for(let i = worldGroup.children.length - 1; i >= 0; i--) {
+                const child = worldGroup.children[i];
+                worldGroup.remove(child);
+            }
 
-        generateArena();
-        spawnPlayer(chosenClass);
-        spawnBots(); // Added Bot Spawning
-        state.gameActive = true;
+            generateArena();
+            spawnPlayer(chosenClass);
+            spawnBots(); // Added Bot Spawning
+            state.gameActive = true;
+        } catch (e) {
+            console.error("Game Start Error:", e);
+            alert("Error starting game: " + e.message);
+            location.reload();
+        }
     };
 }
 

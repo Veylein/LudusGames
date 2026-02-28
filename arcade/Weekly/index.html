@@ -61,10 +61,10 @@
         <!-- On-Screen Controls (Visible on start) -->
         <div id="mobile-controls">
             <div class="control-group dpad-grid">
-                <div class="control-btn" id="btn-w">W</div>
-                <div class="control-btn" id="btn-a">A</div>
-                <div class="control-btn" id="btn-s">S</div>
-                <div class="control-btn" id="btn-d">D</div>
+                <div class="control-btn" id="btn-w">▲</div>
+                <div class="control-btn" id="btn-a">◀</div>
+                <div class="control-btn" id="btn-s">▼</div>
+                <div class="control-btn" id="btn-d">▶</div>
             </div>
             <div class="control-group action-grid">
                 <div class="control-btn" id="btn-1">1</div>
@@ -89,8 +89,37 @@
             <div id="game-over-stats">Score: 0</div>
             <button id="restart-btn">RESPAWN</button>
         </div>
+        
+        <!-- Reload Helper (Hidden unless error) -->
+        <button id="emergency-reload" style="display: none; position: absolute; top: 10px; left: 10px; z-index: 1000; padding: 10px; background: red; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            ⚠️ RELOAD (Game Error)
+        </button>
     </div>
 
+    <script>
+        // Emergency Error Handler & Fallback
+        window.GAME_LOADED = false; // Default false
+        
+        window.onerror = function() {
+            const btn = document.getElementById('emergency-reload');
+            if(btn) {
+                btn.style.display = 'block';
+                btn.onclick = () => location.reload();
+            }
+        };
+        
+        // If buttons are clicked before game loads (or if it fails), reload
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.control-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    if (!window.GAME_LOADED) {
+                        e.stopImmediatePropagation();
+                        location.reload();
+                    }
+                });
+            });
+        });
+    </script>
     <script type="module" src="game.js"></script>
 </body>
 </html>
