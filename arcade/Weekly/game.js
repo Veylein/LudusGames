@@ -208,7 +208,13 @@ function createNameTag(name, color) {
 
 // --- PLAYER ---
 function spawnPlayer(classId) {
+    console.log("Spawning player with classId:", classId);
     const classData = CLASSES.find(c => c.id === classId);
+    
+    if (!classData) {
+        throw new Error(`Invalid class ID: ${classId}. Available: ${CLASSES.map(c => c.id).join(', ')}`);
+    }
+
     state.selectedClass = classData;
     state.player.maxHp = classData.hp;
     state.player.hp = classData.hp;
@@ -956,9 +962,15 @@ if (grid) {
 
 if (startBtn) {
     startBtn.onclick = () => {
-        if (!chosenClass) return;
+        // Fix: Use the module-scoped variable 'chosenClass'
+        // If it's null, we shouldn't even be here effectively, but let's check.
+        if (!chosenClass) {
+            console.error("No class selected!");
+            return;
+        }
         
         try {
+            console.log("Starting game with class:", chosenClass);
             const selectScreen = document.getElementById('character-select');
             const hud = document.getElementById('hud-top');
             if (selectScreen) selectScreen.style.display = 'none';
@@ -972,6 +984,9 @@ if (startBtn) {
             }
 
             generateArena();
+            // CRITICAL FIX: Ensure CLASSES is defined and spawnPlayer gets valid ID
+            if (!CLASSES || CLASSES.length === 0) throw new Error("Class definitions failed to load.");
+            
             spawnPlayer(chosenClass);
             spawnBots(); // Added Bot Spawning
             state.gameActive = true;
