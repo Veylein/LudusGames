@@ -98,6 +98,80 @@ body, html {
 #game-over-screen {
     font-size: 3rem;
     color: #a00;
+    font-weight: bold;
+    text-shadow: 0 0 10px #000;
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0,0,0,0.8);
+    z-index: 200;
+}
+
+.floating-text {
+    position: absolute;
+    font-family: inherit;
+    font-weight: bold;
+    pointer-events: none;
+    animation: floatUp 1s forwards;
+    text-shadow: 1px 1px 0 #000;
+}
+
+@keyframes floatUp {
+    0% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(-50px); opacity: 0; }
+}
+
+#hotbar-container {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    background: rgba(0,0,0,0.5);
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.hotbar-slot {
+    width: 60px;
+    height: 60px;
+    border: 2px solid #555;
+    background: #222;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    border-radius: 5px;
+}
+.hotbar-slot.cooldown {
+    border-color: #550000;
+}
+.hotbar-slot.cooldown::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%; height: 0%;
+    background: rgba(255, 0, 0, 0.5);
+    transition: height 0.1s linear;
+    z-index: 5;
+}
+
+.key-hint {
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    font-size: 10px;
+    color: #aaa;
+}
+.icon {
+    font-size: 24px;
+    z-index: 6;
+}
     text-shadow: 0 0 20px #500;
     margin-bottom: 20px;
     letter-spacing: 5px;

@@ -181,6 +181,24 @@ function generateArena() {
     }
 }
 
+function createNameTag(name, color) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = color;
+    ctx.font = 'bold 32px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(name, 128, 48);
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    const spriteMaterial = new THREE.SpriteMaterial({ map: texture });
+    const sprite = new THREE.Sprite(spriteMaterial);
+    sprite.scale.set(4, 1, 1);
+    sprite.position.y = 3.5;
+    return sprite;
+}
+
 // --- PLAYER ---
 function spawnPlayer(classId) {
     const classData = CLASSES.find(c => c.id === classId);
@@ -197,6 +215,10 @@ function spawnPlayer(classId) {
     // Create container for rotation separate from capsule
     const group = new THREE.Group();
     group.add(playerMesh);
+    
+    // Name Tag
+    const nameTag = createNameTag(classData.name, '#ffffff');
+    group.add(nameTag);
     
     // Visual Marker (Ring for "Selected")
     const ringGeo = new THREE.RingGeometry(1.5, 1.7, 32);
@@ -248,13 +270,17 @@ function spawnBot(classData, team, index) {
     
     // Body
     const bodyGeo = new THREE.CapsuleGeometry(1, 3, 4, 8);
-    const color = team === 'ally' ? 0x0000ff : 0xff0000; // Team Colors override for now? Or marker?
     // Let's keep class color but add a team marker
     const bodyMat = new THREE.MeshStandardMaterial({ color: classData.color });
     const mesh = new THREE.Mesh(bodyGeo, bodyMat);
     mesh.position.y = 1.5;
     mesh.castShadow = true;
     group.add(mesh);
+
+    // Name Tag
+    const nameColor = team === 'ally' ? '#8888ff' : '#ff8888';
+    const nameTag = createNameTag(classData.name, nameColor);
+    group.add(nameTag);
 
     // Team Marker (Ring)
     const ringColor = team === 'ally' ? 0x4444ff : 0xff4444;
@@ -546,7 +572,7 @@ function performAttack() {
     }
 }
 
-function spawnProjectile(sourceEntity, team, damage) {
+function spawnProjectile(sourceEntity, team, damage, offsetAngle = 0) {
     const projGeo = new THREE.SphereGeometry(0.5);
     const projMat = new THREE.MeshBasicMaterial({ color: team === 'ally' ? 0x00ffff : 0xff0000 });
     const proj = new THREE.Mesh(projGeo, projMat);
@@ -555,9 +581,17 @@ function spawnProjectile(sourceEntity, team, damage) {
     proj.position.y = 2; // Chest height
     
     // Direction: Forward based on rotation
-    const dir = new THREE.Vector3(0, 0, -1);
+    // With atan2(x,z), 0 is +Z (Down).
+    // If we want to shoot forward relative to rotation, we need to match movement.
+    // Movement: +Z (0 deg). Projectile should go +Z.
+    // So local forward is (0, 0, 1).
+    const dir = new THREE.Vector3(0, 0, 1);
+    
     // If source is player group
-    if (sourceEntity.rotation) dir.applyEuler(sourceEntity.rotation);
+    if (sourceEntity.rotation) {
+        const euler = new THREE.Euler(sourceEntity.rotation.x, sourceEntity.rotation.y + offsetAngle, sourceEntity.rotation.z);
+        dir.applyEuler(euler);
+    }
     // Start slightly in front
     proj.position.add(dir.clone().multiplyScalar(2));
     
@@ -573,26 +607,201 @@ function spawnProjectile(sourceEntity, team, damage) {
     });
 }
 
-function useAbility(slot) {
-    // Check CD
-    // Find skill name: state.selectedClass.abilities[slot-1]
-    console.log(`Casting ability ${slot}`);
-    
-    // For prototype: Just heal on 2, AOE on 3
-    if (slot === '2') {
-        state.player.hp = Math.min(state.player.hp + 30, state.player.maxHp);
-        updateHUD();
-        // Visual
-        const aura = new THREE.Mesh(new THREE.RingGeometry(2, 2.5), new THREE.MeshBasicMaterial({ color: 0x00ff00 }));
-        aura.rotation.x = -Math.PI / 2;
-        aura.position.copy(state.player.group.position);
-        scene.add(aura);
-        setTimeout(() => scene.remove(aura), 500);
+
+// --- ABILITIES & EFFECTS ---
+function createEffect(type, position, size = 1, color = 0xffffff, duration = 500) {
+    let mesh;
+    if (type === 'explosion') {
+        const geo = new THREE.SphereGeometry(size, 8, 8);
+        const mat = new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.8 });
+        mesh = new THREE.Mesh(geo, mat);
+        
+        // simple scale up animation
+        const startTime = Date.now();
+        const animateEffect = () => {
+            const progress = (Date.now() - startTime) / duration;
+            if (progress >= 1) {
+                scene.remove(mesh);
+                return;
+            }
+            mesh.scale.setScalar(1 + progress * 2);
+            mat.opacity = 1 - progress;
+            requestAnimationFrame(animateEffect);
+        };
+        requestAnimationFrame(animateEffect);
+    } else if (type === 'ring') {
+        const geo = new THREE.RingGeometry(size, size + 0.5, 32);
+        const mat = new THREE.MeshBasicMaterial({ color: color, side: THREE.DoubleSide, transparent: true });
+        mesh = new THREE.Mesh(geo, mat);
+        mesh.rotation.x = -Math.PI / 2;
+        
+        const startTime = Date.now();
+        const animateEffect = () => {
+            const progress = (Date.now() - startTime) / duration;
+            if (progress >= 1) {
+                scene.remove(mesh);
+                return;
+            }
+            mesh.scale.setScalar(1 + progress);
+            mat.opacity = 1 - progress;
+            requestAnimationFrame(animateEffect);
+        };
+        requestAnimationFrame(animateEffect);
+    } else if (type === 'beam') {
+        const geo = new THREE.CylinderGeometry(0.2, 0.2, size, 8);
+        const mat = new THREE.MeshBasicMaterial({ color: color, transparent: true });
+        mesh = new THREE.Mesh(geo, mat);
+        mesh.rotation.x = Math.PI / 2;
+        // Beam needs specific orientation logic (start -> end), simplified here as just a mesh at pos
     }
+    
+    if (mesh) {
+        mesh.position.copy(position);
+        scene.add(mesh);
+        if(type !== 'explosion' && type !== 'ring') setTimeout(() => scene.remove(mesh), duration);
+    }
+}
+
+function spawnFloatingText(text, position, color = '#fff') {
+    const div = document.createElement('div');
+    div.className = 'floating-text';
+    div.innerText = text;
+    div.style.color = color;
+    
+    // Project 3D position to 2D screen
+    const vec = position.clone();
+    vec.project(camera);
+    
+    const x = (vec.x * 0.5 + 0.5) * window.innerWidth;
+    const y = (-(vec.y * 0.5) + 0.5) * window.innerHeight;
+    
+    div.style.left = `${x}px`;
+    div.style.top = `${y}px`;
+    
+    document.getElementById('ui-layer').appendChild(div);
+    setTimeout(() => div.remove(), 1000);
+}
+
+function useAbility(slot) {
+    const cd = COOLDOWNS[slot] || 5000;
+    if (Date.now() - cooldowns[slot] < cd) return;
+    
+    const role = state.selectedClass.role;
+    const player = state.player.group;
+    if (!player) return;
+
+    console.log(`Casting ability ${slot} for ${role}`);
+    let success = false;
+
+    // --- SLOT 1: BASIC SKILL (Short CD) ---
+    if (slot === '1') {
+        if (role === 'Tank' || role === 'Fighter') {
+            // Power Strike: Cone damage + knockback
+            createEffect('ring', player.position, 3, 0xff0000, 300);
+            dealAreaDamage(player.position, 6, 40, 'enemy');
+            success = true;
+        } else if (role === 'Mage' || role === 'Support') {
+            // Magic Burst: AOE around self
+            createEffect('explosion', player.position, 4, 0x00ffff, 400);
+            dealAreaDamage(player.position, 8, 30, 'enemy');
+            success = true;
+        } else { // Assassin / Marksman / Specialist
+            // Quick Shot: 3 projectiles
+            spawnProjectile(player, 'ally', 15, -0.2);
+            spawnProjectile(player, 'ally', 15, 0);
+            spawnProjectile(player, 'ally', 15, 0.2);
+            success = true;
+        }
+    }
+
+    // --- SLOT 2: MOBILITY / DEFENSE ---
+    if (slot === '2') {
+        if (role === 'Tank' || role === 'Support') {
+            // Shield / Heal: +HP and visual
+            state.player.hp = Math.min(state.player.hp + 40, state.player.maxHp);
+            createEffect('ring', player.position, 2, 0x00ff00, 500);
+            spawnFloatingText("HEAL", player.position, '#0f0');
+            success = true;
+        } else {
+            // Dash: Move forward instantly
+            const dir = new THREE.Vector3(0, 0, -1);
+            dir.applyEuler(player.rotation);
+            player.position.add(dir.multiplyScalar(10));
+            createEffect('ring', player.position, 1, 0xffffff, 200);
+            success = true;
+        }
+    }
+
+    // --- SLOT 3: CROWD CONTROL / UTILITY ---
+    if (slot === '3') {
+         if (role === 'Mage' || role === 'Support') {
+            // Freeze / Stun Area
+            createEffect('explosion', player.position, 10, 0x0000ff, 600);
+            dealAreaDamage(player.position, 12, 20, 'enemy');
+            // TODO: Apply slow status logic if we had status effects
+            success = true;
+         } else {
+            // Heavy Hit
+            createEffect('explosion', player.position, 5, 0xff8800, 300);
+            dealAreaDamage(player.position, 8, 60, 'enemy');
+            success = true;
+         }
+    }
+
+    // --- SLOT 4: ULTIMATE ---
+    if (slot === '4') {
+        // Big AOE for everyone for now
+        createEffect('explosion', player.position, 20, 0xff00ff, 1000);
+        dealAreaDamage(player.position, 20, 150, 'enemy');
+        spawnFloatingText("ULTIMATE!", player.position, '#f0f');
+        success = true;
+    }
+
+    if (success) {
+        cooldowns[slot] = Date.now();
+        triggerCooldownVisual(slot, cd);
+        updateHUD();
+    }
+}
+
+function dealAreaDamage(position, range, damage, targetTeam) {
+    state.enemies.forEach(entity => {
+        if (entity.hp <= 0) return;
+        if (entity.team === targetTeam || targetTeam === 'all') {
+            if (entity.group.position.distanceTo(position) < range) {
+                damageEntity(entity, damage);
+            }
+        }
+    });
+}
+
+function triggerCooldownVisual(slot, duration) {
+    const el = document.getElementById(`slot-${slot}`);
+    if (!el) return;
+    
+    el.classList.add('cooldown');
+    const style = document.createElement('style');
+    style.innerHTML = `
+        #slot-${slot}::after {
+            animation: cooldownAnim ${duration}ms linear forwards;
+        }
+        @keyframes cooldownAnim {
+            from { height: 100%; }
+            to { height: 0%; }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    setTimeout(() => {
+        el.classList.remove('cooldown');
+        style.remove();
+    }, duration);
 }
 
 function damageEntity(entity, amount) {
     entity.hp -= amount;
+    
+    spawnFloatingText(amount, entity.group.position, '#ff0000');
     
     // Flash Material
     entity.group.traverse((child) => {
