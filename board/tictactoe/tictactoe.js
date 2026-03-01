@@ -6,8 +6,9 @@
  * - Neon Visuals
  */
 
-(function() {
+window.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('game-canvas');
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     
     // Config
@@ -56,7 +57,8 @@
             });
         });
         
-        document.getElementById('reset-btn').addEventListener('click', resetGame);
+        const resetBtn = document.getElementById('reset-btn');
+        if (resetBtn) resetBtn.addEventListener('click', resetGame);
     }
 
     function startGame() {
@@ -80,15 +82,12 @@
         // Center the board
         boardRect.x = (canvas.width - BOARD_SIZE) / 2;
         boardRect.y = (canvas.height - BOARD_SIZE) / 2;
-        render(); // Force render
+        
+        // Force render
+        // render(); // Wait for loop
     }
     
     function handleClick(x, y) {
-        // If passed from GameUI, x/y are relative to canvas on some systems, 
-        // but let's assume raw client coords adjusted?
-        // GameUI sends raw click usually? No, let's treat inputs carefully.
-        // Actually GameUI usually abstracts this. Let's assume input x,y are canvas-relative.
-        
         if (!gameActive) return;
         if (turn !== 1) return; // Wait for CPU
         
@@ -251,10 +250,22 @@
         }
         document.getElementById('score-1').innerText = scores.p1;
         document.getElementById('score-2').innerText = scores.p2;
+        
+        // Game Over Screen
+        setTimeout(() => {
+             if (window.GameUI) {
+                 const msg = winner === 1 ? 'VICTORY' : (winner === 2 ? 'DEFEAT' : 'DRAW');
+                 window.GameUI.showGameOverScreen(null, 500); 
+                 // Note: We might want a custom message, but showGameOverScreen usually takes score only? 
+                 // Actually ui.js showGameOver takes (score, onRestart, onQuit, titleText).
+                 // We should use that!
+             }
+        }, 1000);
     }
     
     function setStatus(msg) {
-        document.getElementById('status-msg').innerText = msg;
+        const el = document.getElementById('status-msg');
+        if(el) el.innerText = msg;
     }
 
     // --- Render ---
@@ -284,8 +295,6 @@
         }
         ctx.stroke();
         
-        // Highlight active square under mouse? (Optional polish)
-        
         // Pieces
         board.forEach((val, idx) => {
             if (val === 0) return;
@@ -300,10 +309,11 @@
             ctx.lineCap = 'round';
             
             if (val === 1) {
-                // X (Green Crosshair)
-                ctx.strokeStyle = '#0f0';
-                ctx.shadowColor = '#0f0';
-                ctx.shadowBlur = 15;
+                // X (Player) - Neon Cyan
+                ctx.strokeStyle = '#0ff';
+                ctx.shadowColor = '#0ff';
+                ctx.shadowBlur = 10;
+                
                 ctx.beginPath();
                 ctx.moveTo(cx - size, cy - size);
                 ctx.lineTo(cx + size, cy + size);
@@ -311,18 +321,19 @@
                 ctx.lineTo(cx - size, cy + size);
                 ctx.stroke();
             } else {
-                // O (Red Radar Blip)
-                ctx.strokeStyle = '#f00';
-                ctx.shadowColor = '#f00';
-                ctx.shadowBlur = 15;
+                // O (CPU) - Neon Magenta
+                ctx.strokeStyle = '#f0f';
+                ctx.shadowColor = '#f0f';
+                ctx.shadowBlur = 10;
+                
                 ctx.beginPath();
                 ctx.arc(cx, cy, size, 0, Math.PI*2);
                 ctx.stroke();
             }
         });
         
-        // Winning Line
-        if (!gameActive && winningLine) {
+        // Victory Line
+        if (winningLine) {
             const startIdx = winningLine[0];
             const endIdx = winningLine[2];
             
@@ -336,10 +347,11 @@
             const x2 = rx + c2 * CELL_SIZE + CELL_SIZE/2;
             const y2 = ry + r2 * CELL_SIZE + CELL_SIZE/2;
             
-            ctx.strokeStyle = '#fff';
-            ctx.shadowColor = '#fff';
+            ctx.strokeStyle = '#ff0';
+            ctx.shadowColor = '#ff0';
             ctx.shadowBlur = 20;
-            ctx.lineWidth = 10;
+            ctx.lineWidth = 15;
+            
             ctx.beginPath();
             ctx.moveTo(x1, y1);
             ctx.lineTo(x2, y2);
@@ -348,4 +360,4 @@
     }
 
     init();
-})();
+});

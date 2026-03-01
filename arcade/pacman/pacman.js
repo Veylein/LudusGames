@@ -1,6 +1,15 @@
 ﻿{
 class PacmanGame {
     constructor() {
+        // Wait for DOM
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.initCanvas());
+        } else {
+            this.initCanvas();
+        }
+    }
+
+    initCanvas() {
         this.canvas = document.getElementById('gameCanvas');
         if (!this.canvas) {
             console.error("Canvas element 'gameCanvas' not found!");

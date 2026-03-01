@@ -272,8 +272,18 @@
             
             // Ship Collision
             if (!this.ship.dead && this.ship.invulnerable === 0) {
+                 // Asteroids
                  for(let a of this.asteroids) {
                      if (this.dist(this.ship.x, this.ship.y, a.x, a.y) < this.ship.r + a.r - 5) {
+                         this.die();
+                         break;
+                     }
+                 }
+                 
+                 // Bullets (Friendly Fire / Wrap Around Death)
+                 for(let b of this.bullets) {
+                     // Check if bullet is close to ship
+                     if (this.dist(this.ship.x, this.ship.y, b.x, b.y) < this.ship.r) {
                          this.die();
                          break;
                      }

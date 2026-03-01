@@ -8,8 +8,9 @@
  */
 
 (function() {
-    const canvas = document.getElementById('gameCanvas');
-    if (!canvas) return;
+    window.addEventListener('load', () => {
+        const canvas = document.getElementById('gameCanvas');
+        if (!canvas) return;
     
     // Accessibility & Focus
     canvas.setAttribute('tabindex', '0');
@@ -452,6 +453,7 @@
     }
 
     new DinoGame();
+    });
 })();
         
         // Environment (Draws stars/clouds/ground)

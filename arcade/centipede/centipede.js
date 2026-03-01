@@ -264,7 +264,8 @@
 
                 // Collision with Player
                 if (this.rectIntersect(seg, this.player)) {
-                    this.gameOver(false);
+                    if(window.GameUI) window.GameUI.showGameOverScreen(this.score);
+                    else this.gameOver(false); // Fallback
                 }
             });
 

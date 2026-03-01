@@ -245,7 +245,12 @@
                 localStorage.setItem('flappyHighScore', this.highScore);
             }
             
-            if (window.GameUI) window.GameUI.showGameOverScreen(this.score, this.highScore);
+            if (window.GameUI) {
+                 window.GameUI.showGameOverScreen(this.score, this.highScore);
+            } else {
+                 // Fallback if GameUI missing?
+                 setTimeout(() => this.reset(), 2000);
+            }
         }
 
         loop() {

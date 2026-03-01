@@ -246,9 +246,14 @@
                     this.qbert.y = this.qbert.targetY;
                     
                     if (this.qbert.isFalling) {
-                        this.die();
+                         this.die();
                     }
                 }
+            }
+            // Logic if falling indefinitely? 
+            if (this.qbert.isFalling && !this.isGameOver) {
+                 this.qbert.y += 10; // Fall down screen
+                 if (this.qbert.y > this.canvas.height) this.die();
             }
             
             // Update cube animations
@@ -271,7 +276,7 @@
             });
             
             // Draw Qbert
-            if (!this.qbert.isFalling || this.isGameOver) {
+            if (true) { // Always draw if game running? Or handle invisible? 
                  this.drawQbert(this.qbert.x, this.qbert.y);
             }
         }

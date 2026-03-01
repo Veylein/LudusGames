@@ -209,8 +209,12 @@ class InvadersGame {
         });
 
         if (edgeHit) {
+            // Push them away from the edge slightly to prevent double-triggering next frame
+            const shift = this.alienDirection > 0 ? -5 : 5; 
+            
             this.alienDirection *= -1;
             activeAliens.forEach(a => {
+                a.x += shift; // Move out of wall
                 a.y += 20; 
                 if (a.y + a.height >= this.player.y) this.gameOver(false); 
             });

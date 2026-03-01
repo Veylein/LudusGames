@@ -41,11 +41,31 @@
             
             this.boundKeyDown = this.keyDownHandler.bind(this);
             this.boundKeyUp = this.keyUpHandler.bind(this);
+            this.handleResize = this.handleResize.bind(this);
             
             this.init();
         }
         
-        initBricks() {
+        handleResize() {
+            this.canvas.width = window.innerWidth;
+            this.canvas.height = window.innerHeight;
+            this.paddleX = (this.canvas.width - this.paddleWidth) / 2;
+            
+            // Re-center bricks?
+            const totalBrickW = (this.brickColumnCount * (this.brickWidth + this.brickPadding)) - this.brickPadding;
+            this.brickOffsetLeft = (this.canvas.width - totalBrickW) / 2;
+            
+            this.draw();
+        }
+
+        init() {
+            window.addEventListener("keydown", this.boundKeyDown, false);
+            window.addEventListener("keyup", this.boundKeyUp, false);
+            window.addEventListener("resize", this.handleResize);
+            
+            this.handleResize(); // Set initial size
+            
+            if (window.GameUI) {
             this.bricks = [];
             for(let c=0; c<this.brickColumnCount; c++) {
                 this.bricks[c] = [];
@@ -79,6 +99,7 @@
         cleanup() {
             window.removeEventListener("keydown", this.boundKeyDown);
             window.removeEventListener("keyup", this.boundKeyUp);
+            window.removeEventListener("resize", this.handleResize);
             if(this.animationId) cancelAnimationFrame(this.animationId);
             this.isGameRunning = false;
         }
