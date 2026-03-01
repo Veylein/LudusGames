@@ -188,6 +188,11 @@ function nextPokerStage() {
 // Global Export
 window.pokerAction = pokerAction;
 
-if (typeof pokerInit === 'function') pokerInit();
-
+if (typeof pokerInit === 'function') {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', pokerInit);
+    } else {
+        pokerInit();
+    }
+}
 } // SCOPE END

@@ -185,7 +185,12 @@ function checkWin() {
 }
 
 window.warAction = warAction;
-if(typeof warInit === 'function') warInit();
-
+if(typeof warInit === 'function') {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', warInit);
+    } else {
+        warInit();
+    }
+}
 } // SCOPE END
 

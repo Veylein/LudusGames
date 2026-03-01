@@ -177,6 +177,11 @@ function solitaireAction(action) {
 // Global Export
 window.solitaireAction = solitaireAction;
 
-if (typeof solitaireInit === 'function') solitaireInit();
-
+if (typeof solitaireInit === 'function') {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', solitaireInit);
+    } else {
+        solitaireInit();
+    }
+}
 } // SCOPE END

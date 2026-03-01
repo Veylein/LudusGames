@@ -299,17 +299,29 @@ function hasAnyMoves(player) {
 }
 
 function gameOver(msg) {
-    const title = document.getElementById('game-over-title');
-    const reason = document.getElementById('game-over-reason');
-    if (title) title.innerText = "Game Over";
-    if (reason) reason.innerText = msg;
-    if (gameOverModal) gameOverModal.classList.remove('hidden');
+    if (window.GameUI) {
+        window.GameUI.showGameOver(
+            null,
+            () => initGame(),
+            () => window.history.back(),
+            msg
+        );
+    } else {
+        const title = document.getElementById('game-over-title');
+        const reason = document.getElementById('game-over-reason');
+        if (title) title.innerText = "Game Over";
+        if (reason) reason.innerText = msg;
+        if (gameOverModal) gameOverModal.classList.remove('hidden');
+        else alert(msg);
+    }
 }
 
 function updateUI() {
     if (turnIndicator) {
-        turnIndicator.innerText = `${turn === 'red' ? "Red" : "Black"}'s Turn`;
+        turnIndicator.innerText = `${turn === 'red' ? "RED" : "BLACK"}'s Turn`;
         turnIndicator.className = `turn-indicator ${turn}-turn`;
+        // Add glow effect class if available
+        turnIndicator.classList.add('glow-text');
     }
     
     if (redCountEl) redCountEl.innerText = redPieces;
@@ -325,7 +337,23 @@ if (playAgainBtn) playAgainBtn.addEventListener('click', () => {
     initGame();
 });
 
-// Init
-initGame();
+// Initialization with Start Screen
+function startUp() {
+    if (window.GameUI) {
+        window.GameUI.showStartScreen(
+            "CHECKERS",
+            "Red moves first.<br>Capture all enemy pieces to win.",
+            () => initGame()
+        );
+    } else {
+        initGame();
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startUp);
+} else {
+    startUp();
+}
 
 } // SCOPE END

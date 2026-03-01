@@ -176,17 +176,25 @@
             ];
         }
 
-        togglePause() {
+        togglePause(force) {
             if (!this.isGameRunning) return;
             
-            this.isPaused = !this.isPaused;
+            const shouldPause = (typeof force !== 'undefined') ? force : !this.isPaused;
+            this.isPaused = shouldPause;
+            
             if (this.isPaused) {
-                clearInterval(this.gameInterval);
-                if (this.pauseBtn) {
-                    this.pauseBtn.innerText = 'RESUME';
-                    this.pauseBtn.classList.add('paused');
+                if (this.gameInterval) clearInterval(this.gameInterval);
+                if(window.GameUI) {
+                    window.GameUI.showPause(
+                        () => this.togglePause(false),
+                        () => {
+                            this.isGameRunning = false;
+                            window.history.back(); // Exit
+                        }
+                    );
                 }
             } else {
+                if(window.GameUI) window.GameUI.hide();
                 this.gameInterval = setInterval(() => this.gameLoop(), this.speed);
                 if (this.pauseBtn) {
                     this.pauseBtn.innerText = 'PAUSE';
@@ -354,8 +362,17 @@
         gameOver() {
             this.isGameRunning = false;
             clearInterval(this.gameInterval);
-            if (this.finalScoreElement) this.finalScoreElement.innerText = this.score;
-            if (this.gameOverScreen) this.gameOverScreen.style.display = 'flex';
+            
+            if(window.GameUI) {
+                window.GameUI.showGameOver(
+                    this.score,
+                    () => this.resetGame(),
+                    () => { window.history.back(); }
+                );
+            } else {
+               if (this.finalScoreElement) this.finalScoreElement.innerText = this.score;
+               if (this.gameOverScreen) this.gameOverScreen.style.display = 'flex';
+            }
         }
     
         handleInput(e) {
@@ -394,6 +411,12 @@
             }
         }
     }
-    
-    new SnakeGame();
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+             if (document.getElementById('gameCanvas')) new SnakeGame();
+        });
+    } else {
+         if (document.getElementById('gameCanvas')) new SnakeGame();
+    }
 })();

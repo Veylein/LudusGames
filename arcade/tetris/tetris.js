@@ -16,29 +16,21 @@
             this.canvas.width = this.cols * this.grid;
             this.canvas.height = this.rows * this.grid;
             
+            // Legacy/DOM elements
             this.scoreElement = document.getElementById('score');
             this.levelElement = document.getElementById('level');
             this.linesElement = document.getElementById('lines');
-            this.finalScoreElement = document.getElementById('final-score');
-            this.startScreen = document.getElementById('start-screen');
-            this.gameOverScreen = document.getElementById('game-over-screen');
-            this.restartBtn = document.getElementById('restart-btn');
             
-            this.btnRotate = document.getElementById('rotate-btn');
-            this.btnLeft = document.getElementById('left-btn');
-            this.btnRight = document.getElementById('right-btn');
-            this.btnDown = document.getElementById('down-btn');
-            this.btnDrop = document.getElementById('drop-btn');
-            
+            // Neon Palette
             this.colors = [
                 null,
-                '#FF0D72', 
-                '#0DC2FF', 
-                '#0DFF72', 
-                '#F538FF', 
-                '#FF8E0D', 
-                '#FFE138', 
-                '#3877FF', 
+                '#FF0055', // T - Red
+                '#00FF99', // Z - Green
+                '#00CCFF', // S - Cyan
+                '#FFCC00', // O - Yellow
+                '#9900FF', // I - Purple
+                '#FF6600', // L - Orange
+                '#0033FF', // J - Blue
             ];
 
             this.player = {
@@ -50,71 +42,78 @@
             };
             
             this.arena = this.createMatrix(this.cols, this.rows);
+            
             this.dropCounter = 0;
             this.dropInterval = 1000;
             this.lastTime = 0;
+            
             this.isGameOver = false;
             this.isRunning = false;
+            this.isPaused = false;
+            
             this.nextPiece = null;
+            this.requestId = null;
 
             this.boundHandleInput = this.handleInput.bind(this);
-            this.boundClickStart = this.clickStart.bind(this);
-
+            
             this.init();
         }
         
         init() {
             window.addEventListener('keydown', this.boundHandleInput);
             
-            this.canvas.addEventListener('click', this.boundClickStart);
-            this.canvas.addEventListener('touchstart', (e) => { 
-                e.preventDefault(); 
-                this.clickStart(e); 
-            });
+            // Mobile/Touch Bindings
+            const bindBtn = (id, fn) => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        if (this.isRunning && !this.isPaused) fn();
+                    });
+                }
+            };
             
-            if(this.startScreen) this.startScreen.addEventListener('click', this.boundClickStart);
+            bindBtn('rotate-btn', () => this.playerRotate(1));
+            bindBtn('left-btn', () => this.playerMove(-1));
+            bindBtn('right-btn', () => this.playerMove(1));
+            bindBtn('down-btn', () => this.playerDrop());
+            bindBtn('drop-btn', () => this.hardDrop());
             
-            if(this.btnRotate) this.btnRotate.addEventListener('click', () => this.playerRotate(1));
-            if(this.btnLeft) this.btnLeft.addEventListener('click', () => this.playerMove(-1));
-            if(this.btnRight) this.btnRight.addEventListener('click', () => this.playerMove(1));
-            if(this.btnDown) this.btnDown.addEventListener('click', () => this.playerDrop());
-            if(this.btnDrop) this.btnDrop.addEventListener('click', () => {
-                 this.hardDrop();
-            });
-            
-            if(this.restartBtn) this.restartBtn.addEventListener('click', () => this.resetGame());
-            
-            this.updateScore();
+            // Initial Draw
             this.draw();
+
+            // Show Start Screen via GameUI
+            if (window.GameUI) {
+                window.GameUI.showStartScreen(
+                    "NEON TETRIS",
+                    "Arrow keys to move/rotate.<br>Space to Hard Drop.<br>'P' to Pause.",
+                    () => this.start()
+                );
+            } else {
+                this.start();
+            }
         }
         
         cleanup() {
             window.removeEventListener('keydown', this.boundHandleInput);
-            this.canvas.removeEventListener('click', this.boundClickStart);
-            if(this.startScreen) this.startScreen.removeEventListener('click', this.boundClickStart);
+            if (this.requestId) cancelAnimationFrame(this.requestId);
             this.isRunning = false;
         }
 
-        clickStart(e) {
-             if(e.target.tagName === 'BUTTON') return;
-             if(!this.isRunning) {
-                 if(this.isGameOver) this.resetGame();
-                 else this.start();
-             }
-        }
-        
         start() {
             if (this.isRunning) return;
+            
             this.isRunning = true;
             this.isGameOver = false;
+            this.isPaused = false;
+            
             this.arena.forEach(row => row.fill(0));
+            
             this.player.score = 0;
             this.player.lines = 0;
             this.player.level = 1;
             this.dropInterval = 1000;
             this.updateScore();
-            if(this.startScreen) this.startScreen.style.display = 'none';
-            if(this.gameOverScreen) this.gameOverScreen.style.display = 'none';
             
             this.playerReset();
             this.update();
@@ -124,6 +123,25 @@
             this.isRunning = false;
             this.isGameOver = false;
             this.start();
+        }
+
+        togglePause() {
+            if (!this.isRunning || this.isGameOver) return;
+            
+            this.isPaused = !this.isPaused;
+            
+            if (this.isPaused) {
+                if (window.GameUI) {
+                    window.GameUI.showPause(
+                        () => this.togglePause(), // Resume
+                        () => window.history.back() // Quit
+                    );
+                }
+            } else {
+                if (window.GameUI) window.GameUI.hide();
+                this.lastTime = performance.now();
+                this.update();
+            }
         }
         
         createMatrix(w, h) {
@@ -180,40 +198,119 @@
             }
         }
 
-        drawMatrix(matrix, offset, ctx = this.ctx) {
+        drawMatrix(matrix, offset, ctx = this.ctx, isGhost = false) {
             if (!ctx) return;
+            
             matrix.forEach((row, y) => {
                 row.forEach((value, x) => {
                     if (value !== 0) {
-                        ctx.fillStyle = this.colors[value];
-                        ctx.fillRect((x + offset.x) * this.grid, (y + offset.y) * this.grid, this.grid, this.grid);
-                        
-                        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-                        ctx.lineWidth = 2;
-                        ctx.strokeRect((x + offset.x) * this.grid, (y + offset.y) * this.grid, this.grid, this.grid);
+                        const drawX = (x + offset.x) * this.grid;
+                        const drawY = (y + offset.y) * this.grid;
+                        const size = this.grid;
+
+                        if (isGhost) {
+                            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                            ctx.lineWidth = 1;
+                            ctx.strokeRect(drawX, drawY, size, size);
+                            ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+                            ctx.fillRect(drawX, drawY, size, size);
+                        } else {
+                            const color = this.colors[value];
+                            
+                            // Base & Glow
+                            ctx.fillStyle = color;
+                            ctx.shadowColor = color;
+                            ctx.shadowBlur = 10;
+                            ctx.fillRect(drawX, drawY, size, size);
+                            
+                            // Bevels
+                            ctx.shadowBlur = 0; 
+                            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                            ctx.fillRect(drawX, drawY, size, 2);
+                            ctx.fillRect(drawX, drawY, 2, size);
+
+                            ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                            ctx.fillRect(drawX, drawY + size - 2, size, 2);
+                            ctx.fillRect(drawX + size - 2, drawY, 2, size);
+                            
+                            // Center detail
+                            ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                            ctx.fillRect(drawX + 4, drawY + 4, size - 8, size - 8);
+                        }
                     }
                 });
             });
+            ctx.shadowBlur = 0;
+        }
+
+        drawGhost() {
+            if (!this.player.matrix) return;
+            
+            const ghost = {
+                matrix: this.player.matrix,
+                pos: { x: this.player.pos.x, y: this.player.pos.y },
+            };
+            
+            while (!this.collide(this.arena, ghost)) {
+                ghost.pos.y++;
+            }
+            ghost.pos.y--; 
+            
+            this.drawMatrix(ghost.matrix, ghost.pos, this.ctx, true);
         }
 
         draw() {
             if (!this.ctx) return;
-            this.ctx.fillStyle = '#000';
+            
+            // Dark Background
+            this.ctx.fillStyle = '#101015'; 
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
             
+            // Grid Lines
+            this.ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+            this.ctx.lineWidth = 1;
+            for (let i = 0; i <= this.cols; i++) {
+                this.ctx.beginPath();
+                this.ctx.moveTo(i * this.grid, 0);
+                this.ctx.lineTo(i * this.grid, this.canvas.height);
+                this.ctx.stroke();
+            }
+            for (let i = 0; i <= this.rows; i++) {
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, i * this.grid);
+                this.ctx.lineTo(this.canvas.width, i * this.grid);
+                this.ctx.stroke();
+            }
+
             this.drawMatrix(this.arena, {x: 0, y: 0});
+            
+            if (!this.isGameOver) this.drawGhost();
+            
             this.drawMatrix(this.player.matrix, this.player.pos);
             
+            // Next Piece Preview
             if (this.nextCtx) {
-                this.nextCtx.fillStyle = '#111';
+                this.nextCtx.clearRect(0, 0, 80, 80);
+                this.nextCtx.fillStyle = '#000';
                 this.nextCtx.fillRect(0, 0, 80, 80);
+                
                 if (this.nextPiece) {
-                    const scale = 15; 
+                    const offset = {
+                        x: (4 - this.nextPiece[0].length) / 2,
+                        y: (4 - this.nextPiece.length) / 2
+                    };
+                    
                     this.nextPiece.forEach((row, y) => {
                         row.forEach((value, x) => {
                             if (value !== 0) {
+                                const size = 15;
+                                const px = (x + offset.x) * size + 10;
+                                const py = (y + offset.y) * size + 10;
+                                
                                 this.nextCtx.fillStyle = this.colors[value];
-                                this.nextCtx.fillRect(x * scale + 10, y * scale + 10, scale, scale);
+                                this.nextCtx.fillRect(px, py, size, size);
+                                this.nextCtx.strokeStyle = '#fff';
+                                this.nextCtx.strokeRect(px, py, size, size);
                             }
                         });
                     });
@@ -225,7 +322,6 @@
             player.matrix.forEach((row, y) => {
                 row.forEach((value, x) => {
                     if (value !== 0) {
-                        // Ensure row exists before accessing
                         if (arena[y + player.pos.y] && arena[y + player.pos.y][x + player.pos.x] !== undefined) {
                              arena[y + player.pos.y][x + player.pos.x] = value;
                         }
@@ -258,8 +354,11 @@
                 this.playerReset();
                 this.arenaSweep();
                 this.updateScore();
+            } else {
+                this.draw(); // optimization: only draw if moved
             }
             this.dropCounter = 0;
+            // this.draw(); 
         }
         
         playerMove(dir) {
@@ -267,6 +366,7 @@
             if (this.collide(this.arena, this.player)) {
                 this.player.pos.x -= dir;
             }
+            this.draw();
         }
         
         playerRotate(dir) {
@@ -282,6 +382,7 @@
                     return;
                 }
             }
+            this.draw();
         }
         
         playerReset() {
@@ -299,8 +400,19 @@
             if (this.collide(this.arena, this.player)) {
                 this.isGameOver = true;
                 this.isRunning = false;
-                this.gameOver();
+                
+                if (window.GameUI) {
+                    window.GameUI.showGameOver(
+                        this.player.score,
+                        () => this.resetGame(),
+                        () => window.history.back()
+                    );
+                } else {
+                    alert('Game Over! Score: ' + this.player.score);
+                    this.resetGame();
+                }
             }
+            this.draw();
         }
         
         collide(arena, player) {
@@ -349,13 +461,6 @@
             if (this.levelElement) this.levelElement.innerText = this.player.level;
             if (this.linesElement) this.linesElement.innerText = this.player.lines;
         }
-        
-        gameOver() {
-            if(this.gameOverScreen) {
-                if (this.finalScoreElement) this.finalScoreElement.innerText = this.player.score;
-                this.gameOverScreen.style.display = 'flex';
-            }
-        }
 
         hardDrop() {
              while(!this.collide(this.arena, this.player)) {
@@ -366,14 +471,21 @@
              this.playerReset();
              this.arenaSweep();
              this.updateScore();
+             this.draw();
         }
         
         handleInput(e) {
-            // Check canvas existence here too
             if (!document.getElementById('gameCanvas')) return;
 
-            if (!this.isRunning) {
-                if (e.code === 'Space') {
+            // Pause toggle
+            if (e.code === 'KeyP' || e.code === 'Escape') {
+                e.preventDefault();
+                this.togglePause();
+                return;
+            }
+
+            if (!this.isRunning || this.isPaused) {
+                if (e.code === 'Space' && !this.isRunning && !this.isGameOver) {
                     e.preventDefault();
                     this.start();
                 }
@@ -396,7 +508,6 @@
                 e.preventDefault();
                 this.hardDrop();
             }
-            this.draw(); // Redraw on input
         }
         
         update(time = 0) {
@@ -405,7 +516,7 @@
                 return;
             }
 
-            if (!this.isRunning) return;
+            if (!this.isRunning || this.isPaused) return;
             
             const deltaTime = time - this.lastTime;
             this.lastTime = time;
@@ -416,9 +527,21 @@
             }
             
             this.draw();
-            requestAnimationFrame((t) => this.update(t));
+            this.requestId = requestAnimationFrame((t) => this.update(t));
         }
     }
-    
-    new TetrisGame();
+
+    // Initialization Wrapper
+    function initGame() {
+        if (document.getElementById('gameCanvas')) {
+            new TetrisGame();
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initGame);
+    } else {
+        initGame();
+    }
+
 })();

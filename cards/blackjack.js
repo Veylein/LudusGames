@@ -227,6 +227,12 @@ window.newGame = newGame;
 window.blackjackAction = blackjackAction;
 
 if (typeof messageLog !== 'undefined' && messageLog) {
-   messageLog.innerText = "Press New Hand to Start";
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+             messageLog.innerText = "Press New Hand to Start";
+        });
+    } else {
+        messageLog.innerText = "Press New Hand to Start";
+    }
 }
 } // End scope

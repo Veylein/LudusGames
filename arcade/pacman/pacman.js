@@ -2,7 +2,10 @@
 class PacmanGame {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
-        if (!this.canvas) return; // Guard
+        if (!this.canvas) {
+            console.error("Canvas element 'gameCanvas' not found!");
+            return;
+        }
         this.ctx = this.canvas.getContext('2d');
         
         // Map Configuration 
@@ -217,16 +220,30 @@ class PacmanGame {
         this.startGame();
     }
 
-    togglePause() {
+    togglePause(force) {
         if (!this.isGameRunning) return;
-        this.isPaused = !this.isPaused;
-        if(this.pauseBtn) this.pauseBtn.innerText = this.isPaused ? 'RESUME' : 'PAUSE';
         
+        let shouldPause = (typeof force !== 'undefined') ? force : !this.isPaused;
+        
+        this.isPaused = shouldPause;
+
+        // Custom Overlay Handling
         if (this.isPaused) {
-            if (this.animationId) cancelAnimationFrame(this.animationId);
+            cancelAnimationFrame(this.animationId);
             this.animationId = null;
+            
+            if(window.GameUI) {
+                window.GameUI.showPause(
+                    () => this.togglePause(false),
+                    () => {
+                        this.isGameRunning = false;
+                        window.history.back(); // Or go to arcade index
+                    }
+                );
+            }
         } else {
-            this.loop();
+             if(window.GameUI) window.GameUI.hide();
+             this.loop();
         }
     }
 
@@ -271,7 +288,20 @@ class PacmanGame {
         }
     }
 
-    movePlayer() {
+    gameOver(won = false) {
+        this.isGameRunning = false;
+        if(this.animationId) cancelAnimationFrame(this.animationId);
+        
+        const title = won ? "VICTORY!" : "GAME OVER";
+        if(window.GameUI) {
+            window.GameUI.showGameOver(
+                this.score,
+                () => this.resetGame(),
+                () => { window.history.back(); },
+                title
+            );
+        }
+    }
         const p = this.player;
         
         // Try to change direction if aligned to grid
@@ -418,8 +448,8 @@ class PacmanGame {
         const pCx = this.player.pixelX + pRadius;
         const pCy = this.player.pixelY + pRadius;
 
-        this.ghosts.forEach(g => {
-            if (g.dead) return; // Dead ghosts don't kill you
+        for (const g of this.ghosts) {
+            if (g.dead) continue;
 
             const gCx = g.pixelX + this.tileSize / 2;
             const gCy = g.pixelY + this.tileSize / 2;
@@ -431,15 +461,15 @@ class PacmanGame {
                 if (g.scared) {
                     // Eat Ghost
                     g.dead = true;
-                    // Respawn logic or point logic
                     this.score += 200;
                     this.updateScore();
                 } else {
                     // Die
-                    this.gameOver();
+                    this.gameOver(false);
+                    return; // Stop checking
                 }
             }
-        });
+        }
     }
 
     isValidMove(x, y) {
@@ -658,8 +688,11 @@ class PacmanGame {
     }
 }
 
-// Start
-if (document.getElementById('gameCanvas')) {
-    new PacmanGame();
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        if (document.getElementById('gameCanvas')) new PacmanGame();
+    });
+} else {
+    if (document.getElementById('gameCanvas')) new PacmanGame();
 }
 }

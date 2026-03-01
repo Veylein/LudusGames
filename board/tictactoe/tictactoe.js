@@ -298,8 +298,12 @@ class TicTacToe {
 }
 
 // Check for unique element to this game
-if (document.getElementById('strike-line')) {
-    new TicTacToe();
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        if (document.getElementById('game-board')) new TicTacToe();
+    });
+} else {
+    if (document.getElementById('game-board')) new TicTacToe();
 }
 
 } // SCOPE END
