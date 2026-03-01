@@ -2,34 +2,21 @@
 class GalagaGame {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
-        if (!this.canvas) return; // Guard
+        if (!this.canvas) return;
 
         this.ctx = this.canvas.getContext('2d');
-        // Set proper size for vertical shooter
-        // Check if we are already approx this size or if it needs enforcement. 
-        // Arcade CSS often handles responsiveness, but internal resolution is good.
-        this.canvas.width = 600;
-        this.canvas.height = 800;
-        
-        // UI
-        this.scoreElement = document.getElementById('score');
-        this.highScoreElement = document.getElementById('high-score');
-        this.startScreen = document.getElementById('start-screen');
-        this.gameOverScreen = document.getElementById('game-over-screen');
-        this.finalScoreElement = document.getElementById('final-score');
-        this.restartBtn = document.getElementById('restart-btn');
-        this.pauseBtn = document.getElementById('pause-btn');
+        // Fit container logic if needed, but fixed 600x800 is fine for this
+        // CSS forces it to fit screen height usually
         
         // Input
         this.input = { left: false, right: false, fire: false };
-        this.setupControls();
+        this.bindEvents();
         
         // Game State
         this.isGameRunning = false;
         this.isPaused = false;
         this.level = 1;
         this.score = 0;
-        this.highScore = parseInt(localStorage.getItem('galagaHighScore') || 0);
         
         // Entities
         this.player = null;
@@ -46,28 +33,35 @@ class GalagaGame {
     }
     
     init() {
-        if(this.highScoreElement) this.highScoreElement.innerText = this.highScore;
         this.createStars();
+        if (window.GameUI) {
+            window.GameUI.showStartScreen("GALAGA", "Defeat the insectoid fleet!<br>Arrows to move, Space to fire.", () => this.startGame());
+        } else {
+            this.startGame();
+        }
         
-        if(this.restartBtn) this.restartBtn.addEventListener('click', () => this.startGame());
-        if(this.pauseBtn) this.pauseBtn.addEventListener('click', () => this.togglePause());
-        
-        requestAnimationFrame(() => this.loop());
+        // Background loop for stars
+        this.loop();
     }
     
-    setupControls() {
-        // cleanup old listeners?
-        // We can't really cleanup anonymous functions easily unless we store them.
-        // But since we wrap in Scope, previous instances are GC'd, though listeners remain on WINDOW.
-        // Best practice: Store bound functions.
-        
+    bindEvents() {
         this.handleKeyDown = (e) => {
-            if (!this.canvas) return; // Dead object check
+            if (!this.canvas) return;
+            
+            // Prevent scrolling
+            if(["ArrowLeft", "ArrowRight", "Space", "ArrowUp", "ArrowDown"].includes(e.code)) {
+                e.preventDefault();
+            }
+
             if(e.code === 'ArrowLeft') this.input.left = true;
             if(e.code === 'ArrowRight') this.input.right = true;
             if(e.code === 'Space') {
                 this.input.fire = true;
-                if(!this.isGameRunning) this.startGame();
+                // If game not running / game over, space might restart handled by GameUI? 
+                // Actually GameUI handles restart clicks, but we can map space to start too if we want
+            }
+            if (e.code === 'KeyP' || e.code === 'Escape') {
+                if (this.isGameRunning) this.togglePause();
             }
         };
         
@@ -80,30 +74,10 @@ class GalagaGame {
 
         window.addEventListener('keydown', this.handleKeyDown);
         window.addEventListener('keyup', this.handleKeyUp);
-        
-        // Click/Touch to Start
-        const touchStart = (e) => {
-            if (e.type === 'touchstart') e.preventDefault();
-            if(!this.isGameRunning) {
-                this.startGame();
-            } else {
-                // Optional: Tap to fire?
-                this.input.fire = true;
-                setTimeout(() => this.input.fire = false, 100);
-            }
-        };
-        
-        this.canvas.addEventListener('mousedown', touchStart);
-        this.canvas.addEventListener('touchstart', touchStart);
-        
-        const startScreen = document.getElementById('start-screen');
-        if(startScreen) {
-             startScreen.addEventListener('click', touchStart);
-             startScreen.addEventListener('touchstart', touchStart);
-        }
     }
     
     createStars() {
+        this.stars = [];
         for(let i=0; i<80; i++) {
             this.stars.push({
                 x: Math.random() * this.canvas.width,
@@ -120,14 +94,13 @@ class GalagaGame {
         this.isPaused = false;
         this.score = 0;
         this.level = 1;
-        this.updateScoreUI();
-        if(this.startScreen) this.startScreen.style.display = 'none';
-        if(this.gameOverScreen) this.gameOverScreen.style.display = 'none';
+        
+        if (window.GameUI) window.GameUI.hide();
         
         this.player = {
             x: this.canvas.width / 2 - 15,
-            y: this.canvas.height - 50,
-            w: 30, h: 30,
+            y: this.canvas.height - 60,
+            w: 32, h: 32,
             speed: 5,
             cooldown: 0,
             lives: 3,
@@ -145,7 +118,7 @@ class GalagaGame {
         
         const rows = 4;
         const cols = 8;
-        const startX = (this.canvas.width - (cols * 40)) / 2 + 20;
+        const startX = (this.canvas.width - (cols * 45)) / 2 + 20;
         
         for(let r=0; r<rows; r++) {
             for(let c=0; c<cols; c++) {
@@ -157,13 +130,13 @@ class GalagaGame {
                 else if (r === 1) { type = 'butterfly'; score=80; hp=1; }
                 
                 this.enemies.push({
-                    x: startX + c * 40,
-                    y: 50 + r * 35,
-                    homeX: startX + c * 40,
-                    homeY: 50 + r * 35,
+                    x: startX + c * 45,
+                    y: 60 + r * 40,
+                    homeX: startX + c * 45,
+                    homeY: 60 + r * 40,
                     vx: 0, vy: 0,
                     type: type,
-                    w: 24, h: 24,
+                    w: 30, h: 30,
                     hp: hp,
                     scoreVal: score,
                     state: 'formation',
@@ -176,13 +149,15 @@ class GalagaGame {
     togglePause() {
         if(!this.isGameRunning) return;
         this.isPaused = !this.isPaused;
-        if(this.pauseBtn) this.pauseBtn.innerText = this.isPaused ? 'RESUME' : 'PAUSE';
+        if (this.isPaused && window.GameUI) {
+            window.GameUI.showPause(() => this.togglePause(), () => window.history.back());
+        } else {
+            if (window.GameUI) window.GameUI.hide();
+        }
     }
     
     loop() {
-        // DOM Check inside loop for cleanup?
         if (!document.getElementById('gameCanvas')) {
-             // Clean up listeners if needed
              window.removeEventListener('keydown', this.handleKeyDown);
              window.removeEventListener('keyup', this.handleKeyUp);
              return;
@@ -191,8 +166,9 @@ class GalagaGame {
         if(this.isGameRunning && !this.isPaused) {
             this.update();
         } else {
-            this.updateStars();
+            this.updateStars(); // Keep stars moving in BG
         }
+        
         this.draw();
         requestAnimationFrame(() => this.loop());
     }
@@ -207,7 +183,8 @@ class GalagaGame {
             if(this.input.right && this.player.x < this.canvas.width - this.player.w) this.player.x += this.player.speed;
             
             if(this.input.fire && this.player.cooldown <= 0) {
-                this.bullets.push({ x: this.player.x + 13, y: this.player.y, w: 4, h: 10, speed: 8 });
+                // Dual shot powerup? Just single for now
+                this.bullets.push({ x: this.player.x + 14, y: this.player.y, w: 4, h: 12, speed: 10 });
                 this.player.cooldown = 15;
             }
             if(this.player.cooldown > 0) this.player.cooldown--;
@@ -217,7 +194,7 @@ class GalagaGame {
         for(let i=this.bullets.length-1; i>=0; i--) {
             let b = this.bullets[i];
             b.y -= b.speed;
-            if(b.y < -10) this.bullets.splice(i, 1);
+            if(b.y < -20) this.bullets.splice(i, 1);
         }
         
         // E-Bullets
@@ -264,7 +241,7 @@ class GalagaGame {
                 
                 // Shoot
                 if(Math.random() < 0.02) {
-                    this.enemyBullets.push({ x: e.x + 10, y: e.y+20, w: 4, h: 8, speed: 4 });
+                    this.enemyBullets.push({ x: e.x + 10, y: e.y+20, w: 6, h: 6, speed: 4 });
                 }
                 
                 if(e.y > this.canvas.height + 20) {
@@ -293,25 +270,29 @@ class GalagaGame {
             }
             
             // Bullet Collisions
+            let hit = false;
             for(let b=this.bullets.length-1; b>=0; b--) {
                 if(this.rectIntersect(this.bullets[b], e)) {
                     this.bullets.splice(b, 1);
                     e.hp--;
+                    hit = true;
                     if(e.hp <= 0) {
                         this.score += e.scoreVal;
-                        this.updateScoreUI();
                         this.createExplosion(e.x, e.y, e.type);
                         this.enemies.splice(i, 1);
                     } else {
-                        // Flash or particle
+                        // Hit flash
+                        this.createParticles(e.x + e.w/2, e.y + e.h/2, '#fff', 3); 
                     }
                     break;
                 }
             }
+            if(hit) continue; // Enemy might be deleted
         }
         
         if(this.enemies.length === 0) {
             this.level++;
+            // Bonus points?
             this.startLevel();
         }
         
@@ -320,13 +301,13 @@ class GalagaGame {
             let p = this.particles[i];
             p.x += p.vx;
             p.y += p.vy;
-            p.life--;
+            p.life -= 0.05;
             if(p.life <= 0) this.particles.splice(i, 1);
         }
     }
     
     updateStars() {
-        const speed = this.isGameRunning ? (1 + this.level * 0.5) : 0.5;
+        const speed = this.isGameRunning ? (1 + this.level * 0.2) : 0.5;
         this.stars.forEach(s => {
             s.y += s.speed * speed;
             if(s.y > this.canvas.height) {
@@ -342,22 +323,21 @@ class GalagaGame {
         this.player.dead = true;
         this.player.lives--;
         
-        setTimeout(() => {
-            if(this.player.lives > 0) {
+        if (this.player.lives <= 0) {
+            setTimeout(() => {
+                this.isGameRunning = false;
+                if (window.GameUI) {
+                    window.GameUI.showGameOver(this.score, () => this.startGame(), () => window.history.back(), "MISSION FAILED");
+                }
+            }, 1000);
+        } else {
+            setTimeout(() => {
                 this.player.dead = false;
                 this.player.x = this.canvas.width / 2 - 15;
                 this.bullets = [];
                 this.enemyBullets = [];
-            } else {
-                this.isGameRunning = false;
-                if(this.gameOverScreen) this.gameOverScreen.style.display = 'flex';
-                if(this.finalScoreElement) this.finalScoreElement.innerText = this.score;
-                if(this.score > this.highScore) {
-                    this.highScore = this.score;
-                    localStorage.setItem('galagaHighScore', this.score);
-                }
-            }
-        }, 1000);
+            }, 1500);
+        }
     }
     
     createExplosion(x, y, type) {
@@ -365,134 +345,162 @@ class GalagaGame {
         if(type === 'boss') color = '#0f0';
         if(type === 'butterfly') color = '#f00';
         if(type === 'bee') color = '#ff0';
-        if(type === 'player') color = '#fff';
-        
-        for(let i=0; i<10; i++) {
+        if(type === 'player') color = '#0af';
+        this.createParticles(x+15, y+15, color, 15);
+    }
+    
+    createParticles(x, y, color, count) {
+        for(let i=0; i<count; i++) {
             this.particles.push({
-                x: x + 10, y: y + 10,
-                vx: (Math.random() - 0.5) * 5,
-                vy: (Math.random() - 0.5) * 5,
+                x: x, y: y,
+                vx: (Math.random() - 0.5) * 8,
+                vy: (Math.random() - 0.5) * 8,
                 color: color,
-                life: 20
+                life: 1.0
             });
         }
     }
     
     rectIntersect(r1, r2) {
-        return !(r2.x > r1.x + r1.w || 
-                 r2.x + r2.w < r1.x || 
-                 r2.y > r1.y + r1.h || 
-                 r2.y + r2.h < r1.y);
-    }
-    
-    updateScoreUI() {
-        if(this.scoreElement) this.scoreElement.innerText = this.score;
+        // Simple AABB
+        // Entities have x,y,w,h (mapped width/height)
+        let w1 = r1.w || r1.width || 4;
+        let h1 = r1.h || r1.height || 4;
+        let w2 = r2.w || r2.width || 30;
+        let h2 = r2.h || r2.height || 30;
+        
+        return !(r2.x > r1.x + w1 || 
+                 r2.x + w2 < r1.x || 
+                 r2.y > r1.y + h1 || 
+                 r2.y + h2 < r1.y);
     }
     
     draw() {
         if (!this.ctx) return;
+        
         // Background
-        this.ctx.fillStyle = '#000';
+        this.ctx.fillStyle = '#050510';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // Stars (Twinkle)
+        // Stars
         this.stars.forEach(s => {
-            this.ctx.fillStyle = s.color;
+            if (Math.random() > 0.95) this.ctx.fillStyle = '#fff'; // Twinkle
+            else this.ctx.fillStyle = s.color;
             this.ctx.globalAlpha = Math.random() * 0.5 + 0.5;
             this.ctx.fillRect(s.x, s.y, s.size, s.size);
         });
         this.ctx.globalAlpha = 1.0;
         
-        if(!this.isGameRunning) {
-             // Maybe Draw Title/Start Screen elements if desired
-             return;
-        }
-        
-        // Player (Retro Fighter)
+        // Particles
+        this.particles.forEach(p => {
+            this.ctx.shadowBlur = 5;
+            this.ctx.shadowColor = p.color;
+            this.ctx.fillStyle = p.color;
+            this.ctx.globalAlpha = p.life;
+            this.ctx.fillRect(p.x, p.y, 3, 3);
+        });
+        this.ctx.globalAlpha = 1.0;
+        this.ctx.shadowBlur = 0;
+
+        if(!this.isGameRunning) return;
+
+        // Player (Neon Fighter)
         if(this.player && !this.player.dead) {
             const x = this.player.x;
             const y = this.player.y;
             
-            // White Body
-            this.ctx.fillStyle = '#fff';
-            this.ctx.fillRect(x+13, y, 4, 6); // Nose
-            this.ctx.fillRect(x+11, y+6, 8, 8); // Cockpit base
-            this.ctx.fillRect(x+4, y+14, 22, 4); // Wings Top
-            this.ctx.fillRect(x+2, y+18, 26, 8); // Wings Base
-
-            // Red Detail
-            this.ctx.fillStyle = '#f00'; 
-            this.ctx.fillRect(x+0, y+16, 2, 10); // Left Tip
-            this.ctx.fillRect(x+28, y+16, 2, 10); // Right Tip
-            this.ctx.fillRect(x+13, y+8, 4, 4); // Center stripe
-
-            // Blue Engine Thruster
+            this.ctx.shadowBlur = 10;
+            this.ctx.shadowColor = '#0af';
+            this.ctx.fillStyle = '#fff'; // Body is white
+            
+            // Draw Fighter
+            this.ctx.beginPath();
+            this.ctx.moveTo(x+16, y);
+            this.ctx.lineTo(x+32, y+32);
+            this.ctx.lineTo(x+16, y+24);
+            this.ctx.lineTo(x, y+32);
+            this.ctx.closePath();
+            this.ctx.fill();
+            
+            // Cockpit
+            this.ctx.fillStyle = '#f00';
+            this.ctx.fillRect(x+14, y+10, 4, 8);
+            
+            // Engine
+            this.ctx.shadowBlur = 15;
+            this.ctx.shadowColor = '#0af';
             this.ctx.fillStyle = '#0af';
             if (Date.now() % 200 < 100) {
-                 this.ctx.fillRect(x+11, y+26, 8, 4); 
+                 this.ctx.fillRect(x+12, y+24, 8, 8); 
             }
         }
         
         // Enemies
+        const time = Date.now();
         this.enemies.forEach(e => {
             const x = e.x;
             const y = e.y;
             
+            this.ctx.shadowBlur = 10;
+            
             if(e.type === 'bee') {
-                // Yellow Bee
-                this.ctx.fillStyle = '#ff0'; 
-                this.ctx.fillRect(x+6, y+4, 12, 12); // Body
-                this.ctx.fillStyle = '#fff'; 
-                this.ctx.fillRect(x+2, y+2, 4, 8); // L Wing
-                this.ctx.fillRect(x+18, y+2, 4, 8); // R Wing
-                this.ctx.fillStyle = '#f00';
-                this.ctx.fillRect(x+8, y+8, 2, 2); // Eye
-                this.ctx.fillRect(x+14, y+8, 2, 2); // Eye
+                this.ctx.shadowColor = '#ff0';
+                this.ctx.fillStyle = '#ff0';
+                // Bug Shape
+                this.ctx.beginPath();
+                this.ctx.ellipse(x+15, y+15, 12, 8, 0, 0, Math.PI*2);
+                this.ctx.fill();
+                // Wings
+                if(Math.floor(time/100)%2===0) {
+                    this.ctx.fillStyle = '#fff';
+                    this.ctx.fillRect(x+2, y-5, 8, 10);
+                    this.ctx.fillRect(x+20, y-5, 8, 10);
+                }
             } else if(e.type === 'butterfly') {
-                // Red Butterfly
+                this.ctx.shadowColor = '#f00';
                 this.ctx.fillStyle = '#f00';
-                this.ctx.fillRect(x+8, y+6, 8, 10); // Body
-                this.ctx.fillStyle = '#0af'; 
-                this.ctx.fillRect(x+2, y+2, 6, 8); // L Wing Top
-                this.ctx.fillRect(x+16, y+2, 6, 8); // R Wing Top
-                this.ctx.fillRect(x+4, y+12, 4, 6); // L Wing Bot
-                this.ctx.fillRect(x+16, y+12, 4, 6); // R Wing Bot
-            } else { // Boss (Green Capturer)
+                // Triangle
+                this.ctx.beginPath();
+                this.ctx.moveTo(x+15, y+25);
+                this.ctx.lineTo(x+30, y);
+                this.ctx.lineTo(x, y);
+                this.ctx.fill();
+            } else { // Boss
+                this.ctx.shadowColor = '#0f0';
                 this.ctx.fillStyle = '#0f0';
-                this.ctx.fillRect(x+6, y+10, 18, 10); // Body
-                this.ctx.fillRect(x+2, y+14, 4, 8); // L Claw
-                this.ctx.fillRect(x+24, y+14, 4, 8); // R Claw
+                this.ctx.fillRect(x+5, y+5, 20, 20);
                 this.ctx.fillStyle = '#a0a';
-                this.ctx.fillRect(x+10, y+4, 10, 6); // Head crest?
+                 this.ctx.fillRect(x+10, y+10, 10, 10);
             }
         });
         
         // Bullets
-        this.ctx.fillStyle = '#ff4';
+        this.ctx.shadowBlur = 10;
+        this.ctx.shadowColor = '#ff0';
+        this.ctx.fillStyle = '#ffff00';
         this.bullets.forEach(b => {
              this.ctx.fillRect(b.x, b.y, b.w, b.h);
-             this.ctx.fillStyle = '#ff0'; 
-             this.ctx.fillRect(b.x+1, b.y+b.h, b.w-2, 2); // Trail
         });
         
-        this.ctx.fillStyle = '#f44';
+        // Enemy Bullets
+        this.ctx.shadowColor = '#f00';
+        this.ctx.fillStyle = '#f00';
         this.enemyBullets.forEach(b => {
             this.ctx.beginPath();
-            this.ctx.arc(b.x+2, b.y+4, 3, 0, Math.PI*2);
+            this.ctx.arc(b.x, b.y, 4, 0, Math.PI*2);
             this.ctx.fill();
         });
         
-        // Particles
-        this.particles.forEach(p => {
-            this.ctx.fillStyle = p.color;
-            this.ctx.globalAlpha = p.life / 20;
-            this.ctx.fillRect(p.x, p.y, 3, 3);
-        });
-        this.ctx.globalAlpha = 1.0;
+        this.ctx.shadowBlur = 0;
+        
+        // HUD
+        this.ctx.fillStyle = '#fff';
+        this.ctx.font = "20px 'Courier New', monospace";
+        this.ctx.fillText(`SCORE: ${this.score}`, 10, 30);
+        this.ctx.fillText(`LIVES: ${this.player ? this.player.lives : 0}`, this.canvas.width - 120, 30);
     }
 }
 
-// Start Game if Canvas Exists
 if (document.getElementById('gameCanvas')) {
     new GalagaGame();
 }

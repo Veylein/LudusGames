@@ -1,256 +1,374 @@
-﻿console.log("Game loaded: mousetrap.js");
-{ // SCOPE START
+/*
+ * CYBER TRAP
+ * 
+ * Game Logic:
+ * - 4 Players
+ * - Circuit Board Path
+ * - Collect 3 Trap Parts: [Code, Exploit, Trigger]
+ * - Trigger Trap on 'Execute' spaces
+ */
 
-class MouseTrapGame {
-    constructor() {
-        if(!document.getElementById('game-board')) return;
+(function() {
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Constants
+    const PLAYER_COLORS = ['#00ff00', '#00ffff', '#ff00ff', '#ffff00'];
+    const SPACE_TYPES = ['safe', 'data', 'part', 'hazard', 'execute'];
+    const PARTS = ['CODE', 'EXPLOIT', 'TRIGGER'];
+    
+    // State
+    let players = [];
+    let currentPlayer = 0;
+    let turnState = 'roll'; // roll, anim, end
+    let message = 'SYSTEM READY';
+    let diceVal = 0;
+    let boardPath = []; 
+    
+    // Layout
+    let scale = 1;
+    let offsetX = 0;
+    let offsetY = 0;
 
-        this.boardSize = 32; 
-        this.players = [
-            { id: 1, pos: 0, cheese: 0, color: 'red', piece: document.getElementById('p1-piece') },
-            { id: 2, pos: 0, cheese: 0, color: 'blue', piece: document.getElementById('p2-piece') }
-        ];
-        this.currentPlayerIndex = 0;
-        this.trapParts = ['gear', 'crank', 'bucket', 'cage'];
-        this.builtParts = []; 
-        
-        this.spaces = [];
-        this.isAnimating = false;
-
-        this.ui = {
-            board: document.getElementById('game-board'),
-            rollBtn: document.getElementById('roll-btn'),
-            diceDisplay: document.getElementById('dice-val'),
-            log: document.getElementById('game-log'),
-            p1Card: document.getElementById('p1-card'),
-            p2Card: document.getElementById('p2-card'),
-            p1Cheese: document.getElementById('p1-cheese'),
-            p2Cheese: document.getElementById('p2-cheese'),
-            trapMsg: document.getElementById('trap-msg')
-        };
-        
-        if(!this.ui.board) return;
-
-        this.initBoard();
-        this.updatePlayerStats();
-        
-        if(this.ui.rollBtn)
-            this.ui.rollBtn.addEventListener('click', () => this.handleTurn());
-    }
-
-    initBoard() {
-        // Define space types pattern
-        const pattern = [
-            'start', 'safe', 'cheese', 'safe', 'build', 'danger', 'cheese', 'safe', 
-            'crank', 'safe', 'cheese', 'danger', 'build', 'safe', 'cheese', 'safe',
-            'crank', 'safe', 'cheese', 'safe', 'build', 'danger', 'cheese', 'safe',
-            'crank', 'safe', 'cheese', 'danger', 'build', 'safe', 'cheese', 'danger'
-        ];
-
-        // Ensure 32 spaces
-        this.ui.board.innerHTML = ''; // CLEAR FIRST
-        for (let i = 0; i < this.boardSize; i++) {
-            const type = pattern[i] || 'safe';
-            const space = document.createElement('div');
-            space.className = "space " + type;
-            space.dataset.index = i;
-            
-            let icon = '';
-            if (type === 'start') icon = '';
-            else if (type === 'cheese') icon = '';
-            else if (type === 'build') icon = '';
-            else if (type === 'danger') icon = '';
-            else if (type === 'crank') icon = '';
-            
-            space.innerHTML = "<span>" + icon + "</span><small style='position:absolute;bottom:2px;font-size:0.6rem;opacity:0.5'>" + i + "</small>";
-            
-            let row, col;
-            
-            if (i <= 8) {
-                row = 1; col = i + 1;
-            } else if (i <= 16) {
-                row = i - 8 + 1; col = 9;
-            } else if (i <= 24) {
-                row = 9; col = 9 - (i - 16);
-            } else {
-                row = 9 - (i - 24); col = 1;
-            }
-
-            space.style.gridRow = row;
-            space.style.gridColumn = col;
-            this.ui.board.appendChild(space);
-            this.spaces.push({ element: space, type: type, row, col });
+    function init() {
+        if (window.GameUI) {
+            window.GameUI.init(canvas, {
+                onStart: startGame,
+                onLoop: loop,
+                onResize: handleResize
+            });
+            window.GameUI.showStartScreen();
+        } else {
+            handleResize();
+            startGame();
+            setInterval(loop, 16);
         }
 
-        // Initial Piece Placement
-        this.updatePiecePositions();
+        document.getElementById('btn-roll').onclick = () => doRoll();
+        document.getElementById('btn-trap').onclick = () => doTrap();
     }
 
-    
-    updatePiecePositions() {
-        this.players.forEach(p => {
-            if(!this.spaces[p.pos]) return;
-            const spaceInfo = this.spaces[p.pos];
-            const space = spaceInfo.element;
+    function createPath() {
+        // Create a 'circuit loop' path relative to 1000x1000 grid
+        // A spiraling square or complex loop
+        const p = [];
+        
+        // Outer Loop
+        // Top edge
+        for(let i=100; i<=900; i+=100) p.push({x: i, y: 100});
+        // Right edge
+        for(let i=200; i<=900; i+=100) p.push({x: 900, y: i});
+        // Bottom edge
+        for(let i=800; i>=100; i-=100) p.push({x: i, y: 900});
+        // Left edge
+        for(let i=800; i>=200; i-=100) p.push({x: 100, y: i});
+        
+        // Inner diversion (Loop-back)
+        // Let's keep it simple: Just a 32-space outer loop is fine for now
+        // The points above give: 9 + 8 + 8 + 7 = 32 points roughly. 
+        // 100->900 (9 pts: 100,200..900)
+        // 200->900 vertical (8 pts: 200..900)
+        // 800->100 horizontal (8 pts)
+        // 800->200 vertical (7 pts)
+        // Total 32 steps. Perfect.
+        
+        return p.map((pt, i) => {
+            // Assign types
+            let type = 'safe';
+            if (i % 4 === 0) type = 'data';    // +Points
+            else if (i % 6 === 0) type = 'part';    // +Trap Part
+            else if (i % 8 === 0) type = 'hazard';  // -Points or Lose Turn
+            else if (i % 10 === 0) type = 'execute'; // Trigger Trap
             
-            const spaceRect = space.getBoundingClientRect();
+            // Override corners
+            if (i===0) type = 'start';
             
-            // Simplified placement
-            const centerX = 10;
-            const centerY = 10;
+            return { ...pt, type, index: i };
+        });
+    }
 
-            const offsetX = p.id === 1 ? -5 : 5;
-            const offsetY = p.id === 1 ? -5 : 5;
+    function startGame() {
+        if (window.GameUI) window.GameUI.hideStartScreen();
+        
+        boardPath = createPath();
+        
+        players = [
+            { id: 0, name: 'SYS_ADMIN', data: 0, pos: 0, color: PLAYER_COLORS[0], parts: [], stuck: 0, isBot: false },
+            { id: 1, name: 'GUEST', data: 0, pos: 0, color: PLAYER_COLORS[1], parts: [], stuck: 0, isBot: true },
+            { id: 2, name: 'BOT_Alpha', data: 0, pos: 0, color: PLAYER_COLORS[2], parts: [], stuck: 0, isBot: true },
+            { id: 3, name: 'BOT_Beta', data: 0, pos: 0, color: PLAYER_COLORS[3], parts: [], stuck: 0, isBot: true }
+        ];
+        
+        currentPlayer = 0;
+        turnState = 'roll';
+        updateUI();
+        log('SYSTEM ONLINE. WAITING FOR INPUT.');
+    }
+
+    function handleResize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        // Fit 1000x1000 into screen
+        const minDim = Math.min(canvas.width, canvas.height);
+        scale = (minDim - 100) / 1000;
+        offsetX = (canvas.width - 1000*scale) / 2;
+        offsetY = (canvas.height - 1000*scale) / 2;
+    }
+
+    function loop() {
+        // Clear
+        ctx.fillStyle = '#000500';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.save();
+        ctx.translate(offsetX, offsetY);
+        ctx.scale(scale, scale);
+        
+        drawBoard();
+        drawPlayers();
+        
+        ctx.restore();
+    }
+    
+    function drawBoard() {
+        // Draw connections
+        ctx.beginPath();
+        ctx.strokeStyle = '#003300';
+        ctx.lineWidth = 20;
+        ctx.lineJoin = 'round';
+        if(boardPath.length > 0) {
+            ctx.moveTo(boardPath[0].x, boardPath[0].y);
+            for(let i=1; i<boardPath.length; i++) ctx.lineTo(boardPath[i].x, boardPath[i].y);
+            ctx.lineTo(boardPath[0].x, boardPath[0].y); // Close loop
+        }
+        ctx.stroke();
+        
+        ctx.strokeStyle = '#0f0';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Draw Nodes
+        boardPath.forEach(pt => {
+            // Base
+            ctx.fillStyle = '#001100';
+            ctx.beginPath();
+            ctx.arc(pt.x, pt.y, 30, 0, Math.PI*2);
+            ctx.fill();
+            ctx.stroke();
             
-            if(p.piece) {
-                // Just put it in the grid cell
-                p.piece.style.display = 'flex';
-                // Move into the board wrapper relative logic if needed, but grid overlay is better.
-                // Re-append piece to board so it sits on top? 
-                // Currently piece is outside?
-                // Assuming CSS handles it. The original code used global positioning which is flaky.
-                // I will append piece to the space?? No, multiple pieces on one space.
+            // Icon/Color
+            ctx.fillStyle = '#0f0';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = '20px Courier New';
+            
+            let char = '';
+            let color = '#0f0';
+            
+            if (pt.type === 'start') { char = 'START'; color='#fff'; }
+            else if (pt.type === 'data') { char = 'DATA'; color='#0ff'; }
+            else if (pt.type === 'part') { char = 'PART'; color='#ff0'; }
+            else if (pt.type === 'hazard') { char = 'BUG'; color='#f00'; }
+            else if (pt.type === 'execute') { char = 'EXEC'; color='#f0f'; }
+            
+            ctx.fillStyle = color;
+            ctx.fillText(char, pt.x, pt.y);
+            
+            // Glow for special types
+            if (pt.type !== 'safe') {
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = color;
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(pt.x, pt.y, 35, 0, Math.PI*2);
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+            }
+        });
+    }
+    
+    function drawPlayers() {
+        players.forEach((p, i) => {
+            const pt = boardPath[p.pos];
+            if (!pt) return;
+            
+            // Offset
+             const offX = (i % 2) * 20 - 10;
+            const offY = Math.floor(i / 2) * 20 - 10;
+            
+            ctx.fillStyle = p.color;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = p.color;
+            
+            ctx.beginPath();
+            ctx.arc(pt.x + offX, pt.y + offY, 10, 0, Math.PI*2);
+            ctx.fill();
+            
+            ctx.shadowBlur = 0;
+            
+            // Current Player Indicator
+            if (i === currentPlayer && turnState === 'roll') {
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(pt.x + offX, pt.y + offY, 15, 0, Math.PI*2);
+                ctx.stroke();
             }
         });
     }
 
-    async handleTurn() {
-        if (this.isAnimating) return;
-        this.isAnimating = true;
-        this.ui.rollBtn.disabled = true;
+    // --- Logic ---
 
-        const player = this.players[this.currentPlayerIndex];
-        this.log(this.getPlayerName(player) + " rolling...");
-
-        // Dice Roll
-        const roll = Math.floor(Math.random() * 6) + 1;
-        this.ui.diceDisplay.textContent = this.getDiceFace(roll);
+    function doRoll() {
+        if (turnState !== 'roll') return;
         
-        await this.wait(500);
+        turnState = 'anim';
+        const p = players[currentPlayer];
         
-        // Move Step by Step
-        for (let i = 0; i < roll; i++) {
-            player.pos = (player.pos + 1) % this.boardSize;
-            this.updatePiecePositions();
-            await this.wait(300);
-        }
-
-        this.log(this.getPlayerName(player) + " landed on Space " + player.pos + " (" + this.spaces[player.pos].type + ")");
-        
-        await this.handleLandEffect(player);
-        
-        // Check Win Condition
-        if (player.cheese >= 10) {
-            this.log(" " + this.getPlayerName(player) + " WINS with 10 Cheese!");
-            alert(this.getPlayerName(player) + " WINS!");
+        if (p.stuck > 0) {
+            log(p.name + ' IS FROZEN (' + p.stuck + ')');
+            p.stuck--;
+            endTurn();
             return;
         }
 
-        // Next Turn
-        this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
-        this.updateUI();
-        this.isAnimating = false;
-        this.ui.rollBtn.disabled = false;
-    }
-
-    async handleLandEffect(player) {
-        const type = this.spaces[player.pos].type;
+        const roll = Math.floor(Math.random() * 6) + 1;
+        diceVal = roll;
+        document.getElementById('dice-display').innerText = roll;
+        log(p.name + ' ROLLED ' + roll);
         
-        switch (type) {
-            case 'cheese':
-                player.cheese++;
-                this.log(" found! Total: " + player.cheese);
-                break;
-            case 'build':
-                if (this.builtParts.length < 4) {
-                    const part = this.trapParts[this.builtParts.length];
-                    this.builtParts.push(part);
-                    const partEl = document.getElementById("part-" + part);
-                    if(partEl) partEl.classList.add('collected');
-                    this.log(" Built " + part + "!");
-                } else {
-                    this.log("Trap already fully built!");
-                }
-                break;
-            case 'crank':
-                if (this.builtParts.length === 4) {
-                    this.log(" CRANK TURNED! TRAP ACTIVATED!");
-                    await this.activateTrap(player);
-                } else {
-                    this.log(" Trap not ready... (" + this.builtParts.length + "/4 parts)");
-                }
-                break;
-            case 'danger':
-                this.log(" Danger zone... careful!");
-                break;
-            case 'start':
-                this.log(" Back to start. +1 Cheese bonus.");
-                player.cheese++;
-                break;
-        }
-        
-        this.updatePlayerStats();
-    }
-
-    async activateTrap(activePlayer) {
-        // Check opponents on Danger spaces
-        let caught = false;
-        this.players.forEach(p => {
-            if (p.id !== activePlayer.id) {
-                const spaceType = this.spaces[p.pos].type;
-                if (spaceType === 'danger' || spaceType === 'cheese') { // Danger or Cheese spaces are risky
-                    this.log(" CAUGHT " + this.getPlayerName(p) + "!");
-                    
-                    // Penalty
-                    const penalty = Math.ceil(p.cheese / 2);
-                    p.cheese -= penalty;
-                    activePlayer.cheese += penalty;
-                    this.log("Stealing " + penalty + " cheese!");
-                    
-                    caught = true;
-                }
-            }
-        });
-
-        if (!caught) {
-            this.log("Trap sprung but missed! Opponents safe.");
-        }
-        await this.wait(1000);
-    }
-
-    updateUI() {
-        this.ui.p1Card.classList.toggle('active', this.currentPlayerIndex === 0);
-        this.ui.p2Card.classList.toggle('active', this.currentPlayerIndex === 1);
-        this.ui.trapMsg.textContent = this.builtParts.length === 4 ? "TRAP READY! Land on Crank!" : "Build parts: " + this.builtParts.length + "/4";
-    }
-
-    updatePlayerStats() {
-        this.ui.p1Cheese.textContent = this.players[0].cheese;
-        this.ui.p2Cheese.textContent = this.players[1].cheese;
-    }
-
-    getPlayerName(p) {
-        return p.id === 1 ? "Player 1" : "Player 2";
-    }
-
-    getDiceFace(val) {
-        const faces = ['', '', '', '', '', ''];
-        return faces[val-1];
-    }
-
-    wait(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+        // Animate move (simple jump for now)
+        movePlayer(p, roll);
     }
     
-    log(msg) {
-        if(this.ui.log) this.ui.log.textContent = msg;
+    function movePlayer(p, steps) {
+        let currentSteps = 0;
+        
+        const interval = setInterval(() => {
+            p.pos = (p.pos + 1) % boardPath.length;
+            currentSteps++;
+            
+            if (currentSteps >= steps) {
+                clearInterval(interval);
+                handleLand(p);
+            }
+        }, 200);
     }
-}
+    
+    function handleLand(p) {
+        const pt = boardPath[p.pos];
+        log('LANDED ON: ' + pt.type.toUpperCase());
+        
+        if (pt.type === 'data') {
+            p.data += 100;
+            log('DATA MINED +100');
+        } else if (pt.type === 'part') {
+            if (p.parts.length < 3) {
+                const part = PARTS[p.parts.length];
+                p.parts.push(part);
+                log('ACQUIRED PART: ' + part);
+            } else {
+                log('INVENTORY FULL');
+            }
+        } else if (pt.type === 'hazard') {
+            log('HIT FIREWALL! DATA CORRUPTED.');
+            p.data = Math.max(0, p.data - 50);
+            p.stuck = 1;
+        } else if (pt.type === 'execute') {
+            // Can activate trap?
+            if (p.parts.length === 3) {
+                 if (!p.isBot) {
+                     log('TRAP READY! EXECUTE?');
+                     document.getElementById('btn-trap').disabled = false;
+                     // Pause end turn until decided logic... 
+                     // For simplicity, auto-trap highest score opponent
+                 } 
+                 // Allow trap logic here
+                 attemptTrap(p);
+                 return; // attemptTrap calls endTurn
+            }
+        }
+        
+        endTurn();
+    }
+    
+    function attemptTrap(p) {
+        // Find leader excluding self
+        let target = null;
+        let maxData = -1;
+        
+        players.forEach(pl => {
+            if (pl.id !== p.id && pl.data > maxData) {
+                maxData = pl.data;
+                target = pl;
+            }
+        });
+        
+        if (target && p.parts.length === 3) {
+            log('EXECUTING CYBER-TRAP ON ' + target.name + '!');
+            target.data = Math.floor(target.data / 2);
+            target.stuck = 2;
+            p.parts = []; // Consume parts
+        }
+        
+        document.getElementById('btn-trap').disabled = true;
+        endTurn();
+    }
+    
+    function doTrap() {
+        // User clicked button manually
+        attemptTrap(players[currentPlayer]);
+    }
 
-// Init
-const boardEl = document.getElementById('game-board');
-if(boardEl) {
-    new MouseTrapGame();
-}
+    function endTurn() {
+        updateUI();
+        currentPlayer = (currentPlayer + 1) % 4;
+        turnState = 'roll';
+        
+        // Check win condition?
+        if (players.some(p => p.data >= 1000)) {
+            log('WINNER FOUND! REBOOTING...');
+            setTimeout(startGame, 3000);
+            return;
+        }
+        
+        updateUI();
+        
+        // Bot Logic
+        const p = players[currentPlayer];
+        if (p.isBot) {
+            setTimeout(doRoll, 1000);
+        }
+    }
+    
+    function updateUI() {
+        // Cards
+        players.forEach((p, i) => {
+            const el = document.querySelectorAll('.p-panel')[i];
+            el.querySelector('.p-data').innerText = 'DATA: ' + p.data;
+            
+            // Trap bar
+            let trapStr = 'TRAP: ';
+            trapStr += (p.parts.length > 0 ? '[/]' : '[ ]');
+            trapStr += (p.parts.length > 1 ? '[/]' : '[ ]');
+            trapStr += (p.parts.length > 2 ? '[X]' : '[ ]');
+            el.querySelector('.p-trap').innerText = trapStr;
+            
+            if (i === currentPlayer) el.classList.add('active');
+            else el.classList.remove('active');
+        });
+        
+        // Buttons
+        const p = players[currentPlayer];
+        document.getElementById('btn-roll').disabled = p.isBot || turnState !== 'roll';
+        // Trap button is managed in handleLand
+    }
+    
+    function log(msg) {
+        document.getElementById('status-log').innerText = msg;
+    }
 
-} // SCOPE END
+    init();
+})();

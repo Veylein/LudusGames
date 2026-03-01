@@ -1,8 +1,428 @@
-﻿{
-class FroggerGame {
-    constructor() {
-        this.canvas = document.getElementById('gameCanvas');
-        if (!this.canvas) return; // Guard
+﻿(function() {
+    const canvas = document.getElementById('gameCanvas');
+    if (!canvas) return;
+
+    class FroggerGame {
+        constructor() {
+            this.canvas = canvas;
+            this.ctx = this.canvas.getContext('2d');
+            
+            this.grid = 32;
+            this.cols = 14; 
+            this.rows = 15;
+            
+            // Adjust canvas to fit grid if needed
+            // Canvas in HTML is 448x480 (14*32 x 15*32)
+            
+            this.score = 0;
+            this.lives = 3;
+            this.level = 1;
+            this.time = 0; 
+            this.maxTime = 60 * 60; // 60 seconds
+
+            this.isGameRunning = false;
+            this.isPaused = false;
+            this.animationId = null;
+
+            this.frog = {
+                x: 7 * this.grid,
+                y: 13 * this.grid,
+                width: this.grid - 8,
+                height: this.grid - 8,
+                dir: 'up',
+                dead: false,
+                onLog: false,
+                attachSpeed: 0
+            };
+
+            this.homes = [false, false, false, false, false];
+            this.lanes = [];
+            this.particles = [];
+
+            this.boundKeyDown = this.handleKeyDown.bind(this);
+            this.init();
+        }
+
+        init() {
+            window.addEventListener('keydown', this.boundKeyDown);
+            
+            if (window.GameUI) {
+                window.GameUI.showStartScreen("FROGGER", "Use Arrow Keys to move.<br>Cross the road and river!", () => this.startGame());
+            } else {
+                this.startGame();
+            }
+        }
+
+        startGame() {
+            this.score = 0;
+            this.lives = 3;
+            this.level = 1;
+            this.isGameRunning = true;
+            this.isPaused = false;
+            
+            if (window.GameUI) window.GameUI.hide();
+
+            this.resetLevel();
+            this.respawnFrog();
+            
+            if (this.animationId) cancelAnimationFrame(this.animationId);
+            this.loop();
+        }
+
+        resetLevel() {
+            this.homes = [false, false, false, false, false];
+            this.lanes = [];
+            this.particles = [];
+            
+            const speedMult = 1 + (this.level - 1) * 0.1;
+
+            // Lane Setup
+            // Row 1-5: River
+            // Row 7-11: Road
+            
+            this.addLane(1, 'log', 1.5 * speedMult, 3, 100, '#d2691e'); 
+            this.addLane(2, 'turtle', -2.0 * speedMult, 4, 32, '#ff4444');
+            this.addLane(3, 'log', 2.5 * speedMult, 2, 160, '#d2691e');
+            this.addLane(4, 'log', -1.0 * speedMult, 3, 90, '#d2691e');
+            this.addLane(5, 'turtle', 1.5 * speedMult, 4, 32, '#ff4444');
+
+            this.addLane(7, 'car', -1.5 * speedMult, 3, 40, '#ff0000');
+            this.addLane(8, 'car', 3.0 * speedMult, 2, 32, '#ffff00');
+            this.addLane(9, 'car', -2.0 * speedMult, 2, 40, '#ff00ff');
+            this.addLane(10, 'car', 1.0 * speedMult, 3, 50, '#00ff00');
+            this.addLane(11, 'car', -1.2 * speedMult, 3, 40, '#00ffff');
+        }
+
+        addLane(row, type, speed, count, width, color) {
+            let objects = [];
+            let spacing = (this.canvas.width + 100) / count;
+            
+            for(let i=0; i<count; i++) {
+                objects.push({
+                    x: i * spacing + Math.random() * 50,
+                    y: row * this.grid,
+                    width: width,
+                    height: this.grid,
+                    type: type,
+                    speed: speed,
+                    color: color
+                });
+            }
+            this.lanes.push({ row, type, speed, objects });
+        }
+
+        respawnFrog() {
+            this.frog.x = 7 * this.grid;
+            this.frog.y = 13 * this.grid;
+            this.frog.dir = 'up';
+            this.frog.dead = false;
+            this.frog.onLog = false;
+            this.frog.attachSpeed = 0;
+            this.time = this.maxTime;
+        }
+
+        handleKeyDown(e) {
+            if (!this.canvas) return;
+            // Prevent Scroll
+            if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code)) {
+                e.preventDefault();
+            }
+            
+            if (e.code === 'KeyP' || e.code === 'Escape') {
+                if (this.isGameRunning) this.togglePause();
+                return;
+            }
+
+            if (!this.isGameRunning || this.isPaused || this.frog.dead) return;
+
+            const moveAmt = this.grid;
+            switch(e.code) {
+                case 'ArrowUp': 
+                    this.frog.y -= moveAmt; 
+                    this.frog.dir = 'up';
+                    break;
+                case 'ArrowDown': 
+                    if (this.frog.y < 13 * this.grid) {
+                        this.frog.y += moveAmt;
+                        this.frog.dir = 'down';
+                    }
+                    break;
+                case 'ArrowLeft': 
+                    this.frog.x -= moveAmt; 
+                    this.frog.dir = 'left';
+                    break;
+                case 'ArrowRight': 
+                    this.frog.x += moveAmt; 
+                    this.frog.dir = 'right';
+                    break;
+            }
+        }
+
+        togglePause() {
+            this.isPaused = !this.isPaused;
+            if (this.isPaused && window.GameUI) {
+                window.GameUI.showPause(() => this.togglePause(), () => window.history.back());
+            } else {
+                if (window.GameUI) window.GameUI.hide();
+                this.loop();
+            }
+        }
+
+        loop() {
+            if (!document.getElementById('gameCanvas')) {
+                window.removeEventListener('keydown', this.boundKeyDown);
+                return;
+            }
+
+            if (this.isGameRunning && !this.isPaused) {
+                this.update();
+                this.draw();
+                this.animationId = requestAnimationFrame(() => this.loop());
+            }
+        }
+
+        update() {
+            if (this.frog.dead) return;
+
+            // Timer
+            this.time--;
+            if (this.time <= 0) {
+                this.die();
+                return;
+            }
+
+            // Move Lanes
+            this.lanes.forEach(lane => {
+                lane.objects.forEach(obj => {
+                    obj.x += lane.speed;
+                    if (lane.speed > 0 && obj.x > this.canvas.width) obj.x = -obj.width;
+                    if (lane.speed < 0 && obj.x + obj.width < 0) obj.x = this.canvas.width;
+                });
+            });
+
+            // Frog Logic
+            let cx = this.frog.x + 16;
+            let cy = this.frog.y + 16;
+            let onRiver = (this.frog.y < 6 * this.grid && this.frog.y >= 1 * this.grid);
+            let safe = false;
+            this.frog.attachSpeed = 0;
+
+            // Collisions
+            this.lanes.forEach(lane => {
+                if (cy >= lane.row * this.grid && cy < (lane.row + 1) * this.grid) {
+                    lane.objects.forEach(obj => {
+                        if (cx > obj.x && cx < obj.x + obj.width) {
+                            if (lane.type === 'car') {
+                                this.die();
+                            } else if (lane.type === 'log' || lane.type === 'turtle') {
+                                safe = true;
+                                this.frog.attachSpeed = lane.speed;
+                            }
+                        }
+                    });
+                }
+            });
+
+            if (onRiver) {
+                if (safe) {
+                    this.frog.x += this.frog.attachSpeed;
+                } else {
+                    this.die();
+                }
+            }
+
+            // Screen Bounds
+            if (this.frog.x < 0 || this.frog.x + this.grid > this.canvas.width) {
+                if(onRiver && safe) this.die(); // Carried off screen
+                else if (!onRiver) {
+                     // Wall clamp
+                     if(this.frog.x < 0) this.frog.x = 0;
+                     if(this.frog.x > this.canvas.width - this.grid) this.frog.x = this.canvas.width - this.grid;
+                }
+            }
+
+            // Check Home
+            if (this.frog.y < this.grid) {
+                let landed = false;
+                // Homes are at specific columns? We can be lenient
+                // Cols 1, 4, 7, 10, 13 (approx centers: 48, 144, 240, 336, 432)
+                const homeCenters = [48, 144, 240, 336, 432];
+                
+                for(let i=0; i<5; i++) {
+                    if (Math.abs(cx - homeCenters[i]) < 16) {
+                        landed = true;
+                        if (this.homes[i]) {
+                            this.die(); // Occupied
+                        } else {
+                            this.homes[i] = true;
+                            this.score += 100 + Math.ceil(this.time/10);
+                            this.respawnFrog();
+                            
+                            // Check All Homes
+                            if (this.homes.every(h => h)) {
+                                this.level++;
+                                this.score += 1000;
+                                this.resetLevel();
+                            }
+                        }
+                        break;
+                    }
+                }
+                if (!landed) this.die(); // Missed slot
+            }
+            
+            // Particles
+            for(let i=this.particles.length-1; i>=0; i--) {
+                let p = this.particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.05;
+                if(p.life <=0) this.particles.splice(i,1);
+            }
+        }
+
+        die() {
+            if (this.frog.dead) return;
+            this.frog.dead = true;
+            this.createExplosion(this.frog.x + 16, this.frog.y + 16, '#00ff00');
+            
+            setTimeout(() => {
+                this.lives--;
+                if (this.lives > 0) {
+                    this.respawnFrog();
+                } else {
+                    this.gameOver();
+                }
+            }, 1000);
+        }
+        
+        createExplosion(x, y, color) {
+            for(let i=0; i<30; i++) {
+                this.particles.push({
+                    x, y,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: (Math.random() - 0.5) * 8,
+                    color: color,
+                    life: 1.0
+                });
+            }
+        }
+
+        gameOver() {
+            this.isGameRunning = false;
+            if (window.GameUI) {
+                window.GameUI.showGameOver(this.score, () => this.startGame(), () => window.history.back());
+            }
+        }
+
+        draw() {
+            if (!this.ctx) return;
+            
+            // Backgrounds
+            this.ctx.fillStyle = '#050510'; // Dark
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            
+            // Water (Row 1-5)
+            this.ctx.fillStyle = '#000033';
+            this.ctx.fillRect(0, this.grid, this.canvas.width, 5 * this.grid);
+            
+            // Median (Row 6)
+            this.ctx.fillStyle = '#1a1a2e';
+            this.ctx.fillRect(0, 6 * this.grid, this.canvas.width, this.grid);
+            
+            // Start (Row 12-13)
+            this.ctx.fillStyle = '#1a1a2e';
+            this.ctx.fillRect(0, 12 * this.grid, this.canvas.width, 2 * this.grid);
+
+            // Objects
+            this.lanes.forEach(lane => {
+                lane.objects.forEach(obj => {
+                    this.ctx.shadowBlur = 5;
+                    this.ctx.shadowColor = obj.color;
+                    this.ctx.fillStyle = obj.color;
+                    
+                    if (lane.type === 'turtle') {
+                         this.ctx.beginPath();
+                         this.ctx.arc(obj.x + 16, obj.y + 16, 12, 0, Math.PI*2);
+                         this.ctx.fill();
+                    } else {
+                        // Log or Car
+                        this.ctx.fillRect(obj.x, obj.y + 4, obj.width, 24);
+                    }
+                    this.ctx.shadowBlur = 0;
+                });
+            });
+
+            // Homes
+            this.ctx.fillStyle = '#004400';
+            this.ctx.fillRect(0, 0, this.canvas.width, this.grid);
+            const homeCenters = [48, 144, 240, 336, 432];
+            homeCenters.forEach((cx, i) => {
+                this.ctx.fillStyle = '#000033'; // Bay
+                this.ctx.fillRect(cx - 15, 0, 30, this.grid);
+                
+                if (this.homes[i]) {
+                    this.ctx.shadowBlur = 10;
+                    this.ctx.shadowColor = '#00ff00';
+                    this.ctx.fillStyle = '#00ff00';
+                    this.drawFrogIcon(cx - 10, 4, 1);
+                    this.ctx.shadowBlur = 0;
+                }
+            });
+
+            // Player
+            if (!this.frog.dead) {
+                this.ctx.shadowBlur = 10;
+                this.ctx.shadowColor = '#00ff00';
+                this.ctx.fillStyle = '#00ff00';
+                
+                this.ctx.save();
+                this.ctx.translate(this.frog.x + 16, this.frog.y + 16);
+                if (this.frog.dir === 'down') this.ctx.rotate(Math.PI);
+                if (this.frog.dir === 'left') this.ctx.rotate(-Math.PI/2);
+                if (this.frog.dir === 'right') this.ctx.rotate(Math.PI/2);
+                this.ctx.translate(-16, -16);
+                
+                this.drawFrogIcon(0, 0, 1);
+                
+                this.ctx.restore();
+                this.ctx.shadowBlur = 0;
+            }
+            
+            // Particles
+            this.particles.forEach(p => {
+                this.ctx.globalAlpha = p.life;
+                this.ctx.fillStyle = p.color;
+                this.ctx.fillRect(p.x, p.y, 4, 4);
+            });
+            this.ctx.globalAlpha = 1.0;
+            
+            // HUD
+            this.ctx.fillStyle = '#fff';
+            this.ctx.font = "20px monospace";
+            this.ctx.fillText(`SCORE: ${this.score}`, 10, 470);
+            
+            // Time Bar
+            let barW = (this.time / this.maxTime) * 100;
+            this.ctx.fillStyle = this.time < 600 ? '#ff0000' : '#00ff00';
+            this.ctx.fillRect(this.canvas.width - 120, 460, barW, 10);
+        }
+        
+        drawFrogIcon(x, y, scale) {
+             // Simple Frog Shape
+             this.ctx.fillRect(x + 8, y + 8, 16, 16); // Body
+             this.ctx.fillRect(x + 4, y + 4, 8, 8); // FL
+             this.ctx.fillRect(x + 20, y + 4, 8, 8); // FR
+             this.ctx.fillRect(x + 4, y + 20, 8, 8); // BL
+             this.ctx.fillRect(x + 20, y + 20, 8, 8); // BR
+        }
+    }
+
+    new FroggerGame();
+
+})();
+/*
+
 
         this.ctx = this.canvas.getContext('2d');
         
@@ -622,8 +1042,4 @@ class FroggerGame {
     }
 }
 
-// Start Game if Canvas Exists
-if (document.getElementById('gameCanvas')) {
-    new FroggerGame();
-}
-}
+*/

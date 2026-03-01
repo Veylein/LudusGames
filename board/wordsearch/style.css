@@ -1,146 +1,81 @@
-:root {
-    --grid-size: 15; /* Default, can be overridden by JS */
-    --cell-size: 30px;
-}
-
 body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
-    font-family: 'Press Start 2P', cursive;
+    margin: 0;
+    overflow: hidden;
+    background: #000;
+    font-family: "Courier New", monospace;
 }
 
-.game-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 20px;
-}
-
-.word-search-wrapper {
-    display: flex;
-    gap: 30px;
-    margin-top: 20px;
-    flex-wrap: wrap; /* allow wrapping on small screens */
-    justify-content: center;
-}
-
-.word-grid {
-    display: grid;
-    grid-template-columns: repeat(var(--grid-size), var(--cell-size));
-    grid-template-rows: repeat(var(--grid-size), var(--cell-size));
-    gap: 2px;
-    background-color: #333;
-    padding: 10px;
-    border: 4px solid #fff;
-    user-select: none; /* Prevent text selection */
-}
-
-.grid-cell {
-    width: var(--cell-size);
-    height: var(--cell-size);
-    background-color: #222;
-    color: #fff;
+#game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 16px;
-    cursor: pointer;
-    text-transform: uppercase;
 }
 
-.grid-cell:hover {
-    background-color: #444;
+canvas {
+    background: #000;
 }
 
-/* While dragging */
-.grid-cell.selected {
-    background-color: #f39c12; /* orange */
-    color: #000;
-}
-
-/* Already found */
-.grid-cell.found {
-    background-color: #27ae60; /* green */
-    color: #fff;
-}
-
-/* Sidebar */
-.sidebar {
+#overlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 250px; /* Sidebar */
+    height: 100%;
+    background: rgba(0, 10, 0, 0.9);
+    border-left: 2px solid #0f0;
+    padding: 20px;
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    min-width: 200px;
+    pointer-events: none; /* Let clicks pass through if covered? No, sidebar shouldn"t cover game */
 }
 
-.word-list-container {
-    margin-top: 20px;
-    border: 2px solid #fff;
-    padding: 10px;
-    background: rgba(0,0,0,0.5);
-}
-
-.word-list-container h3 {
+.neon-title {
+    color: #0f0;
+    text-shadow: 0 0 10px #0f0;
+    font-size: 1.5rem;
     margin-top: 0;
     text-align: center;
-    font-size: 14px;
-    margin-bottom: 10px;
+    border-bottom: 1px dashed #050;
+    padding-bottom: 10px;
 }
 
-#word-list {
-    list-style: none;
-    padding: 0;
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* layout 2 columns if list is long */
+#status-bar {
+    margin: 20px 0;
+    color: #fff;
+    font-size: 1rem;
+    display: flex;
+    flex-direction: column;
     gap: 10px;
 }
 
+#word-bank {
+    flex: 1;
+    overflow-y: auto;
+    pointer-events: auto;
+}
+
 .word-item {
-    font-size: 12px;
-    color: #ccc;
-    cursor: default;
+    color: #050;
+    margin-bottom: 5px;
+    font-size: 0.9rem;
+    transition: color 0.3s;
 }
 
 .word-item.found {
+    color: #0f0;
     text-decoration: line-through;
-    color: #666;
+    text-shadow: 0 0 5px #0f0;
 }
 
-.timer-display, .score-display {
-    font-size: 14px;
-    margin-bottom: 10px;
-    text-align: center;
+/* Scrollbar */
+#word-bank::-webkit-scrollbar {
+    width: 5px;
+}
+#word-bank::-webkit-scrollbar-thumb {
+    background: #0f0;
 }
 
-.action-btn {
-    margin-top: 20px;
-    padding: 10px;
-    background: #e74c3c;
-    color: white;
-    border: none;
-    font-family: inherit;
-    cursor: pointer;
-}
-
-.action-btn:hover {
-    background: #c0392b;
-}
-
-.modal {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.8);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-.modal.hidden { display: none; }
-
-.modal-content {
-    background: #fff;
-    color: #000;
-    padding: 30px;
-    text-align: center;
-    border: 4px solid #000;
-}

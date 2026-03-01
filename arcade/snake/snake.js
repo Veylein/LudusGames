@@ -253,17 +253,17 @@
         }
 
         draw() {
-            // Check canvas context
             if (!this.ctx) return;
 
-            // Arcade Background
-            this.ctx.fillStyle = '#000';
+            // Arcade Background - Darker
+            this.ctx.fillStyle = '#050510';
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
             
-            // Subtle Grid
-            this.ctx.strokeStyle = '#111';
+            // Neon Grid
+            this.ctx.strokeStyle = 'rgba(0, 255, 64, 0.1)';
             this.ctx.lineWidth = 1;
             this.ctx.beginPath();
+            
             for (let x = 0; x <= this.canvas.width; x += this.gridSize) {
                 this.ctx.moveTo(x, 0);
                 this.ctx.lineTo(x, this.canvas.height);
@@ -274,58 +274,94 @@
             }
             this.ctx.stroke();
 
+            // Draw Food with Glow
             this.drawFood();
+            
+            // Draw Snake with Glow
             this.drawSnake();
         }
 
         drawSnake() {
+            this.ctx.save();
             this.snake.forEach((segment, i) => {
                 const x = segment.x * this.gridSize;
                 const y = segment.y * this.gridSize;
-                const s = this.gridSize;
-                
-                // Head vs Body
+                const s = this.gridSize - 2; // Slight spacing
+
                 if (i === 0) {
-                    // Head Sprite (Green)
+                    // Head - Neon Green Glow
+                    this.ctx.shadowBlur = 15;
+                    this.ctx.shadowColor = '#00ff00';
                     this.ctx.fillStyle = '#00ff00';
-                    this.ctx.fillRect(x, y, s, s);
+                    this.ctx.fillRect(x + 1, y + 1, s, s);
                     
-                    // Eyes (Pixelated)
+                    // Eyes
+                    this.ctx.shadowBlur = 0;
                     this.ctx.fillStyle = '#000';
-                    let lx = 4, ly = 4, rx = 12, ry = 4; // Default Up
                     
-                    if(this.dx === 1) { // Right
-                       lx = 10; ly = 4; rx = 10; ry = 12;
-                    } else if(this.dx === -1) { // Left
-                       lx = 4; ly = 4; rx = 4; ry = 12;
-                    } else if(this.dy === 1) { // Down
-                       lx = 4; ly = 10; rx = 12; ry = 10;
+                    // Directional Eyes
+                    let ex1 = x + 4, ey1 = y + 4;
+                    let ex2 = x + 12, ey2 = y + 4;
+                    
+                    if (this.dx === 1) { // Right
+                        ex1 = x + 10; ey1 = y + 4;
+                        ex2 = x + 10; ey2 = y + 12;
+                    } else if (this.dx === -1) { // Left
+                        ex1 = x + 4; ey1 = y + 4;
+                        ex2 = x + 4; ey2 = y + 12;
+                    } else if (this.dy === 1) { // Down
+                        ex1 = x + 4; ey1 = y + 12;
+                        ex2 = x + 12; ey2 = y + 12;
                     }
                     
-                    this.ctx.fillRect(x + lx, y + ly, 4, 4);
-                    this.ctx.fillRect(x + rx, y + ry, 4, 4);
+                    this.ctx.fillRect(ex1, ey1, 4, 4);
+                    this.ctx.fillRect(ex2, ey2, 4, 4);
                     
                 } else {
+                    // Body - Slightly dimmer green
+                    this.ctx.shadowBlur = 5;
+                    this.ctx.shadowColor = '#00cc00';
                     this.ctx.fillStyle = '#00cc00';
-                    this.ctx.fillRect(x, y, s, s);
-                    this.ctx.fillStyle = '#66ff66';
-                    this.ctx.fillRect(x + 2, y + 2, 4, 4);
+                    this.ctx.fillRect(x + 1, y + 1, s, s);
+                    
+                    // Inner texture
+                    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                    this.ctx.fillRect(x + 4, y + 4, s - 8, s - 8);
                 }
             });
+            this.ctx.restore();
         }
         
         drawFood() {
             const x = this.food.x * this.gridSize;
             const y = this.food.y * this.gridSize;
-            const s = this.gridSize;
+            const s = this.gridSize - 4;
             
-            this.ctx.fillStyle = '#ff0000';
-            this.ctx.fillRect(x + 4, y, s - 8, s); 
-            this.ctx.fillRect(x, y + 4, s, s - 8); 
-            this.ctx.fillRect(x + 2, y + 2, s - 4, s - 4); 
+            this.ctx.save();
             
+            // Pulsing effect
+            const time = Date.now() / 200;
+            const pulse = (Math.sin(time) + 1) / 2; // 0 to 1
+            const glowSize = 10 + pulse * 10;
+            
+            this.ctx.shadowBlur = glowSize;
+            this.ctx.shadowColor = '#ff0000';
+            this.ctx.fillStyle = '#ff3333';
+            
+            // Draw Apple shape (simplified)
+            const cx = x + this.gridSize/2;
+            const cy = y + this.gridSize/2;
+            
+            this.ctx.beginPath();
+            this.ctx.arc(cx, cy, s/2, 0, Math.PI * 2);
+            this.ctx.fill();
+            
+            // Stem
+            this.ctx.shadowBlur = 0;
             this.ctx.fillStyle = '#00ff00';
-            this.ctx.fillRect(x + 8, y - 4, 4, 4); 
+            this.ctx.fillRect(cx - 2, y + 2, 4, 4);
+            
+            this.ctx.restore();
         }
     
         spawnFood() {

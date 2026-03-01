@@ -20,7 +20,9 @@ body {
     color: #fff;
     font-family: 'Press Start 2P', cursive, monospace;
     margin: 0;
-    min-height: 100vh;
+    height: 100vh; /* Fixed height */
+    width: 100vw;
+    overflow: hidden; /* NO SCROLLING */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -30,6 +32,7 @@ body {
         repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.5) 3px),
         repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 0, 0, 0.5) 3px);
     background-size: 100% 100%, 4px 4px, 4px 4px;
+    touch-action: none; /* Prevent touch scrolling */
 }
 
 /* --- ARCADE CABINET CONTAINER --- */
@@ -37,6 +40,8 @@ body {
     position: relative;
     width: 90vw;
     max-width: 800px;
+    height: auto;
+    max-height: 95vh; /* Ensure it fits on screen */
     background: var(--cabinet-color);
     border: 15px solid #1a1a2e;
     border-radius: 20px 20px 4px 4px;
@@ -47,8 +52,9 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 20px;
-    margin: 20px 0;
+    padding: 10px; /* Reduced padding */
+    margin: 0; /* Removing margin to center perfectly */
+    box-sizing: border-box;
 }
 
 /* Cabinet Header / Marquee */

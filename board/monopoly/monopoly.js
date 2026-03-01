@@ -1,722 +1,689 @@
-﻿{
-    // Monopoly - Full JS Logic
-    // 11x11 Grid implementation
+/*
+ * NEON ESTATE (Monopoly-style)
+ * 
+ * Logic:
+ * - 40 Space Board
+ * - 4 Players (1 Human, 3 AI)
+ * - Buying, Rent, Go, Jail
+ * - Canvas Rendering
+ */
 
-    if (!document.getElementById('btn-buy')) return;
-
+(function() {
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Constants
     const BOARD_SIZE = 40;
-    const START_MONEY = 1500;
-
-    // Groups/Colors:
-    // Brown -> LightBlue -> Pink -> Orange -> Red -> Yellow -> Green -> Blue
+    const SIDE_COUNT = 10; // Spaces per side (excluding corners mostly, handled by logic)
+    const PLAYER_COLORS = ['#00ffff', '#ff00ff', '#ffff00', '#00ff00'];
     const GROUPS = {
-        BROWN: 'brown',
-        LBLUE: 'lightblue',
-        PINK: 'pink',
-        ORANGE: 'orange',
-        RED: 'red',
-        YELLOW: 'yellow',
-        GREEN: 'green',
-        BLUE: 'blue',
-        RAIL: 'railroad',
-        UTIL: 'utility'
+        BROWN: '#8B4513', LBLUE: '#87CEEB', PINK: '#FF69B4', ORANGE: '#FFA500',
+        RED: '#FF0000', YELLOW: '#FFFF00', GREEN: '#008000', BLUE: '#0000FF',
+        RAIL: '#FFFFFF', UTIL: '#CCCCCC'
     };
-
-    /* 
-      Spaces Data Structure
-      Rent is simplified for this demo: base rent only.
-    */
-    const spaces = [
-        { index: 0, name: "GO", type: "go" },
-        { index: 1, name: "Mediterranean", price: 60, rent: 2, group: GROUPS.BROWN, type: "property" },
-        { index: 2, name: "Community Chest", type: "chest" },
-        { index: 3, name: "Baltic Ave", price: 60, rent: 4, group: GROUPS.BROWN, type: "property" },
-        { index: 4, name: "Income Tax", type: "tax", amount: 200 },
-        { index: 5, name: "Reading RR", price: 200, rent: 25, group: GROUPS.RAIL, type: "railroad" },
-        { index: 6, name: "Oriental Ave", price: 100, rent: 6, group: GROUPS.LBLUE, type: "property" },
-        { index: 7, name: "Chance", type: "chance" },
-        { index: 8, name: "Vermont Ave", price: 100, rent: 6, group: GROUPS.LBLUE, type: "property" },
-        { index: 9, name: "Connecticut", price: 120, rent: 8, group: GROUPS.LBLUE, type: "property" },
-        { index: 10, name: "Jail", type: "jail" },
-        { index: 11, name: "St. Charles", price: 140, rent: 10, group: GROUPS.PINK, type: "property" },
-        { index: 12, name: "Electric Co", price: 150, rent: 0, group: GROUPS.UTIL, type: "utility" }, // Dice multiplier logic omitted for brevity, fixed rent
-        { index: 13, name: "States Ave", price: 140, rent: 10, group: GROUPS.PINK, type: "property" },
-        { index: 14, name: "Virginia Ave", price: 160, rent: 12, group: GROUPS.PINK, type: "property" },
-        { index: 15, name: "Penn RR", price: 200, rent: 25, group: GROUPS.RAIL, type: "railroad" },
-        { index: 16, name: "St. James", price: 180, rent: 14, group: GROUPS.ORANGE, type: "property" },
-        { index: 17, name: "Com. Chest", type: "chest" },
-        { index: 18, name: "Tennessee", price: 180, rent: 14, group: GROUPS.ORANGE, type: "property" },
-        { index: 19, name: "New York", price: 200, rent: 16, group: GROUPS.ORANGE, type: "property" },
-        { index: 20, name: "Free Parking", type: "parking" },
-        { index: 21, name: "Kentucky", price: 220, rent: 18, group: GROUPS.RED, type: "property" },
-        { index: 22, name: "Chance", type: "chance" },
-        { index: 23, name: "Indiana", price: 220, rent: 18, group: GROUPS.RED, type: "property" },
-        { index: 24, name: "Illinois", price: 240, rent: 20, group: GROUPS.RED, type: "property" },
-        { index: 25, name: "B. & O. RR", price: 200, rent: 25, group: GROUPS.RAIL, type: "railroad" },
-        { index: 26, name: "Atlantic", price: 260, rent: 22, group: GROUPS.YELLOW, type: "property" },
-        { index: 27, name: "Ventnor", price: 260, rent: 22, group: GROUPS.YELLOW, type: "property" },
-        { index: 28, name: "Water Works", price: 150, rent: 0, group: GROUPS.UTIL, type: "utility" },
-        { index: 29, name: "Marvin Gdns", price: 280, rent: 24, group: GROUPS.YELLOW, type: "property" },
-        { index: 30, name: "Go To Jail", type: "gotojail" },
-        { index: 31, name: "Pacific", price: 300, rent: 26, group: GROUPS.GREEN, type: "property" },
-        { index: 32, name: "N. Carolina", price: 300, rent: 26, group: GROUPS.GREEN, type: "property" },
-        { index: 33, name: "Com. Chest", type: "chest" },
-        { index: 34, name: "Penn Ave", price: 320, rent: 28, group: GROUPS.GREEN, type: "property" },
-        { index: 35, name: "Short Line", price: 200, rent: 25, group: GROUPS.RAIL, type: "railroad" },
-        { index: 36, name: "Chance", type: "chance" },
-        { index: 37, name: "Park Place", price: 350, rent: 35, group: GROUPS.BLUE, type: "property" },
-        { index: 38, name: "Luxury Tax", type: "tax", amount: 100 },
-        { index: 39, name: "Boardwalk", price: 400, rent: 50, group: GROUPS.BLUE, type: "property" }
+    
+    // Data
+    const SPACES = [
+        { name: 'GO', type: 'go', color: null },
+        { name: 'Med Ave', price: 60, rent: 2, group: GROUPS.BROWN, type: 'prop' },
+        { name: 'Com Chest', type: 'chest', color: null },
+        { name: 'Baltic Ave', price: 60, rent: 4, group: GROUPS.BROWN, type: 'prop' },
+        { name: 'Inc Tax', type: 'tax', amount: 200, color: null },
+        { name: 'Read RR', price: 200, rent: 25, group: GROUPS.RAIL, type: 'rail' },
+        { name: 'Ori Ave', price: 100, rent: 6, group: GROUPS.LBLUE, type: 'prop' },
+        { name: 'Chance', type: 'chance', color: null },
+        { name: 'Ver Ave', price: 100, rent: 6, group: GROUPS.LBLUE, type: 'prop' },
+        { name: 'Conn Ave', price: 120, rent: 8, group: GROUPS.LBLUE, type: 'prop' },
+        { name: 'Jail', type: 'jail', color: null },
+        { name: 'St. C Pl', price: 140, rent: 10, group: GROUPS.PINK, type: 'prop' },
+        { name: 'Electric', price: 150, rent: 0, group: GROUPS.UTIL, type: 'util' },
+        { name: 'States', price: 140, rent: 10, group: GROUPS.PINK, type: 'prop' },
+        { name: 'Virg Ave', price: 160, rent: 12, group: GROUPS.PINK, type: 'prop' },
+        { name: 'Penn RR', price: 200, rent: 25, group: GROUPS.RAIL, type: 'rail' },
+        { name: 'St. J Pl', price: 180, rent: 14, group: GROUPS.ORANGE, type: 'prop' },
+        { name: 'Com Chest', type: 'chest', color: null },
+        { name: 'Tenn Ave', price: 180, rent: 14, group: GROUPS.ORANGE, type: 'prop' },
+        { name: 'NY Ave', price: 200, rent: 16, group: GROUPS.ORANGE, type: 'prop' },
+        { name: 'Parking', type: 'parking', color: null },
+        { name: 'Ken Ave', price: 220, rent: 18, group: GROUPS.RED, type: 'prop' },
+        { name: 'Chance', type: 'chance', color: null },
+        { name: 'Ind Ave', price: 220, rent: 18, group: GROUPS.RED, type: 'prop' },
+        { name: 'Ill Ave', price: 240, rent: 20, group: GROUPS.RED, type: 'prop' },
+        { name: 'B&O RR', price: 200, rent: 25, group: GROUPS.RAIL, type: 'rail' },
+        { name: 'Atl Ave', price: 260, rent: 22, group: GROUPS.YELLOW, type: 'prop' },
+        { name: 'Ven Ave', price: 260, rent: 22, group: GROUPS.YELLOW, type: 'prop' },
+        { name: 'Water', price: 150, rent: 0, group: GROUPS.UTIL, type: 'util' },
+        { name: 'Marvin', price: 280, rent: 24, group: GROUPS.YELLOW, type: 'prop' },
+        { name: 'Go Jail', type: 'gotojail', color: null },
+        { name: 'Pac Ave', price: 300, rent: 26, group: GROUPS.GREEN, type: 'prop' },
+        { name: 'NC Ave', price: 300, rent: 26, group: GROUPS.GREEN, type: 'prop' },
+        { name: 'Com Chest', type: 'chest', color: null },
+        { name: 'Penn Ave', price: 320, rent: 28, group: GROUPS.GREEN, type: 'prop' },
+        { name: 'Short Ln', price: 200, rent: 25, group: GROUPS.RAIL, type: 'rail' },
+        { name: 'Chance', type: 'chance', color: null },
+        { name: 'Park Pl', price: 350, rent: 35, group: GROUPS.BLUE, type: 'prop' },
+        { name: 'Lux Tax', type: 'tax', amount: 100, color: null },
+        { name: 'Boardwlk', price: 400, rent: 50, group: GROUPS.BLUE, type: 'prop' }
     ];
 
-    // Utility: coordinate mapper
-    function getGridPosition(index) {
-        // 0 -> (11,11)
-        // 10 -> (11,1)
-        // 20 -> (1,1)
-        // 30 -> (1,11)
-        
-        // Bottom: 11, 10->2
-        // Left: 10->2, 1
-        // Top: 1, 2->10
-        // Right: 2->10, 11
-        
-        if (index === 0) return { r: 11, c: 11 };
-        if (index < 10) return { r: 11, c: 11 - index };
-        if (index === 10) return { r: 11, c: 1 };
-        if (index < 20) return { r: 11 - (index - 10), c: 1 };
-        if (index === 20) return { r: 1, c: 1 };
-        if (index < 30) return { r: 1, c: 1 + (index - 20) };
-        if (index === 30) return { r: 1, c: 11 };
-        if (index < 40) return { r: 1 + (index - 30), c: 11 };
-        return { r: 1, c: 1 };
-    }
-
-    // Game State
+    // State
     let players = [];
-    let currentPlayerIndex = 0;
-    let turnPhase = 'roll'; // roll, action, end
-    let diceValue = [0,0];
+    let currentPlayer = 0;
+    let turnState = 'roll'; // roll, buy, end
+    let dice = [1, 1];
+    let message = 'NEON ESTATE';
+    
+    // Layout Metrics (calculated on resize)
+    let boardRect = { x: 0, y: 0, w: 0, h: 0 };
+    let spaceSize = 0;
 
-    class Player {
-        constructor(id, name, color, isHuman=false) {
-            this.id = id;
-            this.name = name;
-            this.color = color;
-            this.isHuman = isHuman;
-            this.money = START_MONEY;
-            this.position = 0;
-            this.properties = []; // indices of owned properties
-            this.inJail = false;
-            this.jailTurns = 0;
-        }
-    }
-
-    // Setup
-    const playerConfigs = [
-        { name: "You", color: "#00ffcc", isHuman: true, icon: "" }, // Neon cyan
-        { name: "Bot 1", color: "#ff0099", isHuman: false, icon: "" }, // Neon pink
-        { name: "Bot 2", color: "#ffff00", isHuman: false, icon: "" }, // Neon yellow
-        { name: "Bot 3", color: "#9900ff", isHuman: false, icon: "" }  // Neon purple
-    ];
-
-    function initGame() {
-        players = playerConfigs.map((cfg, idx) => {
-            const p = new Player(idx, cfg.name, cfg.color, cfg.isHuman);
-            p.icon = cfg.icon;
-            return p;
-        });
-        
-        // Setup event listeners
-        const btnRoll = document.getElementById('btn-roll');
-        if (btnRoll) btnRoll.onclick = actionRoll;
-        
-        const btnBuy = document.getElementById('btn-buy');
-        if (btnBuy) btnBuy.onclick = actionBuy;
-        
-        const btnEnd = document.getElementById('btn-end');
-        if (btnEnd) btnEnd.onclick = actionEndTurn;
-
-        renderBoard();
-        updateUI();
-        log("<b>Welcome to Neon Monopoly!</b>");
-        log("You start with $" + START_MONEY);
-    }
-
-    function renderBoard() {
-        const boardEl = document.getElementById('board');
-        if(!boardEl) return;
-        // Clear non-token/space elements if any? Or just append.
-        // Better to clear old spaces to prevent dupes if re-init
-        // But we want to keep structure if any.
-        // Let's clear board content to be safe.
-        boardEl.innerHTML = '';
-        
-        spaces.forEach(sp => {
-            const div = document.createElement('div');
-            div.className = 'space';
-            // Add data-id for CSS hooks if needed
-            div.setAttribute('data-id', sp.index);
-
-            const pos = getGridPosition(sp.index);
-            div.style.gridRow = pos.r;
-            div.style.gridColumn = pos.c;
-            div.id = `space-${sp.index}`;
-            
-            // Content
-            let content = `<div class="sp-name">${sp.name}</div>`;
-            if (sp.price) {
-                content += `<div class="sp-price">$${sp.price}</div>`;
-            }
-            
-            // Color bar for properties
-            if (sp.group) {
-                // Note: No longer adding class to container to avoid full background color
-                // div.classList.add(`group-${sp.group}`);
-                
-                // Add color bar visual
-                const bar = document.createElement('div');
-                bar.className = 'color-bar';
-                bar.style.backgroundColor = getGroupColor(sp.group);
-                bar.style.height = '15px';
-                bar.style.width = '100%';
-                div.prepend(bar);
-            }
-            
-            div.innerHTML += content;
-            boardEl.appendChild(div);
-        });
-        
-        // Re-add center logo/dice area which we wiped
-        const centerLogo = document.createElement('div');
-        centerLogo.className = 'center-logo';
-        centerLogo.innerHTML = 'LUDUS<br>ESTATE';
-        boardEl.appendChild(centerLogo);
-
-        const diceArea = document.createElement('div');
-        diceArea.id = 'dice-display';
-        diceArea.className = 'dice-area';
-        diceArea.innerHTML = `<div class="die" style="font-size:40px; border:none; background:transparent;"></div>
-                              <div class="die" style="font-size:40px; border:none; background:transparent;"></div>`;
-        boardEl.appendChild(diceArea);
-
-        // Create Tokens
-        players.forEach(p => {
-            const tok = document.createElement('div');
-            tok.className = 'token';
-            tok.id = `token-${p.id}`;
-            tok.style.color = p.color; // Set icon color
-            tok.style.backgroundColor = 'transparent'; // No background for emoji
-            tok.style.border = 'none'; // No border
-            tok.style.textShadow = `0 0 5px ${p.color}`;
-            tok.style.fontSize = '24px';
-            tok.style.display = 'flex';
-            tok.style.alignItems = 'center';
-            tok.style.justifyContent = 'center';
-            tok.style.zIndex = '50';
-            tok.innerText = p.icon; // Use Icon
-            boardEl.appendChild(tok);
-            moveToken(p.id, 0); // initial pos
-        });
-    }
-
-    function getGroupColor(group) {
-        switch(group) {
-            case GROUPS.BROWN: return '#8B4513';
-            case GROUPS.LBLUE: return '#87CEEB';
-            case GROUPS.PINK: return '#FF69B4';
-            case GROUPS.ORANGE: return '#FFA500';
-            case GROUPS.RED: return '#FF0000';
-            case GROUPS.YELLOW: return '#FFFF00';
-            case GROUPS.GREEN: return '#008000';
-            case GROUPS.BLUE: return '#0000FF';
-            case GROUPS.RAIL: return '#FFFFFF'; 
-            default: return '#555';
-        }
-    }
-
-    function moveToken(playerId, index) {
-        const tok = document.getElementById(`token-${playerId}`);
-        if(!tok) return;
-        const pos = getGridPosition(index);
-        const offsetMap = [
-            {x:-10, y:-10}, {x:10, y:-10},
-            {x:-10, y:10}, {x:10, y:10}
-        ];
-        const off = offsetMap[playerId] || {x:0, y:0};
-        
-        tok.style.gridRow = pos.r;
-        tok.style.gridColumn = pos.c;
-        // Store base transform to allow appending scale later
-        const baseTransform = `translate(${off.x}px, ${off.y}px)`;
-        tok.dataset.baseTransform = baseTransform;
-        
-        // Check if active player to apply scale
-        if (playerId === currentPlayerIndex) {
-            tok.style.transform = `${baseTransform} scale(1.3)`;
-            tok.style.zIndex = 100;
-            tok.style.filter = "drop-shadow(0 0 8px #fff)";
-        } else {
-            tok.style.transform = baseTransform;
-            tok.style.zIndex = 50;
-            tok.style.filter = "none";
-        }
-    }
-
-    function showFloatingText(playerId, text, color) {
-        const token = document.getElementById(`token-${playerId}`);
-        if (!token) return;
-        
-        const el = document.createElement('div');
-        el.className = 'float-text';
-        el.innerText = text;
-        el.style.color = color || '#fff';
-        
-        // Position relative to token
-        const rect = token.getBoundingClientRect();
-        // But token is in board, which has relative positioning.
-        // Easier to append to token direct? But token moves.
-        // Best to append to board at token's grid position.
-        
-        const board = document.getElementById('board');
-        el.style.left = token.offsetLeft + "px";
-        el.style.top = (token.offsetTop - 20) + "px";
-        
-        // Grid hack:
-        el.style.gridRow = token.style.gridRow;
-        el.style.gridColumn = token.style.gridColumn;
-        el.style.justifySelf = 'center';
-        el.style.alignSelf = 'start';
-        
-        board.appendChild(el);
-        setTimeout(() => el.remove(), 1500);
-    }
-
-    function updateMoney(player, amount) {
-        player.money += amount;
-        const text = amount >= 0 ? `+$${amount}` : `-$${Math.abs(amount)}`;
-        const color = amount >= 0 ? '#0f0' : '#f00';
-        showFloatingText(player.id, text, color);
-        updateUI(); // force update
-    }
-
-    // Actions
-    function actionRoll() {
-        if (turnPhase !== 'roll') return;
-        const p = getCurrentPlayer();
-        
-        const d1 = Math.floor(Math.random() * 6) + 1;
-        const d2 = Math.floor(Math.random() * 6) + 1;
-        diceValue = [d1, d2];
-        const total = d1 + d2;
-        
-        const diceChars = ['', '', '', '', '', ''];
-        
-        // UI Dice
-        const diceDisplay = document.getElementById('dice-display');
-        if(diceDisplay) {
-            // Simple wobble animation
-            diceDisplay.style.animation = 'none';
-            diceDisplay.offsetHeight; /* trigger reflow */
-            diceDisplay.style.animation = 'shake 0.5s';
-            
-            setTimeout(() => {
-                const style = "font-size:40px; color:#fff; background:transparent; box-shadow:none; width:auto; height:auto; padding:0 10px;";
-                diceDisplay.innerHTML = `<div class="die" style="${style}">${diceChars[d1-1]}</div>
-                                         <div class="die" style="${style}">${diceChars[d2-1]}</div>`;
-                log(`${p.name} rolled ${d1} + ${d2} = ${total}`);
-                // Continue game logic after animation? No, immediate for now.
-            }, 250);
-        }
-        
-        if (p.inJail) {
-            if (d1 === d2) {
-                log("Doubles! Released from Jail.");
-                p.inJail = false;
-                p.jailTurns = 0;
-                movePlayer(p, total);
-            } else {
-                p.jailTurns++;
-                log("Stayed in Jail.");
-                if (p.jailTurns >= 3) {
-                     log("Paid $50 to leave Jail.");
-                     updateMoney(p, -50);
-                     p.inJail = false;
-                     p.jailTurns = 0;
-                     movePlayer(p, total);
-                } else {
-                    turnPhase = 'end';
-                    updateUI();
-                    checkBotTurn();
-                    return;
-                }
-            }
-        } else {
-            movePlayer(p, total);
-        }
-    }
-
-    function movePlayer(player, steps) {
-        // Animate later?
-        let newPos = player.position + steps;
-        if (newPos >= BOARD_SIZE) {
-            newPos -= BOARD_SIZE;
-            log(`${player.name} passed GO! Collect $200.`);
-            updateMoney(player, 200);
-        }
-        player.position = newPos;
-        moveToken(player.id, newPos);
-        
-        handleLanding(player);
-    }
-
-    function handleLanding(player) {
-        const space = spaces[player.position];
-        log(`Landed on ${space.name}`);
-        
-        // Types
-        if (space.type === 'property' || space.type === 'railroad' || space.type === 'utility') {
-            // Owned?
-            const owner = players.find(p => p.properties.includes(space.index));
-            if (owner) {
-                if (owner.id === player.id) {
-                    log("You own this property.");
-                    turnPhase = 'end';
-                } else {
-                    // Rent
-                    let rent = space.rent || 0;
-                    // Simple logic: if util, roll * 4? rail * 25
-                    if (space.type === 'utility') rent = (diceValue[0]+diceValue[1]) * 4;
-                    if (space.type === 'railroad') {
-                        // Count owned
-                        const count = owner.properties.filter(idx => spaces[idx].type === 'railroad').length;
-                        rent = 25 * Math.pow(2, count - 1);
-                    }
-                    
-                    log(`Paid $${rent} rent to ${owner.name}`);
-                    // Use new updateMoney for visual feedback
-                    updateMoney(player, -rent);
-                    updateMoney(owner, rent);
-                    turnPhase = 'end';
-                }
-            } else {
-                // Unowned - can buy
-                if (player.money >= space.price) {
-                    if (player.isHuman) {
-                        turnPhase = 'action'; // Enable Buy button
-                        const btn = document.getElementById('btn-buy');
-                        if(btn) {
-                            btn.disabled = false;
-                            btn.innerText = `Buy for $${space.price}`;
-                        }
-                    } else {
-                        // Bot logic
-                        botDecideBuy(player, space);
-                    }
-                } else {
-                    log("Cannot afford to buy.");
-                    turnPhase = 'end';
-                }
-            }
-        } else if (space.type === 'tax') {
-            log(`Paid tax $${space.amount}`);
-            updateMoney(player, -space.amount);
-            turnPhase = 'end';
-        } else if (space.type === 'gotojail') {
-            log("Go to Jail!");
-            player.position = 10;
-            player.inJail = true;
-            moveToken(player.id, 10);
-            turnPhase = 'end';
-        } else if (space.type === 'chance' || space.type === 'chest') {
-            handleCard(player, space.type);
-        } else {
-            // Parking, Just Visiting...
-            log("Safe space.");
-            turnPhase = 'end';
-        }
-        
-        updateUI();
-        
-        // If not human buy phase, or if bot finished logic immediately
-        if (turnPhase === 'end' && !player.isHuman) {
-            setTimeout(actionEndTurn, 1000);
-        }
-    }
-
-    function handleCard(player, type) {
-        // Simple card logic
-        const cards = [
-            { text: "Advance to GO", action: (p) => { 
-                p.position = 0; 
-                moveToken(p.id, 0); 
-                // Money handled by move pass Log, but card explicitly says so
-                // Actually movePlayer handles +200. Logic might double pay?
-                // movePlayer adds 200 if pass go. If we warp to 0, movePlayer logic
-                // depends on (newPos >= BOARD_SIZE). Setting p.position=0 bypasses that check.
-                // So we pay manually.
-                updateMoney(p, 200);
-                log("Bank pays you dividend of $200.");
-            }},
-            { text: "Bank error in your favor. Collect $200.", action: (p) => { updateMoney(p, 200); }},
-            { text: "Doctor's fees. Pay $50.", action: (p) => { updateMoney(p, -50); }},
-            { text: "Get Out of Jail Free.", action: (p) => { p.hasJailCard = true; }}, // simplistic
-            { text: "Go to Jail.", action: (p) => { 
-                p.position = 10; 
-                p.inJail = true; 
-                moveToken(p.id, 10); 
-            }},
-            { text: "Grand Opera Night. Collect $50 from every player.", action: (p) => {
-                players.forEach(pl => {
-                    if (pl !== p) {
-                        updateMoney(pl, -50);
-                        updateMoney(p, 50);
-                    }
-                });
-            }},
-            { text: "Holiday Fund matures. Receive $100.", action: (p) => { updateMoney(p, 100); }},
-            { text: "Income tax refund. Collect $20.", action: (p) => { updateMoney(p, 20); }},
-            { text: "It is your birthday. Collect $10 from every player.", action: (p) => {
-                players.forEach(pl => {
-                    if (pl !== p) {
-                        updateMoney(pl, -10);
-                        updateMoney(p, 10);
-                    }
-                });
-            }},
-            { text: "Life insurance matures. Collect $100.", action: (p) => { updateMoney(p, 100); }},
-            { text: "Pay hospital fees of $100.", action: (p) => { updateMoney(p, -100); }},
-            { text: "Pay school fees of $50.", action: (p) => { updateMoney(p, -50); }},
-            { text: "Receive $25 consultancy fee.", action: (p) => { updateMoney(p, 25); }},
-            { text: "You have won second prize in a beauty contest. Collect $10.", action: (p) => { updateMoney(p, 10); }},
-            { text: "You inherit $100.", action: (p) => { updateMoney(p, 100); }}
-        ];
-        
-        // Pick random
-        const card = cards[Math.floor(Math.random() * cards.length)];
-        log(`[${type.toUpperCase()}] ${card.text}`);
-        if (card.action) card.action(player);
-        turnPhase = 'end';
-    }
-
-
-    function actionBuy() {
-        if (turnPhase !== 'action') return;
-        const p = getCurrentPlayer();
-        const space = spaces[p.position];
-        if (p.money >= space.price) {
-            updateMoney(p, -space.price);
-            p.properties.push(space.index);
-            log(`${p.name} bought ${space.name}!`);
-            
-            // Highlight property
-            const cell = document.getElementById(`space-${space.index}`);
-            cell.style.borderColor = p.color;
-            cell.style.borderWidth = '3px';
-            
-            turnPhase = 'end';
-            updateUI();
-        }
-    }
-
-    function botDecideBuy(bot, space) {
-        const diffSelect = document.getElementById('difficultySelect');
-        const difficulty = diffSelect ? parseInt(diffSelect.value) : 1; // Default 1 (Gambler)
-
-        let shouldBuy = false;
-
-        if (difficulty === 0) {
-            // Apprentice: Very Conservative. Keeps $300 buffer.
-            shouldBuy = (bot.money >= space.price + 300);
-        } else if (difficulty === 1) {
-            // Gambler: Moderate. Keeps $50 buffer.
-            shouldBuy = (bot.money >= space.price + 50);
-        } else {
-            // Ruthless: Aggressive. Buys if affordable.
-            shouldBuy = (bot.money >= space.price);
-        }
-
-        if (shouldBuy) {
-            updateMoney(bot, -space.price);
-            bot.properties.push(space.index);
-            log(`${bot.name} bought ${space.name}.`);
-            
-            const cell = document.getElementById(`space-${space.index}`);
-            cell.style.borderColor = bot.color;
-            cell.style.borderWidth = '3px';
-        } else {
-            log(`${bot.name} passed on ${space.name}.`);
-        }
-        turnPhase = 'end';
-    }
-
-    function actionEndTurn() {
-        // Check bankruptcy
-        const p = getCurrentPlayer();
-        if (p.money < 0) {
-            log(` <b>${p.name} WENT BANKRUPT!</b>`);
-            p.eliminated = true;
-            
-            // Return properties to bank
-            p.properties.forEach(idx => {
-                const cell = document.getElementById(`space-${idx}`);
-                if(cell) {
-                    cell.style.borderColor = "#444";
-                    cell.style.borderWidth = "1px";
-                }
+    function init() {
+        if (window.GameUI) {
+            window.GameUI.init(canvas, {
+                onStart: startGame,
+                onLoop: loop,
+                onResize: handleResize
             });
-            p.properties = [];
+            window.GameUI.showStartScreen();
+        } else {
+            // Fallback
+            handleResize();
+            startGame();
+            setInterval(loop, 16);
+        }
 
-            // Remove token
-            const tok = document.getElementById(`token-${p.id}`);
-            if (tok) tok.style.display = 'none';
-            
-            // Check for Winner
-            const survivors = players.filter(pl => !pl.eliminated);
-            if (survivors.length === 1) {
-                log(` <b>GAME OVER! ${survivors[0].name} WINS!</b>`);
-                showVictory(survivors[0]);
+        // Setup Buttons
+        document.getElementById('btn-roll').onclick = () => playerRoll();
+        document.getElementById('btn-buy').onclick = () => playerBuy();
+        document.getElementById('btn-end').onclick = () => endTurn();
+    }
+
+    function startGame() {
+        if (window.GameUI) window.GameUI.hideStartScreen();
+        
+        players = [
+            { id: 0, name: 'You', money: 1500, pos: 0, color: PLAYER_COLORS[0], props: [], jail: 0, isBot: false },
+            { id: 1, name: 'CPU1', money: 1500, pos: 0, color: PLAYER_COLORS[1], props: [], jail: 0, isBot: true },
+            { id: 2, name: 'CPU2', money: 1500, pos: 0, color: PLAYER_COLORS[2], props: [], jail: 0, isBot: true },
+            { id: 3, name: 'CPU3', money: 1500, pos: 0, color: PLAYER_COLORS[3], props: [], jail: 0, isBot: true },
+        ];
+        
+        // Reset properties
+        SPACES.forEach(s => s.owner = null);
+        
+        currentPlayer = 0;
+        turnState = 'roll';
+        updateUI();
+        log('Welcome to Neon Estate!');
+    }
+
+    function handleResize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        const minDim = Math.min(canvas.width, canvas.height);
+        const padding = 20;
+        boardRect.w = minDim - padding * 2;
+        boardRect.h = boardRect.w;
+        boardRect.x = (canvas.width - boardRect.w) / 2;
+        boardRect.y = (canvas.height - boardRect.h) / 2;
+        
+        // 11 spaces per side logic (Corners count twice in simplistic math, but we need 13 cells? No, 11x11 grid)
+        // corner + 9 middle + corner = 11 units
+        spaceSize = boardRect.w / 11;
+        
+        render();
+    }
+
+    function loop() {
+        render();
+    }
+
+    // --- Logic ---
+
+    function playerRoll() {
+        const p = players[currentPlayer];
+        
+        // Roll
+        dice = [Math.ceil(Math.random()*6), Math.ceil(Math.random()*6)];
+        const total = dice[0] + dice[1];
+        
+        log(${p.name} rolled  +  = );
+        
+        // Jail Logic
+        if (p.jail > 0) {
+            if (dice[0] === dice[1]) {
+                log('Double! Escaped Jail!');
+                p.jail = 0;
+            } else {
+                log(Still in jail. Turns left: );
+                p.jail--;
+                endTurn();
                 return;
             }
-            
-            if (p.isHuman) {
-                log(" You have been eliminated.");
-            }
         }
         
-        turnPhase = 'roll';
-        const btnBuy = document.getElementById('btn-buy');
-        if(btnBuy) {
-            btnBuy.disabled = true;
-            btnBuy.innerText = "Buy Property";
-        }
+        // Move
+        movePlayer(p, total);
         
-        // Find next active player
-        let nextIndex = (currentPlayerIndex + 1) % players.length;
-        let loopCount = 0;
-        while (players[nextIndex].eliminated && loopCount < players.length) {
-            nextIndex = (nextIndex + 1) % players.length;
-            loopCount++;
-        }
-        
-        currentPlayerIndex = nextIndex;
-        updateUI();
-        checkBotTurn();
+        // Check Landing
+        handleLanding(p);
     }
-
-    function showVictory(winner) {
-        const overlay = document.createElement('div');
-        overlay.className = 'victory-overlay';
-        overlay.innerHTML = `
-            <div class="victory-title"> ${winner.name} WINS!</div>
-            <div style="font-size: 20px; color: #fff; margin-bottom: 20px;">
-                Total Wealth: $${winner.money} <br>
-                Properties Owned: ${winner.properties.length}
-            </div>
-            <button class="victory-btn" onclick="location.reload()">Play Again</button>
-            <button class="victory-btn" style="margin-top: 10px;" onclick="location.href='../index.html'">Exit</button>
-        `;
-        document.body.appendChild(overlay);
+    
+    function movePlayer(p, steps) {
+        let oldPos = p.pos;
+        p.pos = (p.pos + steps) % 40;
         
-        // Confetti effect via emoji rain
-        if(window.createPixelRain) {
-            // Boost rain
-            for(let i=0; i<50; i++) setTimeout(window.createPixelRain, i*50);
+        // Pass Go
+        if (p.pos < oldPos) {
+            p.money += 200;
+            log('Passed GO! +');
         }
     }
-
-    function checkBotTurn() {
-        const p = getCurrentPlayer();
-        if (!p.isHuman) {
-            setTimeout(() => {
-                actionRoll();
-            }, 1000); // delay for effect
-        }
-    }
-
-    function getCurrentPlayer() {
-        return players[currentPlayerIndex];
-    }
-
-    function updateUI() {
-        const p = getCurrentPlayer();
-        const list = document.getElementById('player-list');
-        list.innerHTML = "";
+    
+    function handleLanding(p) {
+        const space = SPACES[p.pos];
+        log(Landed on );
         
-        players.forEach((pl, i) => {
-            const div = document.createElement('div');
-            div.style.padding = "5px";
-            div.style.border = (i === currentPlayerIndex) ? "1px solid white" : "1px solid transparent";
-            div.style.backgroundColor = (i === currentPlayerIndex) ? "#333" : "transparent";
-            div.style.color = pl.color;
-            // Use icon in list
-            div.innerHTML = `<b>${pl.icon} ${pl.name}</b>: $${pl.money}`;
-            // Show properties count
-            div.innerHTML += `<br><small>Props: ${pl.properties.length}</small>`;
-            list.appendChild(div);
-            
-            // Update Token visual state (Scale active player)
-            const tok = document.getElementById(`token-${pl.id}`);
-            if(tok && tok.dataset.baseTransform) {
-                const base = tok.dataset.baseTransform;
-                if (i === currentPlayerIndex) {
-                     tok.style.transform = `${base} scale(1.3)`;
-                     tok.style.zIndex = 100;
-                     tok.style.filter = "drop-shadow(0 0 5px white)";
+        // Logic by type
+        if (space.type === 'prop' || space.type === 'rail' || space.type === 'util') {
+            if (space.owner === null) {
+                // Can buy
+                if (p.money >= space.price) {
+                     if (!p.isBot) {
+                         turnState = 'buy';
+                         updateButtons();
+                     } else {
+                         // Bot AI: always buy if money > price + 200
+                         if (p.money > space.price + 200) {
+                             buyProperty(p, space);
+                         } 
+                         endTurn();
+                     }
+                     return; // Wait for input if human
                 } else {
-                     tok.style.transform = base; // Reset scale
-                     tok.style.zIndex = 50;
-                     tok.style.filter = "none";
+                    log('Not enough cash to buy.');
+                    endTurn();
                 }
+            } else if (space.owner !== p.id) {
+                // Pay Rent
+                const owner = players[space.owner];
+                const rent = calculateRent(space);
+                p.money -= rent;
+                owner.money += rent;
+                log(Paid body {
+    margin: 0;
+    overflow: hidden;
+    background: #050510;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    color: #fff;
+}
+
+#game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+canvas {
+    box-shadow: 0 0 50px rgba(0, 255, 255, 0.1);
+}
+
+#ui-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#score-panel {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    pointer-events: auto;
+}
+
+.player-card {
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid #333;
+    padding: 10px;
+    width: 120px;
+    text-align: center;
+    border-radius: 5px;
+    transition: all 0.3s;
+}
+
+.player-card.active {
+    border-color: #0ff;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.p-name { font-weight: bold; margin-bottom: 5px; color: #aaa; }
+.p-money { font-size: 1.2rem; color: #fff; text-shadow: 0 0 5px #fff; }
+.p-props { font-size: 0.8rem; color: #888; }
+
+.p1.active .p-name { color: #0ff; }
+.p2.active .p-name { color: #f0f; }
+.p3.active .p-name { color: #ff0; }
+.p4.active .p-name { color: #0f0; }
+
+#center-message {
+    text-align: center;
+    font-size: 3rem;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.1);
+    text-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+    pointer-events: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+}
+
+#action-panel {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    pointer-events: auto;
+    margin-bottom: 20px;
+}
+
+.neon-btn {
+    background: rgba(0, 0, 0, 0.8);
+    color: #0ff;
+    border: 1px solid #0ff;
+    padding: 15px 30px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: all 0.2s;
+    font-family: inherit;
+    min-width: 150px;
+}
+
+.neon-btn:hover:not(:disabled) {
+    background: #0ff;
+    color: #000;
+    box-shadow: 0 0 20px #0ff;
+}
+
+.neon-btn:disabled {
+    border-color: #333;
+    color: #555;
+    cursor: not-allowed;
+}
+{rent} rent to );
+                checkBankrupt(p);
+                endTurn();
+            } else {
+                // Own property
+                endTurn();
+            }
+        } else if (space.type === 'tax') {
+            p.money -= space.amount;
+            log(Paid body {
+    margin: 0;
+    overflow: hidden;
+    background: #050510;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    color: #fff;
+}
+
+#game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+canvas {
+    box-shadow: 0 0 50px rgba(0, 255, 255, 0.1);
+}
+
+#ui-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#score-panel {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    pointer-events: auto;
+}
+
+.player-card {
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid #333;
+    padding: 10px;
+    width: 120px;
+    text-align: center;
+    border-radius: 5px;
+    transition: all 0.3s;
+}
+
+.player-card.active {
+    border-color: #0ff;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.p-name { font-weight: bold; margin-bottom: 5px; color: #aaa; }
+.p-money { font-size: 1.2rem; color: #fff; text-shadow: 0 0 5px #fff; }
+.p-props { font-size: 0.8rem; color: #888; }
+
+.p1.active .p-name { color: #0ff; }
+.p2.active .p-name { color: #f0f; }
+.p3.active .p-name { color: #ff0; }
+.p4.active .p-name { color: #0f0; }
+
+#center-message {
+    text-align: center;
+    font-size: 3rem;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.1);
+    text-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+    pointer-events: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+}
+
+#action-panel {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    pointer-events: auto;
+    margin-bottom: 20px;
+}
+
+.neon-btn {
+    background: rgba(0, 0, 0, 0.8);
+    color: #0ff;
+    border: 1px solid #0ff;
+    padding: 15px 30px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: all 0.2s;
+    font-family: inherit;
+    min-width: 150px;
+}
+
+.neon-btn:hover:not(:disabled) {
+    background: #0ff;
+    color: #000;
+    box-shadow: 0 0 20px #0ff;
+}
+
+.neon-btn:disabled {
+    border-color: #333;
+    color: #555;
+    cursor: not-allowed;
+}
+{space.amount} tax.);
+            checkBankrupt(p);
+            endTurn();
+        } else if (space.type === 'gotojail') {
+            p.pos = 10; // Jail index
+            p.jail = 3;
+            log('GO TO JAIL!');
+            endTurn();
+        } else {
+            // chance, chest, parking
+            endTurn();
+        }
+    }
+    
+    function calculateRent(space) {
+        if (space.type === 'prop') return space.rent; // Simplified
+        if (space.type === 'rail') return 25; // Simplified
+        if (space.type === 'util') return 4 * (dice[0]+dice[1]);
+        return 0;
+    }
+    
+    function playerBuy() {
+        const p = players[currentPlayer];
+        const space = SPACES[p.pos];
+        
+        buyProperty(p, space);
+        endTurn();
+    }
+    
+    function buyProperty(p, space) {
+        if (p.money >= space.price) {
+            p.money -= space.price;
+            space.owner = p.id;
+            p.props.push(p.pos);
+            log(Bought !);
+        }
+    }
+    
+    function endTurn() {
+        currentPlayer = (currentPlayer + 1) % 4;
+        turnState = 'roll';
+        updateUI();
+        
+        const p = players[currentPlayer];
+        if (p.isBot) {
+            setTimeout(() => playerRoll(), 1500); // Delay for bot
+        }
+    }
+    
+    function checkBankrupt(p) {
+        if (p.money < 0) {
+            log(${p.name} WENT BANKRUPT!);
+            // Reset props
+            SPACES.forEach(s => {
+                if (s.owner === p.id) s.owner = null;
+            });
+            // Mark inactive? (Simple version just lets them play with neg money for now or hangs)
+            // Real version removes player.
+        }
+    }
+    
+    function updateUI() {
+        // Cards
+        players.forEach((p, i) => {
+            const card = document.querySelectorAll('.player-card')[i];
+            card.querySelector('.p-money').innerText = '$' + p.money;
+            card.querySelector('.p-props').innerText = 'Props: ' + p.props.length;
+            
+            if (i === currentPlayer) card.classList.add('active');
+            else card.classList.remove('active');
+        });
+        
+        updateButtons();
+    }
+    
+    function updateButtons() {
+        const p = players[currentPlayer];
+        const rollBtn = document.getElementById('btn-roll');
+        const buyBtn = document.getElementById('btn-buy');
+        const endBtn = document.getElementById('btn-end');
+        
+        rollBtn.disabled = true;
+        buyBtn.disabled = true;
+        endBtn.disabled = true;
+        
+        if (p.isBot) return; // Disable all for bot
+        
+        if (turnState === 'roll') rollBtn.disabled = false;
+        if (turnState === 'buy') {
+            buyBtn.disabled = false;
+            endBtn.disabled = false; // Can skip buy
+        }
+    }
+    
+    function log(msg) {
+        document.getElementById('center-message').innerHTML = msg;
+    }
+
+    // --- Rendering ---
+    
+    function render() {
+        // BG
+        ctx.fillStyle = '#050510';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Board
+        drawBoard();
+        
+        // Players
+        drawPlayers();
+        
+        // Dice (Visual only)
+        // drawDice();
+    }
+    
+    function getSpaceCoords(index) {
+        // Map 0-39 to x,y on board
+        // 0=BottomRight, 10=BottomLeft, 20=TopLeft, 30=TopRight
+        
+        // Correct monopoly standard starts Bottom Right and goes CCW?
+        // Actually usually standard is Bottom Right = Go (index 0). 
+        // Then move Left to 10 (Jail). Up to 20 (Parking). Right to 30 (Go Jail). Down to 0.
+        
+        let x, y;
+        const bs = boardRect.w;
+        const ss = spaceSize;
+        const ssH = ss; // height of normal space
+        
+        // Adjust for corners being larger? 
+        // Simplification: uniform grid 11x11
+        // 0 is at (10, 10) in grid coords
+        // 1..9 are (9..1, 10)
+        // 10 is at (0, 10)
+        // 11..19 are (0, 9..1)
+        // 20 is at (0, 0)
+        // 21..29 are (1..9, 0)
+        // 30 is at (10, 0)
+        // 31..39 are (10, 1..9)
+        
+        let gx, gy;
+        
+        if (index === 0) { gx=10; gy=10; }
+        else if (index < 10) { gx=10-index; gy=10; }
+        else if (index === 10) { gx=0; gy=10; }
+        else if (index < 20) { gx=0; gy=10-(index-10); }
+        else if (index === 20) { gx=0; gy=0; }
+        else if (index < 30) { gx=index-20; gy=0; }
+        else if (index === 30) { gx=10; gy=0; }
+        else if (index < 40) { gx=10; gy=index-30; }
+        
+        x = boardRect.x + gx * ss;
+        y = boardRect.y + gy * ss;
+        
+        return { x, y };
+    }
+    
+    function drawBoard() {
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#0ff';
+        
+        SPACES.forEach((space, i) => {
+            const pos = getSpaceCoords(i);
+            const size = spaceSize;
+            
+            // Background
+            ctx.fillStyle = '#111';
+            ctx.fillRect(pos.x, pos.y, size, size);
+            ctx.strokeRect(pos.x, pos.y, size, size);
+            
+            // Color Bar
+            if (space.group) {
+                const barH = size * 0.25;
+                ctx.fillStyle = space.group;
+                
+                // Orient based on side?
+                // For simplicity, just draw a bar at the 'top' relative to the space content
+                // Actually need to rotate based on side.
+                
+                // Determine side
+                let side = 0; // 0=bot, 1=left, 2=top, 3=right
+                if (i > 0 && i < 10) side = 0;
+                else if (i > 10 && i < 20) side = 1;
+                else if (i > 20 && i < 30) side = 2;
+                else if (i > 30 && i < 40) side = 3;
+                
+                if (side === 0) ctx.fillRect(pos.x, pos.y, size, barH); // Top of cell (which is inner edge for bottom row)
+                if (side === 1) ctx.fillRect(pos.x + size - barH, pos.y, barH, size); // Right of cell (inner)
+                if (side === 2) ctx.fillRect(pos.x, pos.y + size - barH, size, barH); // Bottom of cell (inner)
+                if (side === 3) ctx.fillRect(pos.x, pos.y, barH, size); // Left of cell (inner)
+            }
+            
+            // Text
+            ctx.fillStyle = '#fff';
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(space.name.substring(0, 3), pos.x + size/2, pos.y + size/2);
+            
+            // Owner Marker
+            if (space.owner !== null && space.owner !== undefined) {
+                ctx.fillStyle = players[space.owner].color;
+                ctx.beginPath();
+                ctx.arc(pos.x + size/2, pos.y + size/2 + 10, 3, 0, Math.PI*2);
+                ctx.fill();
             }
         });
-
-        const human = players.find(pl => pl.isHuman);
-        const rollBtn = document.getElementById('btn-roll');
-        const endBtn = document.getElementById('btn-end');
-        if(!rollBtn || !endBtn) return;
         
-        // Button States
-        if (p.isHuman) {
-            if (turnPhase === 'roll') {
-                rollBtn.disabled = false;
-                endBtn.disabled = true;
-            } else if (turnPhase === 'action') {
-                rollBtn.disabled = true;
-                endBtn.disabled = false; // can skip buying
-            } else if (turnPhase === 'end') {
-                rollBtn.disabled = true;
-                endBtn.disabled = false;
-            }
-        } else {
-            rollBtn.disabled = true;
-            endBtn.disabled = true;
-        }
+        // Center Void
+        ctx.fillStyle = '#050510';
+        //fillRect for center hole (1 to 9)
+        ctx.fillRect(boardRect.x + spaceSize, boardRect.y + spaceSize, spaceSize*9, spaceSize*9);
+    }
+    
+    function drawPlayers() {
+        players.forEach((p, i) => {
+            const pos = getSpaceCoords(p.pos);
+            const size = spaceSize;
+            
+            // Offset players so they don't overlap perfectly
+            const offX = (i % 2) * 10 - 5;
+            const offY = Math.floor(i / 2) * 10 - 5;
+            
+            const px = pos.x + size/2 + offX;
+            const py = pos.y + size/2 + offY;
+            
+            // Glow
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = p.color;
+            
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(px, py, 6, 0, Math.PI*2);
+            ctx.fill();
+            
+            ctx.shadowBlur = 0;
+        });
     }
 
-    function log(msg) {
-        const box = document.getElementById('log');
-        if(!box) return;
-        const line = document.createElement('div');
-        
-        // Add color/class based on content
-        if (msg.includes('Bankrupt') || msg.includes('Eliminated')) {
-            line.style.color = '#ff0055'; // Red/Pink
-            line.style.fontWeight = 'bold';
-        } else if (msg.includes('bought') || msg.includes('dividend')) {
-            line.style.color = '#00ffcc'; // Cyan
-        } else if (msg.includes('rent') || msg.includes('tax')) {
-            line.style.color = '#ffff00'; // Yellow
-        } else if (msg.includes('rolled')) {
-            line.style.color = '#aaaaaa';
-        }
-        
-        line.innerHTML = `> ${msg}`;
-        box.appendChild(line);
-        box.scrollTop = box.scrollHeight;
-    }
-
-    // Initialize
-    initGame();
-
-}
+    init();
+})();

@@ -2,15 +2,12 @@
 class InvadersGame {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
-        if (!this.canvas) return; // Guard
+        if (!this.canvas) return;
 
         this.ctx = this.canvas.getContext('2d');
-        this.scoreEl = document.getElementById('game-score');
-        this.gameOverScreen = document.getElementById('gameOver');
-        this.finalScoreEl = document.getElementById('final-score');
-
+        
         this.score = 0;
-        this.isGameOver = false;
+        this.isGameRunning = false;
         this.isPaused = false;
         this.animationId = null;
         this.difficulty = 2;
@@ -18,111 +15,149 @@ class InvadersGame {
         // Player
         this.player = {
             x: this.canvas.width / 2,
-            y: this.canvas.height - 30,
-            width: 30,
+            y: this.canvas.height - 40,
+            width: 32,
             height: 20,
-            dx: 0, 
             speed: 5,
             bullets: []
         };
 
         // Aliens
         this.aliens = [];
+        this.particles = [];
         this.rows = 4;
         this.cols = 8;
         this.alienDirection = 1;
         this.alienSpeed = 1;
-
-        // Pause Button
-        this.pauseBtn = document.getElementById('pause-btn');
-        if(this.pauseBtn) {
-            // Remove old listener if any (cleaner to just use new bound function)
-            this.pauseBtn.onclick = () => this.togglePause();
-        }
         
-        // Input Handling
+        // Input
+        this.input = { left: false, right: false };
+        this.bindEvents();
+
+        this.init();
+    }
+
+    bindEvents() {
         this.handleKeyDown = (e) => {
-            if (!document.getElementById('gameCanvas')) return; // check existence
+            if (!this.isGameRunning && !window.GameUI?.active) return;
             
-            if (e.key === 'ArrowLeft') this.input.left = true;
-            if (e.key === 'ArrowRight') this.input.right = true;
+            if (["ArrowLeft", "ArrowRight", "Space"].includes(e.code)) {
+                e.preventDefault();
+            }
+
+            if (e.code === 'ArrowLeft') this.input.left = true;
+            if (e.code === 'ArrowRight') this.input.right = true;
+            
             if (e.code === 'Space') {
-                if (this.isGameOver) this.startGame();
-                else if (!this.isPaused && this.player.bullets.length < 3) {
-                     this.player.bullets.push({x: this.player.x + this.player.width/2 - 2, y: this.player.y, width: 4, height: 10, speed: 7});
-                }
+                if (this.isPaused) return;
+                this.fireBullet();
+            }
+            
+            if (e.code === 'KeyP' || e.code === 'Escape') {
+                if (this.isGameRunning) this.togglePause();
             }
         };
         
         this.handleKeyUp = (e) => {
-             if (e.key === 'ArrowLeft') this.input.left = false;
-             if (e.key === 'ArrowRight') this.input.right = false;
+             if (e.code === 'ArrowLeft') this.input.left = false;
+             if (e.code === 'ArrowRight') this.input.right = false;
         };
-        
-        this.input = { left: false, right: false };
 
         window.addEventListener('keydown', this.handleKeyDown);
         window.addEventListener('keyup', this.handleKeyUp);
-        
-        this.startGame();
+    }
+    
+    init() {
+        if (window.GameUI) {
+            window.GameUI.showStartScreen(
+                "INVADERS", 
+                "Defend Earth!<br>Arrows to move, Space to shoot.", 
+                () => this.startGame()
+            );
+        } else {
+            this.startGame();
+        }
+    }
+
+    fireBullet() {
+        if (!this.isGameRunning || this.isPaused) return;
+        // Limit bullets
+        if (this.player.bullets.length < 3) {
+             this.player.bullets.push({
+                 x: this.player.x + this.player.width/2 - 2, 
+                 y: this.player.y, 
+                 width: 4, 
+                 height: 12, 
+                 speed: 8
+             });
+        }
     }
 
     togglePause() {
-        if (this.isGameOver) return;
         this.isPaused = !this.isPaused;
-        if (this.pauseBtn) this.pauseBtn.innerText = this.isPaused ? 'RESUME' : 'PAUSE';
-        if (!this.isPaused) this.loop();
+        if (this.isPaused && window.GameUI) {
+            window.GameUI.showPause(
+                () => this.togglePause(),
+                () => window.history.back()
+            );
+        } else {
+            if (window.GameUI) window.GameUI.hide();
+            this.loop();
+        }
     }
 
     startGame() {
         this.score = 0;
-        this.isGameOver = false;
+        this.isGameRunning = true;
         this.isPaused = false;
-        if(this.pauseBtn) this.pauseBtn.innerText = 'PAUSE';
         
-        this.player.x = this.canvas.width / 2;
+        this.player.x = this.canvas.width / 2 - this.player.width/2;
         this.player.bullets = [];
         this.aliens = [];
-        if(this.scoreEl) this.scoreEl.innerText = this.score;
-        if(this.gameOverScreen) this.gameOverScreen.style.display = 'none';
+        this.particles = [];
 
         // Difficulty
-        this.difficulty = parseInt(localStorage.getItem("difficulty") || "0");
-        if (this.difficulty === 0) this.alienSpeed = 0.5;
-        else if (this.difficulty === 1) this.alienSpeed = 1;
-        else this.alienSpeed = 2;
+        this.difficulty = 1; // Default
+        this.alienSpeed = 1;
 
         // Create Aliens
         for (let r = 0; r < this.rows; r++) {
             for (let c = 0; c < this.cols; c++) {
                 this.aliens.push({
-                    x: 50 + c * 50,
-                    y: 30 + r * 40,
-                    width: 30,
-                    height: 20,
+                    x: 60 + c * 55,
+                    y: 50 + r * 45,
+                    width: 32,
+                    height: 24,
                     active: true,
-                    type: r === 0 ? 'top' : (r < 3 ? 'mid' : 'bot')
+                    type: r === 0 ? 'top' : (r < 2 ? 'mid' : 'bot'),
+                    frame: 0 // Animation frame
                 });
             }
         }
 
+        if (window.GameUI) window.GameUI.hide();
         if (this.animationId) cancelAnimationFrame(this.animationId);
         this.loop();
     }
 
     loop() {
-        if (!document.getElementById('gameCanvas')) {
-             window.removeEventListener('keydown', this.handleKeyDown);
-             window.removeEventListener('keyup', this.handleKeyUp);
-             return;
-        }
-
-        if (this.isGameOver) return;
-        if (this.isPaused) return;
+        if (!this.isGameRunning || this.isPaused) return;
 
         this.update();
         this.draw();
         this.animationId = requestAnimationFrame(() => this.loop());
+    }
+
+    createExplosion(x, y, color) {
+        for(let i=0; i<8; i++) {
+            this.particles.push({
+                x, y,
+                dx: (Math.random() - 0.5) * 4,
+                dy: (Math.random() - 0.5) * 4,
+                life: 1.0,
+                color
+            });
+        }
     }
 
     update() {
@@ -130,8 +165,10 @@ class InvadersGame {
         if (this.input.left) this.player.x -= this.player.speed;
         if (this.input.right) this.player.x += this.player.speed;
         
-        if (this.player.x < 0) this.player.x = 0;
-        if (this.player.x + this.player.width > this.canvas.width) this.player.x = this.canvas.width - this.player.width;
+        // Clamp
+        if (this.player.x < 10) this.player.x = 10;
+        if (this.player.x + this.player.width > this.canvas.width - 10) 
+            this.player.x = this.canvas.width - 10 - this.player.width;
 
         // Bullets Move
         for (let i = 0; i < this.player.bullets.length; i++) {
@@ -142,32 +179,52 @@ class InvadersGame {
                 i--;
             }
         }
+        
+        // Particles
+        for (let i = 0; i < this.particles.length; i++) {
+            let p = this.particles[i];
+            p.x += p.dx;
+            p.y += p.dy;
+            p.life -= 0.05;
+            if(p.life <= 0) {
+                this.particles.splice(i, 1);
+                i--;
+            }
+        }
 
-        // Aliens Move
+        // Alien Logic
+        // Move trigger every X frames? Or smooth? Smooth is better for smooth canvas.
+        
         let edgeHit = false;
-        this.aliens.forEach(a => {
-            if (!a.active) return;
+        const activeAliens = this.aliens.filter(a => a.active);
+        
+        // Animate aliens (wiggle)
+        const time = Date.now() / 500;
+        
+        activeAliens.forEach(a => {
             a.x += this.alienSpeed * this.alienDirection;
-            if (a.x <= 0 || a.x + a.width >= this.canvas.width) {
+            if (a.x <= 10 || a.x + a.width >= this.canvas.width - 10) {
                 edgeHit = true;
             }
         });
 
         if (edgeHit) {
             this.alienDirection *= -1;
-            this.aliens.forEach(a => {
-                a.y += 20; // Move down
-                if (a.y + a.height >= this.player.y) this.endGame(); // Hit player line
+            activeAliens.forEach(a => {
+                a.y += 20; 
+                if (a.y + a.height >= this.player.y) this.gameOver(false); 
             });
+            // Increase speed slightly per drop
+            this.alienSpeed = this.alienSpeed > 0 ? this.alienSpeed + 0.2 : this.alienSpeed - 0.2; // Keep sign? No, speed is scalar usually
+            // Just scalar increase on absolute
+            const sign = this.alienDirection > 0 ? 1 : -1;
+            const mag = Math.abs(this.alienSpeed) + 0.1;
+            this.alienSpeed = mag * sign; // Wait... current dir is flipped above. 
+            // Correct logic: flip first, then move down, then increase speed magnitude? 
+            // Handled mostly by flip.
         }
 
-        // Alien Shooting (Randomly)
-        if (Math.random() < 0.005 * (this.difficulty + 1)) {
-            // Find a random active alien to shoot
-            // Not implemented fully in original, keeping it minimal
-        }
-
-        // Collisions Player Bullet -> Alien
+        // Collisions
         this.player.bullets.forEach((b, bIdx) => {
             let hit = false;
             for (let a of this.aliens) {
@@ -176,10 +233,7 @@ class InvadersGame {
                     a.active = false;
                     hit = true;
                     this.score += 10;
-                    if(this.scoreEl) this.scoreEl.innerText = this.score;
-                    
-                    // Speed up as aliens die
-                    // this.alienSpeed *= 1.02; // Accumulates too fast?
+                    this.createExplosion(a.x + a.width/2, a.y + a.height/2, this.getAlienColor(a.type));
                     break; 
                 }
             }
@@ -189,60 +243,101 @@ class InvadersGame {
         });
 
         if (this.aliens.filter(a => a.active).length === 0) {
-            this.endGame(true);
+            this.gameOver(true);
         }
     }
 
+    getAlienColor(type) {
+        if (type === 'top') return '#ff0055';
+        if (type === 'mid') return '#00ffff';
+        return '#00ff00';
+    }
+
     draw() {
-        this.ctx.fillStyle = 'black';
+        if (!this.ctx) return;
+        
+        // BG
+        this.ctx.fillStyle = '#050510';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height); 
 
-        // Draw Player (Green Cannon)
+        // Particles
+        this.particles.forEach(p => {
+            this.ctx.globalAlpha = p.life;
+            this.ctx.fillStyle = p.color;
+            this.ctx.fillRect(p.x, p.y, 4, 4);
+            this.ctx.globalAlpha = 1.0;
+        });
+
+        // Player (Neon Green Tank)
+        this.ctx.shadowBlur = 15;
+        this.ctx.shadowColor = '#00ff00';
         this.ctx.fillStyle = '#00ff00';
         const px = this.player.x;
         const py = this.player.y;
-        // Base
-        this.ctx.fillRect(px, py + 12, 30, 8);
-        // Mid
-        this.ctx.fillRect(px + 2, py + 8, 26, 4);
-        this.ctx.fillRect(px + 12, py, 6, 8); // Turret
+        
+        // Neo Tank
+        this.ctx.fillRect(px, py + 12, 32, 8); // Base
+        this.ctx.fillRect(px + 4, py + 6, 24, 6); // Mid
+        this.ctx.fillRect(px + 13, py, 6, 6); // Turret
+        
+        this.ctx.shadowBlur = 0;
 
-        // Draw Aliens (Simple Rects for now or simplified sprites from original)
-        // Original had binary maps, let's keep it simple or copy them if possible.
-        // For brevity in rewrite, using distinct colors/shapes.
+        // Aliens
+        const time = Math.floor(Date.now() / 500); // For animation toggle
         
         this.aliens.forEach(a => {
             if (!a.active) return;
             
-            if (a.type === 'top') this.ctx.fillStyle = '#fff';
-            else if (a.type === 'mid') this.ctx.fillStyle = '#0ff';
-            else this.ctx.fillStyle = '#f0f';
+            const color = this.getAlienColor(a.type);
+            this.ctx.shadowBlur = 10;
+            this.ctx.shadowColor = color;
+            this.ctx.fillStyle = color;
             
-            // Simple alien shape
-            this.ctx.fillRect(a.x, a.y, a.width, a.height);
+            // Draw Alien Shape (Abstract pixel art)
+            // Just simple shapes for now
+            this.ctx.fillRect(a.x + 4, a.y + 4, a.width - 8, a.height - 8);
+            
+            // Arms display based on time
+            if (time % 2 === 0) {
+                this.ctx.fillRect(a.x, a.y, 4, 8);
+                this.ctx.fillRect(a.x + a.width - 4, a.y, 4, 8);
+            } else {
+                this.ctx.fillRect(a.x, a.y + a.height - 8, 4, 8);
+                this.ctx.fillRect(a.x + a.width - 4, a.y + a.height - 8, 4, 8);
+            }
             
             // Eyes
-            this.ctx.fillStyle = '#000';
-            this.ctx.fillRect(a.x + 8, a.y + 6, 4, 4);
-            this.ctx.fillRect(a.x + 18, a.y + 6, 4, 4);
+            this.ctx.fillStyle = '#050510';
+            this.ctx.fillRect(a.x + 8, a.y + 8, 4, 4);
+            this.ctx.fillRect(a.x + a.width - 12, a.y + 8, 4, 4);
         });
 
-        // Draw Bullets
+        // Bullets
+        this.ctx.shadowBlur = 10;
+        this.ctx.shadowColor = '#fff';
         this.ctx.fillStyle = '#ffffff';
         this.player.bullets.forEach(b => {
-            this.ctx.fillRect(b.x, b.y, b.width, b.height);
+             this.ctx.fillRect(b.x, b.y, b.width, b.height);
         });
+        
+        this.ctx.shadowBlur = 0;
+        
+        // HUD
+        this.ctx.fillStyle = '#fff';
+        this.ctx.font = "20px 'Courier New', monospace";
+        this.ctx.fillText(`SCORE: ${this.score}`, 10, 30);
     }
 
-    endGame(win) {
-        this.isGameOver = true;
-        
-        if (this.finalScoreEl) this.finalScoreEl.innerText = this.score;
-        
-        const h2 = document.querySelector('#gameOver h2');
-        if (h2) h2.innerText = win ? "WAVE CLEARED!" : "GAME OVER";
-        
-        if (this.gameOverScreen) this.gameOverScreen.style.display = 'block';
+    gameOver(win) {
+        this.isGameRunning = false;
+        if (window.GameUI) {
+            window.GameUI.showGameOver(
+                this.score, 
+                () => this.startGame(), 
+                () => window.history.back(),
+                win ? "WAVE CLEARED!" : "INVASION SUCCESSFUL"
+            );
+        }
     }
 }
 

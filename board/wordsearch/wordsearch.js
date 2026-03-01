@@ -1,357 +1,334 @@
-﻿console.log("Game loaded: wordsearch.js");
-{ // SCOPE START
+/*
+ * DATA MINER (Word Search)
+ * Theme: Matrix/Hacking
+ * Logic: Grid generation and Canvas selection
+ */
 
-// Game State
-let gridSize = 15;
-let words = [];
-let wordGrid = [];
-let foundWords = [];
-let timerInterval;
-let startTime;
-
-// Word list
-const allWords = [
-    "APPLE", "BANANA", "CHERRY", "DATE", "FIG", "GRAPE", "HONEY", "LIME", "KIWI", "LEMON", "MANGO", 
-    "ORANGE", "PEACH", "PLUM", "RASPBERRY", "STRAWBERRY", "WATERMELON", "BLUEBERRY", "BLACKBERRY",
-    "PINEAMPLE", "COCONUT", "AVOCADO", "TOMATO", "POTATO", "ONION", "GARLIC", "PEPPER", "CARROT",
-    "BROCCOLI", "SPINACH", "KALE", "LETTUCE", "CABBAGE", "CELERY", "CUCUMBER", "ZUCCHINI", "EGGPLANT",
-    "SQUASH", "PUMPKIN", "RADISH", "BEET", "TURNIP", "PARSNIP", "RUTABAGA", "YAM", "OKRA", "ASPARAGUS",
-    "ARTICHOKE", "MUSHROOM", "CORN", "PEAS", "BEANS", "LENTILS", "CHICKPEAS", "SOYBEANS", "NUTS", "SEEDS",
-    "GRAINS", "RICE", "WHEAT", "OATS", "BARLEY", "RYE", "QUINOA", "MILLET", "SORGHUM", "BUCKWHEAT", "AMARANTH",
-    "SPELT", "TEFF", "FARRO", "KAMUT", "TRITICALE", "FONIO", "CANARY", "POPCORN", "CORNMEAL", "FLOUR", "BREAD",
-    "PASTA", "NOODLES", "CEREAL", "GRANOLA", "MUESLI", "OATMEAL", "PORRIDGE", "PANCAKES", "WAFFLES", "TOAST",
-    "BAGEL", "CROISSANT", "DONUT", "MUFFIN", "SCONE", "BISCUIT", "COOKIE", "CAKE", "PIE", "TART", "BROWNIE",
-    "CUPCAKE", "PUDDING", "CUSTARD", "MOUSSE", "GELATO", "ICE", "CREAM", "SHERBET", "SORBET", "YOGURT", "CHEESE",
-    "MILK", "BUTTER", "CREAM", "SOUR", "COTTAGE", "RICOTTA", "MASCARPONE", "MOZZARELLA", "CHEDDAR", "GOUDA",
-    "BRIE", "CAMEMBERT", "ROQUEFORT", "GORGONZOLA", "FETA", "PARMESAN", "PECORINO", "MANCHEGO", "GRUYERE",
-    "SWISS", "PROVOLONE", "HAVARTI", "EDAM", "COLBY", "MONTEREY", "JACK", "MUENSTER", "LIMBURGER", "EPOISSES"
-];
-
-const ROWS = 15;
-const COLS = 15;
-const NUM_WORDS = 10;
-
-// Variables to hold DOM elements
-let wordGridEl;
-let wordListEl;
-let foundCountEl;
-let totalCountEl;
-let timerEl;
-let newGameBtn;
-let modal;
-let finalTimeEl;
-let playAgainBtn;
-
-// Start Game
-function initGame() {
-    // Guard: Check if game exists
-    if (!document.getElementById('word-grid')) return;
-
-    // Initialize DOM elements
-    wordGridEl = document.getElementById('word-grid');
-    wordListEl = document.getElementById('word-list');
-    foundCountEl = document.getElementById('found-count');
-    totalCountEl = document.getElementById('total-count');
-    timerEl = document.getElementById('timer');
-    newGameBtn = document.getElementById('new-game-btn');
-    modal = document.getElementById('win-message');
-    finalTimeEl = document.getElementById('final-time');
-    playAgainBtn = document.getElementById('play-again-btn');
-
-    // Attach listeners here to avoid duplications if they were global
-    // But since we are inside a scope that runs once per load, we need to be careful.
-    // Ideally we remove old listeners. But since elements are re-created (innerHTML replacement of parent or navigation),
-    // the elements are new. 'newGameBtn' etc are new elements.
-    if (newGameBtn) newGameBtn.onclick = initGame;
-    if (playAgainBtn) playAgainBtn.onclick = initGame;
+(function() {
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
     
-    // Global mouseup needs care. 
-    // We'll attach it to document, but we must check if game is active inside it.
-    // Also, to prevent stacking listeners indefinitely on document, we can try to remove it first?
-    // We can't remove anonymous functions.
-    // We'll rely on a flag or just checking element existence.
-
-    clearInterval(timerInterval);
-    foundWords = [];
-    words = selectRandomWords();
-    wordGrid = generateGrid(words);
+    // Config
+    const CELL_SIZE = 35;
+    const GRID_W = 15;
+    const GRID_H = 15;
     
-    renderGrid();
-    renderWordList();
-    startTimer();
+    const TERMS = [
+        'ALGORITHM', 'BINARY', 'CACHE', 'DATA', 'ENCRYPT', 'FIREWALL', 'GLITCH', 'HACKER', 
+        'INPUT', 'JAVA', 'KERNEL', 'LOGIN', 'MALWARE', 'NETWORK', 'OUTPUT', 'PIXEL', 
+        'QUERY', 'ROUTER', 'SERVER', 'TOKEN', 'USER', 'VIRUS', 'WIFI', 'ZERO',
+        'ADMIN', 'BACKUP', 'COOKIE', 'DEBUG', 'EMAIL', 'FOLDER', 'GIGABYTE', 'HTML'
+    ];
     
-    if (modal) modal.classList.add('hidden');
-    if (foundCountEl) foundCountEl.innerText = 0;
-    if (totalCountEl) totalCountEl.innerText = words.length;
-}
+    // State
+    let grid = []; // 2D array of chars
+    let words = []; // List of {word, found, color}
+    let placedWords = []; // List of {word, r, c, dr, dc, len} to verify location
+    
+    let selection = { active: false, r1: -1, c1: -1, r2: -1, c2: -1 };
+    let foundLines = []; // {r1,c1, r2,c2, color}
+    
+    // Layout
+    let offsetX = 0;
+    let offsetY = 0;
+    let startTime = 0;
+    let timerInterval = null;
 
-// Select random words
-function selectRandomWords() {
-    let internalList = [...allWords];
-    let selected = [];
-    while (selected.length < NUM_WORDS && internalList.length > 0) {
-        const index = Math.floor(Math.random() * internalList.length);
-        selected.push(internalList[index]);
-        internalList.splice(index, 1); 
-    }
-    return selected;
-}
-
-// Generate Grid with words placed
-function generateGrid(wordsToPlace) {
-    let grid = Array(ROWS).fill(null).map(() => Array(COLS).fill(''));
-
-    for (let word of wordsToPlace) {
-        let placed = false;
-        let attempts = 0;
-        while (!placed && attempts < 100) {
-            placed = tryPlaceWord(grid, word);
-            attempts++;
-        }
-        if (!placed) {
-            console.warn(`Could not place word: ${word}`);
-            // Note: In a real game we might retry or pick another word.
+    function init() {
+        if (window.GameUI) {
+            window.GameUI.init(canvas, {
+                onStart: startGame,
+                onLoop: loop,
+                onResize: handleResize
+            });
+            
+            // Custom Input Handling for Drag
+            // GameUI might capture clicks, but we need drag.
+            // Let's attach our own listeners to canvas, GameUI won't mind if we don't block.
+            canvas.addEventListener('mousedown', handleDown);
+            canvas.addEventListener('mousemove', handleMove);
+            window.addEventListener('mouseup', handleUp);
+            canvas.addEventListener('touchstart', handleDown);
+            canvas.addEventListener('touchmove', handleMove);
+            window.addEventListener('touchend', handleUp);
+            
+            window.GameUI.showStartScreen();
+        } else {
+            handleResize();
+            startGame();
+            setInterval(loop, 16);
         }
     }
 
-    for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-            if (grid[r][c] === '') {
-                grid[r][c] = String.fromCharCode(65 + Math.floor(Math.random() * 26));
+    function startGame() {
+        if (window.GameUI) window.GameUI.hideStartScreen();
+        
+        generateGrid();
+        startTime = Date.now();
+        if(timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(updateTimer, 1000);
+        
+        updateUI();
+    }
+    
+    function updateTimer() {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const m = Math.floor(elapsed / 60).toString().padStart(2, '0');
+        const s = (elapsed % 60).toString().padStart(2, '0');
+        document.getElementById('timer-stat').innerText = TIME: :;
+    }
+
+    function generateGrid() {
+        // Init Empty
+        grid = Array(GRID_H).fill(0).map(() => Array(GRID_W).fill(''));
+        placedWords = [];
+        foundLines = [];
+        
+        // Pick random words
+        const pool = [...TERMS].sort(() => Math.random() - 0.5);
+        const targetCount = 12;
+        words = [];
+        
+        for(let w of pool) {
+            if (words.length >= targetCount) break;
+            if (placeWord(w)) {
+                words.push({ text: w, found: false });
+            }
+        }
+        
+        // Fill empty
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        for(let r=0; r<GRID_H; r++) {
+            for(let c=0; c<GRID_W; c++) {
+                if(grid[r][c] === '') {
+                    grid[r][c] = chars[Math.floor(Math.random() * chars.length)];
+                }
             }
         }
     }
-    return grid;
-}
-
-function tryPlaceWord(grid, word) {
-    const directions = [
-        { r: 0, c: 1 },  
-        { r: 1, c: 0 },  
-        { r: 1, c: 1 },  
-        { r: -1, c: 1 }, 
-    ];
     
-    const dir = directions[Math.floor(Math.random() * directions.length)];
-    
-    let startRow = Math.floor(Math.random() * ROWS);
-    let startCol = Math.floor(Math.random() * COLS);
-
-    let endRow = startRow + dir.r * (word.length - 1);
-    let endCol = startCol + dir.c * (word.length - 1);
-
-    if (endRow < 0 || endRow >= ROWS || endCol < 0 || endCol >= COLS) return false;
-
-    for (let i = 0; i < word.length; i++) {
-        let r = startRow + dir.r * i;
-        let c = startCol + dir.c * i;
-        if (grid[r][c] !== '' && grid[r][c] !== word[i]) return false;
-    }
-
-    for (let i = 0; i < word.length; i++) {
-        let r = startRow + dir.r * i;
-        let c = startCol + dir.c * i;
-        grid[r][c] = word[i];
-    }
-
-    return true;
-}
-
-function renderGrid() {
-    if (!wordGridEl) return;
-    wordGridEl.innerHTML = '';
-    wordGridEl.style.gridTemplateColumns = `repeat(${COLS}, 30px)`;
-    wordGridEl.style.gridTemplateRows = `repeat(${ROWS}, 30px)`;
-
-    for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-            const cell = document.createElement('div');
-            cell.classList.add('grid-cell');
-            cell.dataset.row = r;
-            cell.dataset.col = c;
-            cell.innerText = wordGrid[r][c];
-            
-            cell.addEventListener('mousedown', handleMouseDown);
-            cell.addEventListener('mouseover', handleMouseOver);
-            cell.addEventListener('mouseup', handleMouseUp);
-            
-            wordGridEl.appendChild(cell);
-        }
-    }
-}
-
-function renderWordList() {
-    if (!wordListEl) return;
-    wordListEl.innerHTML = '';
-    words.forEach(word => {
-        const li = document.createElement('li');
-        li.classList.add('word-item');
-        li.id = `word-${word}`;
-        li.innerText = word;
-        wordListEl.appendChild(li);
-    });
-}
-
-// Interaction
-let isSelecting = false;
-let startCell = null;
-let currentSelection = [];
-
-function handleMouseDown(e) {
-    isSelecting = true;
-    startCell = { 
-        r: parseInt(e.target.dataset.row), 
-        c: parseInt(e.target.dataset.col) 
-    };
-    currentSelection = [e.target];
-    highlightSelection();
-}
-
-function handleMouseOver(e) {
-    if (!isSelecting) return;
-    
-    // Check if still on the board page
-    if (!document.contains(e.target)) {
-        isSelecting = false;
-        return;
-    }
-
-    const target = e.target;
-    if (!target.classList.contains('grid-cell')) return;
-
-    const endCell = {
-        r: parseInt(target.dataset.row),
-        c: parseInt(target.dataset.col)
-    };
-
-    let cells = getCellsBetween(startCell, endCell);
-    if (cells.length > 0) {
-        currentSelection = cells;
-        highlightSelection();
-    }
-}
-
-function handleMouseUp() {
-    if (!isSelecting) return;
-    isSelecting = false;
-    
-    checkWord();
-    clearSelection();
-}
-
-// Global mouse up to catch drags outside
-// Only attach if not already attached? No easy way to check.
-// We'll rely on the handler checking for game existence.
-document.addEventListener('mouseup', () => {
-    if (isSelecting) {
-        isSelecting = false;
-        // Verify we are still on the game page before doing logic?
-        if (document.getElementById('word-grid')) {
-            checkWord();
-            clearSelection();
-        }
-    }
-});
-
-function getCellsBetween(start, end) {
-    let cells = [];
-    let dr = end.r - start.r;
-    let dc = end.c - start.c;
-    
-    const steps = Math.max(Math.abs(dr), Math.abs(dc));
-    
-    if (Math.abs(dr) !== Math.abs(dc) && dr !== 0 && dc !== 0) {
-        // Not a straight line or perfect diagonal
-        return []; 
-    }
-
-    const stepR = dr === 0 ? 0 : dr / Math.abs(dr);
-    const stepC = dc === 0 ? 0 : dc / Math.abs(dc);
-
-    for (let i = 0; i <= steps; i++) {
-        let r = start.r + i * stepR;
-        let c = start.c + i * stepC;
+    function placeWord(word) {
+        // Try random positions and directions
+        const dirs = [
+            {r:0, c:1}, {r:1, c:0}, {r:1, c:1}, {r:1, c:-1}, // Standard
+            {r:0, c:-1}, {r:-1, c:0}, {r:-1, c:-1}, {r:-1, c:1} // Reverse
+        ];
         
-        let cell = null;
-        if (wordGridEl) {
-           // We can't use document.querySelector easily if multiple grids existed (unlikely)
-           // But let's use the container to scope query
-           cell = wordGridEl.querySelector(`.grid-cell[data-row="${r}"][data-col="${c}"]`);
+        for(let attempt=0; attempt<50; attempt++) {
+            const dir = dirs[Math.floor(Math.random() * dirs.length)];
+            const r = Math.floor(Math.random() * GRID_H);
+            const c = Math.floor(Math.random() * GRID_W);
+            
+            if (canPlace(word, r, c, dir)) {
+                // Place
+                for(let i=0; i<word.length; i++) {
+                    grid[r + dir.r*i][c + dir.c*i] = word[i];
+                }
+                placedWords.push({ word, r, c, dr: dir.r, dc: dir.c, len: word.length });
+                return true;
+            }
         }
-        if (cell) cells.push(cell);
+        return false;
     }
-    return cells;
-}
-
-function highlightSelection() {
-    // Clear previous
-    if (wordGridEl) {
-        wordGridEl.querySelectorAll('.grid-cell.selected').forEach(el => el.classList.remove('selected'));
-    }
-    currentSelection.forEach(cell => {
-        cell.classList.add('selected');
-    });
-}
-
-function clearSelection() {
-    if (wordGridEl) {
-        wordGridEl.querySelectorAll('.grid-cell.selected').forEach(el => el.classList.remove('selected'));
-    }
-    currentSelection = [];
-    startCell = null;
-}
-
-function checkWord() {
-    const selectedWord = currentSelection.map(cell => cell.innerText).join('');
-    const reversedWord = selectedWord.split('').reverse().join('');
     
-    if (words.includes(selectedWord) && !foundWords.includes(selectedWord)) {
-        markWordFound(selectedWord, currentSelection);
-    } else if (words.includes(reversedWord) && !foundWords.includes(reversedWord)) {
-        markWordFound(reversedWord, currentSelection);
-    }
-}
-
-function markWordFound(word, cells) {
-    if (foundWords.includes(word)) return; // Double check
-
-    foundWords.push(word);
-    
-    cells.forEach(cell => {
-        cell.classList.add('found');
-    });
-
-    const listEl = document.getElementById(`word-${word}`);
-    if (listEl) listEl.classList.add('found');
-
-    if (foundCountEl) foundCountEl.innerText = foundWords.length;
-
-    if (foundWords.length === words.length) {
-        gameWin();
-    }
-}
-
-function startTimer() {
-    startTime = Date.now();
-    timerInterval = setInterval(() => {
-        if (!document.getElementById('timer')) {
-             clearInterval(timerInterval);
-             return;
+    function canPlace(word, r, c, dir) {
+        if (r < 0 || c < 0 || r >= GRID_H || c >= GRID_W) return false;
+        
+        // Check end bounds
+        const endR = r + dir.r * (word.length - 1);
+        const endC = c + dir.c * (word.length - 1);
+        if (endR < 0 || endC < 0 || endR >= GRID_H || endC >= GRID_W) return false;
+        
+        // Check overlap
+        for(let i=0; i<word.length; i++) {
+            const char = grid[r + dir.r*i][c + dir.c*i];
+            if (char !== '' && char !== word[i]) return false;
         }
-        const delta = Math.floor((Date.now() - startTime) / 1000);
-        const m = Math.floor(delta / 60).toString().padStart(2, '0');
-        const s = (delta % 60).toString().padStart(2, '0');
-        if (timerEl) timerEl.innerText = `${m}:${s}`;
-    }, 1000);
-}
+        
+        return true;
+    }
+    
+    function handleResize() {
+        canvas.width = window.innerWidth - 250; // Sidebar adjustment
+        canvas.height = window.innerHeight;
+        
+        if (canvas.width <= 0) canvas.width = window.innerWidth; // Mobile fallback
+        
+        offsetX = (canvas.width - GRID_W * CELL_SIZE) / 2;
+        offsetY = (canvas.height - GRID_H * CELL_SIZE) / 2;
+    }
+    
+    // --- Input ---
+    
+    function getGridPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        let x, y;
+        if (e.touches) {
+            x = e.touches[0].clientX - rect.left;
+            y = e.touches[0].clientY - rect.top;
+        } else {
+            x = e.clientX - rect.left;
+            y = e.clientY - rect.top;
+        }
+        
+        const c = Math.floor((x - offsetX) / CELL_SIZE);
+        const r = Math.floor((y - offsetY) / CELL_SIZE);
+        return {r, c};
+    }
+    
+    function handleDown(e) {
+        const pos = getGridPos(e);
+        if (pos.r >= 0 && pos.r < GRID_H && pos.c >= 0 && pos.c < GRID_W) {
+            selection.active = true;
+            selection.r1 = pos.r;
+            selection.c1 = pos.c;
+            selection.r2 = pos.r;
+            selection.c2 = pos.c;
+        }
+    }
+    
+    function handleMove(e) {
+        if (!selection.active) return;
+        const pos = getGridPos(e);
+        
+        // Constrain dragging to 8 directions? 
+        // Or just let it float and snap to nearest valid 45-degree line end?
+        // Let's update raw 2, but we validate later
+        selection.r2 = pos.r;
+        selection.c2 = pos.c;
+    }
+    
+    function handleUp(e) {
+        if (!selection.active) return;
+        selection.active = false;
+        
+        checkSelection();
+    }
+    
+    function checkSelection() {
+        // Normalize vector to nearest 45 deg
+        let dr = selection.r2 - selection.r1;
+        let dc = selection.c2 - selection.c1;
+        
+        if (dr === 0 && dc === 0) return;
+        
+        // Get direction
+        // If mostly horizontal, make vertical 0
+        if (Math.abs(dr) > Math.abs(dc) * 2) dc = 0;
+        else if (Math.abs(dc) > Math.abs(dr) * 2) dr = 0;
+        else {
+            // Diagonal needs equal steps
+            const dist = Math.max(Math.abs(dr), Math.abs(dc));
+            dr = Math.sign(dr) * dist;
+            dc = Math.sign(dc) * dist;
+        }
+        
+        const len = Math.max(Math.abs(dr), Math.abs(dc));
+        const stepR = Math.sign(dr);
+        const stepC = Math.sign(dc);
+        
+        // Construct string
+        let str = '';
+        let rev = ''; // User might drag backwards
+        
+        for(let i=0; i<=len; i++) {
+            const r = selection.r1 + stepR * i;
+            const c = selection.c1 + stepC * i;
+            if (r<0 || r>=GRID_H || c<0 || c>=GRID_W) break; // Out of bounds
+            str += grid[r][c];
+        }
+        rev = str.split('').reverse().join('');
+        
+        // Check match
+        let foundWord = words.find(w => !w.found && (w.text === str || w.text === rev));
+        
+        if (foundWord) {
+            foundWord.found = true;
+            foundLines.push({
+                r1: selection.r1, c1: selection.c1,
+                r2: selection.r1 + dr, c2: selection.c1 + dc,
+                color: '#0f0'
+            });
+            updateUI();
+            
+            if (words.every(w => w.found)) {
+                // Win
+                window.GameUI.showGameOverScreen ? window.GameUI.showGameOverScreen(100, 100) : alert('ALL DATA MINED!');
+            }
+        }
+    }
+    
+    function updateUI() {
+        // Update list
+        const list = document.getElementById('word-bank');
+        list.innerHTML = '';
+        words.forEach(w => {
+            const div = document.createElement('div');
+            div.className = 'word-item ' + (w.found ? 'found' : '');
+            div.innerText = w.text;
+            list.appendChild(div);
+        });
+        
+        document.getElementById('found-stat').innerText = FOUND: /;
+    }
+    
+    function loop() {
+        // Clear
+        ctx.fillStyle = '#000500';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.save();
+        ctx.translate(offsetX, offsetY);
+        
+        // Grid Values
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = '20px Courier New';
+        
+        for(let r=0; r<GRID_H; r++) {
+            for(let c=0; c<GRID_W; c++) {
+                const char = grid[r][c];
+                const x = c * CELL_SIZE + CELL_SIZE/2;
+                const y = r * CELL_SIZE + CELL_SIZE/2;
+                
+                // Color
+                ctx.fillStyle = '#050';
+                
+                // If part of found line? (Handled by foundLines overlay)
+                
+                ctx.fillText(char, x, y);
+            }
+        }
+        
+        // Found Lines
+        foundLines.forEach(l => {
+            drawLine(l.r1, l.c1, l.r2, l.c2, '#0f0', 0.5);
+        });
+        
+        // Active Selection
+        if (selection.active) {
+            drawLine(selection.r1, selection.c1, selection.r2, selection.c2, '#0ff', 0.3);
+        }
+        
+        ctx.restore();
+    }
+    
+    function drawLine(r1, c1, r2, c2, color, alpha) {
+        const x1 = c1 * CELL_SIZE + CELL_SIZE/2;
+        const y1 = r1 * CELL_SIZE + CELL_SIZE/2;
+        const x2 = c2 * CELL_SIZE + CELL_SIZE/2;
+        const y2 = r2 * CELL_SIZE + CELL_SIZE/2;
+        
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 25;
+        ctx.lineCap = 'round';
+        ctx.globalAlpha = alpha;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        ctx.globalAlpha = 1.0;
+    }
 
-function gameWin() {
-    clearInterval(timerInterval);
-    if (finalTimeEl && timerEl) finalTimeEl.innerText = timerEl.innerText;
-    if (modal) modal.classList.remove('hidden');
-}
-
-// Initial start
-initGame();
-
-} // SCOPE END
+    init();
+})();

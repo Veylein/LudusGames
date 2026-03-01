@@ -2,85 +2,42 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>Neon Tactics</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tic Tac Toe - Ludus Games</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../../style.css">
     <link rel="stylesheet" href="../../themes.css">
     <link rel="stylesheet" href="tictactoe.css">
 </head>
-<body class="theme-classic">
-
-    <div class="game-container">
-        <header>
-            <a href="../index.html" class="back-link">← Back to Board Games</a>
-            <h1 class="glow-title" data-text="TIC TAC TOE">TIC TAC TOE</h1>
-            <div class="theme-switch-wrapper">
-                <label class="theme-switch" for="checkbox">
-                    <input type="checkbox" id="checkbox" />
-                    <div class="slider round"></div>
-                </label>
-                <em>Enable Dark Mode!</em>
-            </div>
-        </header>
-
-        <main>
-            <div class="game-area">
-                <div class="status-bar" id="status">Player Start (X)</div>
-
-                <div class="board-wrapper">
-                    <div class="board" id="board">
-                        <div class="cell" data-index="0"></div>
-                        <div class="cell" data-index="1"></div>
-                        <div class="cell" data-index="2"></div>
-                        <div class="cell" data-index="3"></div>
-                        <div class="cell" data-index="4"></div>
-                        <div class="cell" data-index="5"></div>
-                        <div class="cell" data-index="6"></div>
-                        <div class="cell" data-index="7"></div>
-                        <div class="cell" data-index="8"></div>
-                        <div class="strike-line" id="strike-line"></div>
-                    </div>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        <div id="ui-layer">
+            <h1 class="neon-title">TACTICAL_TOE</h1>
+            
+            <div id="score-board">
+                <div class="score p1">
+                    <div class="label">PLAYER</div>
+                    <div class="val" id="score-1">0</div>
                 </div>
-
-                <div class="controls">
-                    <div class="difficulty-control">
-                        <span>Difficulty: </span>
-                        <select id="difficulty-select">
-                            <option value="easy">Easy</option>
-                            <option value="medium" selected>Medium</option>
-                            <option value="hard">Impossible</option>
-                        </select>
-                    </div>
-                    
-                    <button id="reset-btn" class="retro-btn">Reset Game</button>
-                    
-                    <div class="score-display">
-                        <div class="score-box p1">
-                            <span>YOU (X)</span>
-                            <b id="score-x">0</b>
-                        </div>
-                        <div class="score-box p2">
-                            <span>BOT (O)</span>
-                            <b id="score-o">0</b>
-                        </div>
-                    </div>
+                <div class="score p2">
+                    <div class="label">CPU</div>
+                    <div class="val" id="score-2">0</div>
                 </div>
             </div>
-        </main>
-    </div>
-
-    <!-- Game Over Modal -->
-    <div id="game-over-modal" class="modal">
-        <div class="modal-content">
-            <h2 id="modal-title">VICTORY!</h2>
-            <p id="modal-msg">You beat the bot!</p>
-            <button id="modal-restart">Play Again</button>
+            
+            <div id="controls">
+                <div class="difficulty-selector">
+                    <span>DIFF:</span>
+                    <button class="diff-btn active" data-lvl="0">EASY</button>
+                    <button class="diff-btn" data-lvl="1">MED</button>
+                    <button class="diff-btn" data-lvl="2">HARD</button>
+                </div>
+                <div class="status" id="status-msg">WAITING FOR INPUT...</div>
+                <button id="reset-btn" class="neon-btn">RESET SIMULATION</button>
+            </div>
         </div>
     </div>
 
     <script src="../../ui.js"></script>
-    <script src="../../effects.js"></script>
     <script src="tictactoe.js"></script>
 </body>
 </html>

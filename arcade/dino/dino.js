@@ -1,503 +1,458 @@
-﻿{
-class Dino {
-    constructor(startX, groundY) {
-        this.startX = startX;
-        this.x = startX;
-        this.y = groundY;
-        this.w = 40;
-        this.h = 43;
-        this.dy = 0;
-        this.jumpForce = 12;
-        this.gravity = 0.6;
-        this.groundY = groundY;
-        this.isGrounded = true;
-        this.isDucking = false;
-        this.isCheering = false;
-        
-        // Sprites handled by simple drawing for now
-    }
-    
-    reset(groundY) {
-        this.y = groundY;
-        this.dy = 0;
-        this.isGrounded = true;
-        this.isDucking = false;
-        this.isCheering = false;
-    }
-    
-    update(input, groundY) {
-        if (this.isCheering) return; // Cutscene freeze
-        
-        // Jump
-        if (input.jump && this.isGrounded) {
-            this.dy = -this.jumpForce;
-            this.isGrounded = false;
-        }
-        
-        // Duck
-        this.isDucking = input.duck;
-        if (this.isDucking) {
-            this.h = 25;
-            this.y = groundY + (43 - 25); // Push down
-        } else {
-            this.h = 43;
-        }
-        
-        // Physics
-        if (!this.isGrounded) {
-             this.dy += this.gravity;
-             this.y += this.dy;
-        } else {
-             this.dy = 0;
-             this.y = groundY;
-             if (this.isDucking) this.y = groundY + (43 - 25);
-        }
-        
-        // Ground Collision
-        const floor = this.isDucking ? groundY + (43-25) : groundY;
-        if (this.y > floor) {
-            this.y = floor;
-            this.dy = 0;
-            this.isGrounded = true;
-        }
-    }
-    
-    draw(ctx, isRetro) {
-        // Monochrome Style
-        ctx.fillStyle = '#000'; // Black Dino
-        
-        const y = this.y - this.h;
-        
-        if (this.isCheering) {
-            // Jumping pose
-            ctx.fillRect(this.x + 10, y - 5, 20, 20); // Head higher
-            ctx.fillRect(this.x, y + 20, 30, 15); 
-        } else if (this.isDucking) {
-            // Ducking
-            ctx.fillRect(this.x, y, 55, 25);
-            // Eye (White)
-            ctx.clearRect(this.x + 40, y + 5, 4, 4);
-        } else {
-            // Standing
-            // Head
-            ctx.fillRect(this.x + 20, y, 24, 25);
-            // Eye
-            ctx.clearRect(this.x + 30, y + 5, 5, 5);
-            // Body
-            ctx.fillRect(this.x, y + 20, 30, 20); 
-            // Tail
-            ctx.fillRect(this.x - 5, y + 22, 5, 5);
+﻿/*
+ * NEON RUNNER
+ * A cyberpunk infinite runner.
+ * Features:
+ * - Neon vector graphics
+ * - Day/Night cycle visualized by background gradients
+ * - Integrated GameUI
+ */
 
-            // Legs
-            if (this.isGrounded) {
-                // Run anim
-                if (Math.floor(Date.now() / 100) % 2 === 0) {
-                     ctx.fillRect(this.x + 5, y + 40, 5, 5); // L
-                     ctx.fillRect(this.x + 25, y + 38, 5, 2); // R up
-                } else {
-                     ctx.fillRect(this.x + 5, y + 38, 5, 2); // L up
-                     ctx.fillRect(this.x + 25, y + 40, 5, 5); // R
-                }
-            } else {
-                // Jump legs
-                ctx.fillRect(this.x + 5, y + 35, 5, 5);
-                ctx.fillRect(this.x + 25, y + 35, 5, 5);
+(function() {
+    const canvas = document.getElementById('gameCanvas');
+    if (!canvas) return;
+    
+    // Accessibility & Focus
+    canvas.setAttribute('tabindex', '0');
+    canvas.focus();
+    
+    const ctx = canvas.getContext('2d');
+
+    // --- Configuration ---
+    const CONFIG = {
+        gravity: 0.6,
+        jumpForce: 12,
+        speedStart: 6,
+        speedMax: 20,
+        colors: {
+            bg: '#050510',
+            ground: '#00ffcc',
+            dino: '#00ff00',
+            cactus: '#ff0055',
+            bird: '#ffee00',
+            star: '#ffffff'
+        }
+    };
+
+    // --- Asset Managers ---
+    class Starfield {
+        constructor(width, height) {
+            this.stars = [];
+            this.width = width;
+            this.height = height;
+            for(let i=0; i<50; i++) {
+                this.stars.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    size: Math.random() * 2,
+                    speed: Math.random() * 0.5 + 0.1
+                });
             }
         }
-    }
-}
-
-class ObstacleManager {
-    constructor(width, groundY) {
-        this.width = width;
-        this.groundY = groundY;
-        this.obstacles = [];
-        this.timer = 0;
-    }
-    
-    reset() {
-        this.obstacles = [];
-        this.timer = 0;
-    }
-    
-    update(speed, score) {
-        this.timer++;
-        const spawnRate = Math.max(50, 100 - speed * 5);
         
-        if (this.timer > spawnRate + Math.random() * 50) {
-            this.spawn(score);
+        update(gameSpeed) {
+            this.stars.forEach(s => {
+                s.x -= s.speed + (gameSpeed * 0.1); 
+                if (s.x < 0) s.x = this.width;
+            });
+        }
+        
+        draw(ctx) {
+            ctx.fillStyle = CONFIG.colors.star;
+            this.stars.forEach(s => {
+                ctx.globalAlpha = Math.random() * 0.5 + 0.5;
+                ctx.fillRect(s.x, s.y, s.size, s.size);
+            });
+            ctx.globalAlpha = 1;
+        }
+    }
+
+    // --- Game Entities ---
+    class Dino {
+        constructor(groundY) {
+            this.w = 40;
+            this.h = 44;
+            this.x = 50;
+            this.y = groundY;
+            this.groundY = groundY;
+            this.dy = 0;
+            this.isGrounded = true;
+            this.isDucking = false;
+        }
+        
+        reset() {
+            this.y = this.groundY;
+            this.dy = 0;
+            this.isGrounded = true;
+            this.isDucking = false;
+        }
+        
+        jump() {
+            if (this.isGrounded) {
+                this.dy = -CONFIG.jumpForce;
+                this.isGrounded = false;
+            }
+        }
+        
+        update(input) {
+            // Ducking
+            this.isDucking = input.duck;
+            if (this.isDucking) {
+                this.h = 26;
+                if(this.isGrounded) this.y = this.groundY + (44 - 26);
+            } else {
+                this.h = 44;
+            }
+            
+            // Physics
+            if (!this.isGrounded) {
+                this.dy += CONFIG.gravity;
+                this.y += this.dy;
+                
+                // Fast fall if ducking in air
+                if (this.isDucking) this.dy += 0.5; 
+            } else {
+                this.dy = 0;
+                this.y = this.groundY + (this.isDucking ? (44 - 26) : 0);
+            }
+            
+            // Ground Collision
+            const floor = this.groundY + (this.isDucking ? (44-26) : 0);
+            if (this.y > floor) {
+                 this.y = floor;
+                 this.dy = 0;
+                 this.isGrounded = true;
+            }
+        }
+        
+        draw(ctx) {
+            ctx.strokeStyle = CONFIG.colors.dino;
+            ctx.lineWidth = 2;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = CONFIG.colors.dino;
+            
+            const x = this.x;
+            const y = this.y - this.h;
+            
+            ctx.beginPath();
+            if (this.isDucking) {
+                // Duck shape
+                ctx.rect(x, y, 55, 26);
+                // Eye
+                ctx.moveTo(x + 40, y + 8);
+                ctx.lineTo(x + 42, y + 8);
+            } else {
+                // Stand shape
+                // Head
+                ctx.rect(x + 20, y, 20, 20);
+                // Body
+                ctx.rect(x, y + 20, 30, 24);
+                // Eye
+                ctx.moveTo(x + 30, y + 5);
+                ctx.lineTo(x + 32, y + 5);
+                
+                // Legs animation
+                if (this.isGrounded) {
+                    const runFrame = Math.floor(Date.now() / 100) % 2;
+                    if (runFrame === 0) {
+                        ctx.moveTo(x + 10, y + 44); ctx.lineTo(x + 5, y + 54);
+                        ctx.moveTo(x + 25, y + 44); ctx.lineTo(x + 25, y + 50);
+                    } else {
+                        ctx.moveTo(x + 10, y + 44); ctx.lineTo(x + 10, y + 50);
+                        ctx.moveTo(x + 25, y + 44); ctx.lineTo(x + 30, y + 54);
+                    }
+                } else {
+                     // Jump legs
+                     ctx.moveTo(x + 10, y + 44); ctx.lineTo(x + 5, y + 50);
+                     ctx.moveTo(x + 25, y + 44); ctx.lineTo(x + 30, y + 50);
+                }
+            }
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+        }
+    }
+
+    class ObstacleManager {
+        constructor(groundY) {
+            this.obstacles = [];
+            this.groundY = groundY;
             this.timer = 0;
         }
         
-        for (let i = this.obstacles.length - 1; i >= 0; i--) {
-            let o = this.obstacles[i];
-            o.x -= speed;
-            if (o.x < -o.w) this.obstacles.splice(i, 1);
+        reset() {
+            this.obstacles = [];
+            this.timer = 0;
         }
-    }
-    
-    spawn(score) {
-        const type = Math.random() < 0.2 && score > 500 ? 'bird' : 'cactus';
         
-        if (type === 'cactus') {
-            const count = Math.floor(Math.random() * 3) + 1;
-            this.obstacles.push({
-                type: 'cactus',
-                x: this.width,
-                y: this.groundY - 30,
-                w: 20 * count,
-                h: 30,
-                hitbox: { x:0, y:0, w: 20*count, h: 30 }
-            });
-        } else {
-            // Bird
-            const height = [20, 50, 70];
-            const yOffset = height[Math.floor(Math.random() * height.length)];
-            this.obstacles.push({
-                type: 'bird',
-                x: this.width,
-                y: this.groundY - yOffset,
-                w: 30,
-                h: 20,
-                hitbox: { x:0, y:0, w:30, h:15 }
-            });
+        update(speed, score) {
+            this.timer++;
+            // Spawn rate decreases as speed increases
+            const spawnRate = Math.max(40, 100 - speed * 3);
+            
+            if (this.timer > spawnRate + Math.random() * 60) {
+                this.spawn(score);
+                this.timer = 0;
+            }
+            
+            for (let i = this.obstacles.length - 1; i >= 0; i--) {
+                let o = this.obstacles[i];
+                o.x -= speed;
+                if (o.x < -100) this.obstacles.splice(i, 1);
+            }
         }
-    }
-    
-    draw(ctx, isRetro) {
-        // Monochrome Obstacles
-        ctx.fillStyle = '#000';
         
-        this.obstacles.forEach(o => {
-            if (o.type === 'cactus') {
-                // Cactus Group
-                const w = o.w / (o.w >= 40 ? 2 : 1); // rough guess on group size logic 
-                // Just draw blocks for now
-                ctx.fillRect(o.x, o.y, o.w, o.h);
-                
-                // Texture (White Lines)
-                ctx.fillStyle = '#fff';
-                ctx.fillRect(o.x + 2, o.y + 2, 2, o.h - 4);
-                ctx.fillStyle = '#000';
+        spawn(score) {
+            const isBird = Math.random() < 0.2 && score > 500;
+            
+            if (isBird) {
+                const height = [20, 50, 70];
+                const yOffset = height[Math.floor(Math.random() * height.length)];
+                this.obstacles.push({
+                    type: 'bird',
+                    x: canvas.width,
+                    y: this.groundY - yOffset,
+                    w: 40,
+                    h: 30
+                });
             } else {
-                // Bird
-                const wingY = (Math.floor(Date.now() / 150) % 2 === 0) ? o.y : o.y + 10;
-                
-                ctx.fillRect(o.x, o.y + 10, o.w, 10); // Body
-                ctx.fillRect(o.x + 10, wingY, 10, 10); // Wing
-                
-                // Beak
-                ctx.fillRect(o.x - 5, o.y + 12, 5, 4);
-            }
-        });
-    }
-    
-    checkCollision(dino) {
-        for(let o of this.obstacles) {
-            // Simple AABB
-            // Dino Y is foot position. Rect is (x, y-h, w, h)
-            const dx = dino.x;
-            const dy = dino.y - dino.h;
-            const dw = dino.w;
-            const dh = dino.h;
-            
-            const ox = o.x;
-            const oy = o.y; // Top left of obstacle for drawing
-            const ow = o.w;
-            const oh = o.h;
-            
-            if (dx < ox + ow &&
-                dx + dw > ox &&
-                dy < oy + oh &&
-                dy + dh > oy) {
-                return true;
+                const count = Math.floor(Math.random() * 3) + 1;
+                this.obstacles.push({
+                    type: 'cactus',
+                    x: canvas.width,
+                    y: this.groundY - 50, // Cactus height usually ~50
+                    w: 25 * count,
+                    h: 50
+                });
             }
         }
-        return false;
-    }
-}
-
-class Environment {
-    constructor(width, height) {
-        this.width = width;
-        this.height = height;
-        this.clouds = [];
-        this.stars = [];
-        this.asteroidX = width;
-        this.asteroidY = -500; // Far up
         
-        // Init stars
-        for(let i=0; i<50; i++) {
-             this.stars.push({x: Math.random()*width, y: Math.random()*height/2, s: Math.random()*2});
+        draw(ctx) {
+            this.obstacles.forEach(o => {
+                if (o.type === 'cactus') {
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = CONFIG.colors.cactus;
+                    ctx.strokeStyle = CONFIG.colors.cactus;
+                    ctx.lineWidth = 2;
+                    
+                    // Draw cactus as triangles/rects
+                    for(let i=0; i<o.w/25; i++) {
+                        const ox = o.x + (i*25);
+                        ctx.strokeRect(ox, o.y, 20, 50);
+                        // Detail
+                        ctx.beginPath();
+                        ctx.moveTo(ox, o.y + 10); ctx.lineTo(ox - 5, o.y + 5); ctx.lineTo(ox - 5, o.y + 20); ctx.lineTo(ox, o.y + 25);
+                        ctx.moveTo(ox + 20, o.y + 15); ctx.lineTo(ox + 25, o.y + 10); ctx.lineTo(ox + 25, o.y + 25); ctx.lineTo(ox + 20, o.y + 30);
+                        ctx.stroke();
+                    }
+                } else {
+                    // Bird
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = CONFIG.colors.bird;
+                    ctx.strokeStyle = CONFIG.colors.bird;
+                    ctx.lineWidth = 2;
+                    
+                    const wingY = (Math.floor(Date.now() / 150) % 2 === 0) ? -10 : 10;
+                    ctx.beginPath();
+                    ctx.rect(o.x, o.y + 10, 40, 10); // Body
+                    ctx.moveTo(o.x + 15, o.y + 10); ctx.lineTo(o.x + 25, o.y + 10 + wingY); // Wing
+                    ctx.stroke();
+                }
+                ctx.shadowBlur = 0;
+            });
         }
-    }
-    
-    reset() {
-        this.clouds = [];
-        this.asteroidX = this.width;
-        this.asteroidY = -500;
-    }
-    
-    update(speed) {
-        // Clouds
-        if (Math.random() < 0.01) {
-             this.clouds.push({x: this.width, y: Math.random() * 100 + 20, w: 40 + Math.random()*30});
-        }
         
-        this.clouds.forEach(c => c.x -= speed * 0.5);
-        this.clouds = this.clouds.filter(c => c.x > -100);
-    }
-    
-    draw(ctx, timeOfDay, isRetro) {
-        // Stars
-        ctx.fillStyle = '#000'; 
-        this.stars.forEach(s => ctx.fillRect(s.x, s.y, s.s, s.s));
-        
-        // Clouds (Outline style)
-        ctx.fillStyle = '#000';
-        this.clouds.forEach(c => {
-             ctx.fillRect(c.x, c.y, c.w, 20);
-        });
-        // Inner cloud
-        ctx.fillStyle = '#fff';
-        this.clouds.forEach(c => {
-            ctx.fillRect(c.x + 2, c.y + 2, c.w - 4, 16);
-       });
-
-        // Ground
-        ctx.fillStyle = '#000';
-        ctx.fillRect(0, this.height - 30, this.width, 2);
-    }
-}
-
-class DinoGame {
-    constructor() {
-        this.canvas = document.getElementById('gameCanvas');
-        if (!this.canvas) return; // Guard
-        this.ctx = this.canvas.getContext('2d');
-        
-        // UI
-        this.scoreElement = document.getElementById('score');
-        this.highScoreElement = document.getElementById('high-score');
-        this.startScreen = document.getElementById('start-screen');
-        this.gameOverScreen = document.getElementById('game-over-screen');
-        this.finalScoreElement = document.getElementById('final-score');
-        this.restartBtn = document.getElementById('restart-btn');
-        this.pauseBtn = document.getElementById('pause-btn');
-        this.difficultySelect = document.getElementById('difficulty-select');
-        this.themeToggle = document.getElementById('checkbox');
-        
-        // Mobile Controls
-        this.btnJump = document.getElementById('jump-btn');
-        this.btnDuck = document.getElementById('duck-btn');
-        
-        // Game Constants
-        this.width = this.canvas.width;
-        this.height = this.canvas.height;
-        this.groundY = this.height - 30; // Ground line (Dino feet level)
-        this.dinoX = 50;
-        
-        // State
-        this.score = 0;
-        this.displayScore = 0; // Visual score
-        this.highScore = localStorage.getItem('dinoHighScore') || 0;
-        this.isGameRunning = false;
-        this.isPaused = false;
-        this.isGameOver = false;
-        this.gameOverTimer = 0;
-        this.animationId = null;
-        this.speed = 5;
-        this.timeOfDay = 0; // 0 = Day, 0.5 = Dusk, 1 = Night
-        this.extinctionEvent = false;
-        
-        // Modules
-        this.dino = new Dino(this.dinoX, this.groundY);
-        this.obstacleManager = new ObstacleManager(this.width, this.groundY);
-        this.environment = new Environment(this.width, this.height);
-        
-        this.input = {
-            jump: false,
-            duck: false
-        };
-        
-        this.init();
-    }
-
-    init() {
-        if(this.highScoreElement) this.highScoreElement.innerText = this.padScore(this.highScore);
-        
-        // Listeners
-        document.addEventListener('keydown', (e) => this.handleInput(e, true));
-        document.addEventListener('keyup', (e) => this.handleInput(e, false));
-        
-        // Click / Tap to start or Jump
-        const tapHandler = (e) => {
-             if(e.target.tagName !== 'CANVAS' && e.target.id !== 'start-screen' && !e.target.classList.contains('overlay')) return;
-
-             if(!this.isGameRunning) {
-                 this.startGame();
-                 return;
-             }
-             
-             // Tap to jump
-             this.input.jump = true;
-             setTimeout(() => this.input.jump = false, 200);
-        };
-        
-        this.canvas.addEventListener('click', tapHandler);
-        this.canvas.addEventListener('touchstart', (e) => { e.preventDefault(); tapHandler(e); });
-        if(this.startScreen) this.startScreen.addEventListener('click', tapHandler);
-
-        if(this.restartBtn) this.restartBtn.addEventListener('click', () => this.resetGame());
-        if(this.pauseBtn) this.pauseBtn.addEventListener('click', () => this.togglePause());
-
-        // Mobile Controls
-        if(this.btnJump) {
-            this.btnJump.addEventListener('touchstart', (e) => { e.preventDefault(); this.input.jump = true; });
-            this.btnJump.addEventListener('touchend', (e) => { e.preventDefault(); this.input.jump = false; });
-            this.btnJump.addEventListener('mousedown', () => { this.input.jump = true; });
-            this.btnJump.addEventListener('mouseup', () => { this.input.jump = false; });
-        }
-        if(this.btnDuck) {
-            this.btnDuck.addEventListener('touchstart', (e) => { e.preventDefault(); this.input.duck = true; });
-            this.btnDuck.addEventListener('touchend', (e) => { e.preventDefault(); this.input.duck = false; });
-            this.btnDuck.addEventListener('mousedown', () => { this.input.duck = true; });
-            this.btnDuck.addEventListener('mouseup', () => { this.input.duck = false; });
-        }
-
-        // Initial paint
-        this.environment.draw(this.ctx, 0, this.themeToggle && this.themeToggle.checked);
-        this.drawGround();
-    }
-    
-    startGame() {
-        if (this.isGameRunning) return;
-        
-        this.isGameRunning = true;
-        this.isPaused = false;
-        this.isGameOver = false;
-        this.extinctionEvent = false;
-        if(this.startScreen) this.startScreen.style.display = 'none';
-        if(this.gameOverScreen) this.gameOverScreen.style.display = 'none';
-        this.score = 0;
-        this.displayScore = 0;
-        this.updateScoreUI();
-        this.speed = 5;
-        this.timeOfDay = 0;
-        
-        this.dino.reset(this.groundY);
-        this.obstacleManager.reset();
-        this.environment.reset();
-        
-        if (this.animationId) cancelAnimationFrame(this.animationId);
-        this.loop();
-    }
-    
-    resetGame() {
-        this.isGameRunning = false;
-        this.startGame();
-    }
-
-    togglePause() {
-        if (!this.isGameRunning || this.isGameOver) return;
-        this.isPaused = !this.isPaused;
-        if(this.pauseBtn) this.pauseBtn.innerText = this.isPaused ? 'RESUME' : 'PAUSE';
-        if (!this.isPaused) this.loop();
-    }
-
-    loop() {
-        if (!this.isGameRunning || this.isPaused) return;
-
-        this.update();
-        this.draw();
-        
-        if (!this.isGameOver) {
-            this.animationId = requestAnimationFrame(() => this.loop());
-        } else {
-             // Let one more update happen for death animation? no.
-             // But we might want ending cutscene loop.
-             if (this.extinctionEvent) {
-                  this.animationId = requestAnimationFrame(() => this.loop());
-             }
+        checkCollision(dino) {
+            const dx = dino.x + 10; // Hitbox adjustment
+            const dy = dino.y - dino.h + 5;
+            const dw = dino.w - 20;
+            const dh = dino.h - 10;
+            
+            for(let o of this.obstacles) {
+                const ox = o.x + 5;
+                const oy = o.y + 5;
+                const ow = o.w - 10;
+                const oh = o.h - 10;
+                
+                if (dx < ox + ow && dx + dw > ox &&
+                    dy < oy + oh && dy + dh > oy) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 
-    update() {
-        if (this.extinctionEvent) {
-             this.updateExtinction();
-             return;
-        }
-
-        // Difficulty / Speed Increase (Slower ramp up)
-        this.speed += 0.0005;
-        
-        // Day/Night Cycle
-        // Night mode at specific intervals: 500-750, 1500-1750, 2500-2750, etc.
-        const modScore = Math.floor(this.displayScore) % 1000;
-        const isNightTime = modScore >= 500 && modScore < 750;
-        
-        // Smooth transition
-        if (isNightTime) {
-            this.timeOfDay = Math.min(1, this.timeOfDay + 0.02);
-        } else {
-            this.timeOfDay = Math.max(0, this.timeOfDay - 0.02);
-        }
-
-        // Update display score every frame for smooth counter
-        // But internal score controls events
-        this.displayScore += 0.2; // roughly 12 points/sec at 60fps
-        this.updateScoreUI();
-        
-        if (this.displayScore >= 1000000) {
-             this.triggerExtinction();
+    // --- Main Game Class ---
+    class DinoGame {
+        constructor() {
+            this.canvas = canvas;
+            this.ctx = ctx;
+            
+            this.groundY = this.canvas.height - 50;
+            this.dino = new Dino(this.groundY);
+            this.obstacles = new ObstacleManager(this.groundY);
+            this.stars = new Starfield(this.canvas.width, this.canvas.height);
+            
+            this.score = 0;
+            this.highScore = localStorage.getItem('dinoHighScore') || 0;
+            this.speed = CONFIG.speedStart;
+            
+            this.isRunning = false;
+            this.isPaused = false;
+            this.gameLoopId = null;
+            
+            this.input = { jump: false, duck: false };
+            
+            this.bindEvents();
+            this.init();
         }
         
-        this.dino.update(this.input, this.groundY);
-        this.obstacleManager.update(this.speed, this.displayScore);
-        this.environment.update(this.speed);
+        bindEvents() {
+            document.addEventListener('keydown', (e) => this.handleInput(e, true));
+            document.addEventListener('keyup', (e) => this.handleInput(e, false));
+            
+            // Mobile
+            this.canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.input.jump = true;
+            });
+            this.canvas.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                this.input.jump = false;
+            });
+        }
         
-        // Collisions
-        if (this.obstacleManager.checkCollision(this.dino)) {
-             this.gameOver(false);
+        init() {
+            if (window.GameUI) {
+                window.GameUI.init(this.canvas, {
+                    onStart: () => this.startGame(),
+                    onPause: () => this.togglePause(),
+                    onRestart: () => this.startGame(),
+                });
+                window.GameUI.showStartScreen();
+            } else {
+                this.draw(); // Idle screen
+            }
+        }
+        
+        startGame() {
+            this.isRunning = true;
+            this.isPaused = false;
+            this.score = 0;
+            this.speed = CONFIG.speedStart;
+            
+            this.dino.reset();
+            this.obstacles.reset();
+            
+            if (window.GameUI) {
+                window.GameUI.updateScore(0);
+                window.GameUI.hideStartScreen();
+                window.GameUI.hideGameOverScreen();
+                window.GameUI.hidePauseScreen();
+            }
+            
+            if (this.gameLoopId) cancelAnimationFrame(this.gameLoopId);
+            this.loop();
+        }
+        
+        togglePause() {
+            if (!this.isRunning) return;
+            this.isPaused = !this.isPaused;
+            if (this.isPaused) {
+                if (window.GameUI) window.GameUI.showPauseScreen();
+            } else {
+                if (window.GameUI) window.GameUI.hidePauseScreen();
+                this.loop();
+            }
+        }
+        
+        handleInput(e, isDown) {
+            if (["Space", "ArrowUp", "ArrowDown"].includes(e.code)) {
+                e.preventDefault();
+            }
+            
+            if (!this.isRunning) {
+                if(isDown && e.code === 'Space') this.startGame();
+                return;
+            }
+            
+            if (this.isPaused) {
+                if(isDown && e.code === 'Space') this.togglePause();
+                return;
+            }
+            
+            if (e.code === 'Space' || e.code === 'ArrowUp') {
+                this.input.jump = isDown;
+                if (isDown) this.dino.jump();
+            }
+            if (e.code === 'ArrowDown') {
+                this.input.duck = isDown;
+            }
+        }
+        
+        update() {
+            this.speed = Math.min(CONFIG.speedMax, this.speed + 0.001);
+            this.score += this.speed * 0.1;
+            
+            if (window.GameUI && Math.floor(this.score) % 10 === 0) {
+                 window.GameUI.updateScore(Math.floor(this.score));
+            }
+            
+            this.stars.update(this.speed);
+            this.dino.update(this.input);
+            this.obstacles.update(this.speed, this.score);
+            
+            if (this.obstacles.checkCollision(this.dino)) {
+                this.die();
+            }
+        }
+        
+        die() {
+            this.isRunning = false;
+            
+            // Death effect or flash?
+            
+            if (this.score > this.highScore) {
+                this.highScore = Math.floor(this.score);
+                localStorage.setItem('dinoHighScore', this.highScore);
+            }
+            
+            if (window.GameUI) window.GameUI.showGameOverScreen(Math.floor(this.score), this.highScore);
+        }
+        
+        loop() {
+            if (this.isPaused || !this.isRunning) return;
+            
+            this.update();
+            this.draw();
+            
+            this.gameLoopId = requestAnimationFrame(() => this.loop());
+        }
+        
+        draw() {
+            // Background
+            this.ctx.fillStyle = CONFIG.colors.bg;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+            
+            this.stars.draw(this.ctx);
+            
+            // Ground Line
+            this.ctx.shadowBlur = 5;
+            this.ctx.shadowColor = CONFIG.colors.ground;
+            this.ctx.strokeStyle = CONFIG.colors.ground;
+            this.ctx.lineWidth = 2;
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, this.groundY);
+            this.ctx.lineTo(this.canvas.width, this.groundY);
+            this.ctx.stroke();
+            this.ctx.shadowBlur = 0;
+            
+            this.obstacles.draw(this.ctx);
+            this.dino.draw(this.ctx);
         }
     }
-    
-    triggerExtinction() {
-        this.extinctionEvent = true;
-        this.dino.isCheering = true; // Look up?
-        this.input.jump = false; // Disable input
-        // Stop spawning obstacles
-        this.obstacleManager.obstacles = []; 
-        this.environment.clouds = [];
-    }
-    
-    updateExtinction() {
-        // Cutscene Logic
-        // 1. Darken Sky to Red
-        // 2. Asteroid enters from top right
-        // 3. Impact
-        this.environment.asteroidY += 3;
-        this.environment.asteroidX -= 2;
-        
-        // Dino runs away (right side of screen)
-        this.dino.x += 2;
-        
-        // Shake
-        this.ctx.save();
-        const shake = (Math.random() - 0.5) * 10;
-        this.ctx.translate(shake, shake);
-        
-        if (this.environment.asteroidY > this.groundY) {
-            // IMPACT
-            this.gameOver(true); // WIN
-        }
-    }
 
-    draw() {
-        // Clear
-        const bgColor = '#fff'; // Always white background for classic look
-        this.ctx.fillStyle = bgColor;
-        this.ctx.fillRect(0, 0, this.width, this.height);
+    new DinoGame();
+})();
         
         // Environment (Draws stars/clouds/ground)
         this.environment.draw(this.ctx, 0, false);

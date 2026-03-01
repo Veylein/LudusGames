@@ -484,75 +484,87 @@ class PacmanGame {
 
     draw() {
         if (!this.ctx) return;
-        const isRetro = this.themeToggle && this.themeToggle.checked;
         
-        // Clear & Background
-        this.ctx.fillStyle = '#000';
+        // Neon Background
+        this.ctx.fillStyle = '#050510';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // Wall Color
-        this.ctx.strokeStyle = '#2121ff'; // Classic Arcade Blue
+        // Wall Color - Neon Blue
+        this.ctx.strokeStyle = '#2121ff'; 
+        this.ctx.shadowBlur = 10;
+        this.ctx.shadowColor = '#2121ff';
         this.ctx.lineWidth = 2;
         this.ctx.lineCap = 'round';
+        this.ctx.lineJoin = 'round';
 
-        // Draw Walls (Double Line style)
-        // For simplicity in this engine, we draw hollow rounded rects
+        // Draw Walls with Glow
+        this.ctx.beginPath();
         this.walls.forEach(w => {
             const x = w.x * this.tileSize;
             const y = w.y * this.tileSize;
             const s = this.tileSize;
             
-            // Outer box
-            this.ctx.strokeRect(x + 4, y + 4, s - 8, s - 8);
-            
-            // Connection logic would be better but expensive to calc every frame
-            // Minimalist retro look: small blue squares
-            // this.ctx.strokeRect(x + 6, y + 6, s - 12, s - 12);
+            // Draw hollow box logic from before, but batched for performance?
+            // Actually individual strokes are fine for this count
+            this.ctx.strokeRect(x + 5, y + 5, s - 10, s - 10);
         });
+        this.ctx.stroke();
 
-        // Draw Dots (Square Pixels)
-        this.ctx.fillStyle = '#ffb8ae'; // Salmon-ish dot color
+        this.ctx.shadowBlur = 0; // Reset for dots
+
+        // Draw Dots (Pulsing)
+        const time = Date.now() / 200;
+        const pulse = (Math.sin(time) + 1) / 2;
+        
         this.dots.forEach(d => {
             if (d.active) {
-                this.ctx.fillRect(d.x * this.tileSize + 8, d.y * this.tileSize + 8, 4, 4);
+                this.ctx.fillStyle = '#ffb8ae';
+                this.ctx.fillRect(d.x * this.tileSize + 9, d.y * this.tileSize + 9, 2, 2);
             }
         });
 
-        // Power Pellets (Bliinking Circle)
+        // Power Pellets
         if (Math.floor(Date.now() / 200) % 2 === 0) { 
+            this.ctx.shadowBlur = 10;
+            this.ctx.shadowColor = '#ffb8ae';
             this.ctx.fillStyle = '#ffb8ae';
             this.powerPellets.forEach(p => {
                 if (p.active) {
                     this.ctx.beginPath();
-                    this.ctx.arc(p.x * this.tileSize + 10, p.y * this.tileSize + 10, 8, 0, Math.PI * 2);
+                    this.ctx.arc(p.x * this.tileSize + 10, p.y * this.tileSize + 10, 6, 0, Math.PI * 2);
                     this.ctx.fill();
                 }
             });
+            this.ctx.shadowBlur = 0;
         }
         
-        // Draw Ghosts (Pixel Art)
+        // Draw Ghosts (Neon Glow)
         this.ghosts.forEach(g => {
             let color = g.color;
-            if (g.scared) color = '#0000ff'; // Blue
-            if (g.dead) color = null; // Eyes only
+            let glow = g.color;
+            if (g.scared) { color = '#0000ff'; glow = '#00ffff'; }
+            if (g.dead) { color = null; glow = null; }
             
-            this.drawGhostSprite(g.pixelX + 1, g.pixelY + 1, color, g.dx, g.dy, g.scared);
+            this.drawGhostSprite(g.pixelX + 1, g.pixelY + 1, color, glow, g.dx, g.dy, g.scared);
         });
 
-        // Draw Pacman
+        // Draw Pacman (Neon Glow)
         this.drawPacmanSprite(this.player.pixelX + 1, this.player.pixelY + 1, this.player.angle, this.player.mouthOpen);
     }
     
-    drawGhostSprite(x, y, color, dx, dy, scared) {
+    drawGhostSprite(x, y, color, glow, dx, dy, scared) {
         const ctx = this.ctx;
         const s = 1.3; // Scale
         
         if (color) {
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = glow;
             ctx.fillStyle = color;
+            
             // Head
             ctx.fillRect(x + 4*s, y, 6*s, 1*s);
             ctx.fillRect(x + 2*s, y + 1*s, 10*s, 1*s);
-            ctx.fillRect(x + 1*s, y + 6*s, 12*s, 1*s); // Body Width
+            ctx.fillRect(x + 1*s, y + 6*s, 12*s, 1*s); 
             ctx.fillRect(x, y + 7*s, 14*s, 7*s); // Body
             
             // Feet (Wiggle)
@@ -567,6 +579,8 @@ class PacmanGame {
             }
         }
         
+        ctx.shadowBlur = 0; // Eyes don't glow as much
+        
         // Eyes
         if (!scared || !color) {
             ctx.fillStyle = '#fff';
@@ -574,17 +588,17 @@ class PacmanGame {
             let ox = dx * 2;
             let oy = dy * 2;
             
-            ctx.fillRect(x + 3*s + ox, y + 4*s + oy, 4*s, 4*s); // Left Eye White
-            ctx.fillRect(x + 9*s + ox, y + 4*s + oy, 4*s, 4*s); // Right Eye White
+            ctx.fillRect(x + 3*s + ox, y + 4*s + oy, 4*s, 4*s); 
+            ctx.fillRect(x + 9*s + ox, y + 4*s + oy, 4*s, 4*s); 
             
             ctx.fillStyle = '#00f'; // Pupil
             ctx.fillRect(x + 5*s + ox, y + 6*s + oy, 2*s, 2*s);
             ctx.fillRect(x + 11*s + ox, y + 6*s + oy, 2*s, 2*s);
         } else {
             // Scared Face
-            ctx.fillStyle = '#ffb8ae'; // Buff color mouth/eyes
-            ctx.fillRect(x + 4*s, y + 6*s, 2*s, 2*s); // Eye L
-            ctx.fillRect(x + 10*s, y + 6*s, 2*s, 2*s); // Eye R
+            ctx.fillStyle = '#ffb8ae'; 
+            ctx.fillRect(x + 4*s, y + 6*s, 2*s, 2*s); 
+            ctx.fillRect(x + 10*s, y + 6*s, 2*s, 2*s); 
             
             // Wavy Mouth
             ctx.fillRect(x + 2*s, y + 10*s, 2*s, 1*s);
@@ -596,21 +610,22 @@ class PacmanGame {
     }
     
     drawPacmanSprite(x, y, angle, mouthOpen) {
-        // Pixel Art imitation is hard for rotation without canvas rotate
-        // So we use standard arc but with no anti-aliasing color
+        this.ctx.shadowBlur = 15;
+        this.ctx.shadowColor = '#ffff00';
         this.ctx.fillStyle = '#ffff00';
         
         const cx = x + 9;
         const cy = y + 9;
         const radius = 9;
         
-        // Mouth
         const mouthWidth = 0.25 * Math.PI * (0.5 + 0.5 * Math.sin(mouthOpen * Math.PI));
         
         this.ctx.beginPath();
         this.ctx.moveTo(cx, cy);
         this.ctx.arc(cx, cy, radius, angle + mouthWidth, angle + 2*Math.PI - mouthWidth);
         this.ctx.fill();
+        
+        this.ctx.shadowBlur = 0;
     }
 
     updateScore() {
@@ -626,42 +641,65 @@ class PacmanGame {
         this.isGameRunning = false;
         if(this.animationId) cancelAnimationFrame(this.animationId);
         
-        if(this.finalScoreEl) this.finalScoreEl.innerText = this.score;
-        const title = this.gameOverScreen ? this.gameOverScreen.querySelector('h2') : null;
-        if (title) {
-            if (won) {
-                title.innerText = "YOU WIN!";
-                title.style.color = "#00ff9d";
-            } else {
-                title.innerText = "GAME OVER";
-                title.style.color = "#ff0055";
-            }
+        if (window.GameUI) {
+            window.GameUI.showGameOver(
+                this.score,
+                () => this.resetGame(),
+                () => window.history.back(),
+                won ? "YOU WIN!" : "GAME OVER"
+            );
+        } else {
+            // Fallback
+            if(this.finalScoreEl) this.finalScoreEl.innerText = this.score;
+            if(this.gameOverScreen) this.gameOverScreen.style.display = 'flex';
         }
-        if(this.gameOverScreen) this.gameOverScreen.style.display = 'flex';
+    }
+    
+    // START
+    init() {
+        if (window.GameUI) {
+            window.GameUI.showStartScreen(
+                "PAC-MAN", 
+                "Eat all dots to win.<br>Avoid ghosts unless they are blue!",
+                () => this.startGame()
+            );
+        } else {
+            this.startGame();
+        }
+    }
+    
+    resetGame() {
+        this.isGameRunning = false;
+        this.startGame();
+    }
+    
+    togglePause() {
+        this.isPaused = !this.isPaused;
+        if (this.isPaused && window.GameUI) {
+            window.GameUI.showPause(
+                () => this.togglePause(),
+                () => window.history.back()
+            );
+        } else {
+            if (window.GameUI) window.GameUI.hide();
+        }
     }
 
     handleInput(e) {
-        // Remove listener if not on page
-        if (!document.getElementById('gameCanvas')) {
-             window.removeEventListener('keydown', this.inputHandler);
-             return;
-        }
+        if (!document.getElementById('gameCanvas')) return;
 
         if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].indexOf(e.code) > -1) {
             e.preventDefault();
         }
-
-        if (!this.isGameRunning) {
-            if (e.code === 'Space' || e.code.startsWith('Arrow')) {
-                this.startGame();
-            }
+        
+        if (e.code === 'KeyP' || e.code === 'Escape') {
+            this.togglePause();
             return;
         }
 
-        if (this.isPaused) {
-            if (e.code === 'Space') this.togglePause();
-            return;
-        }
+        if (!this.isGameRunning) return;
+
+        if (this.isPaused) return;
 
         switch(e.code) {
             case 'ArrowUp': 
@@ -680,11 +718,7 @@ class PacmanGame {
                 this.player.nextDx = 1; 
                 this.player.nextDy = 0; 
                 break;
-            case 'Space': this.togglePause(); break;
         }
-        
-        // Instant turn attempt for better feel even if not aligned yet
-        // (Handled in loop)
     }
 }
 

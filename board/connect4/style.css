@@ -13,7 +13,7 @@ body {
 
 #game-container {
     position: relative;
-    box-shadow: 0 0 50px rgba(100, 100, 255, 0.2);
+    box-shadow: 0 0 50px rgba(0, 0, 255, 0.2);
 }
 
 canvas {

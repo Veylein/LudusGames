@@ -1,74 +1,128 @@
-﻿(function() {
+﻿/*
+ * NEON Q
+ * Isometric neon puzzle game.
+ * Features:
+ * - Wireframe isometric cubes
+ * - Glowing player and enemies
+ * - Integrated GameUI
+ */
+
+(function() {
     const canvas = document.getElementById('gameCanvas');
     if (!canvas) return;
+
+    canvas.setAttribute('tabindex', '0');
+    canvas.focus();
+    
+    const ctx = canvas.getContext('2d');
+
+    const CONFIG = {
+        cubeSize: 30, // Side length logic
+        colors: {
+            bg: '#050510',
+            cubeLines: 'rgba(0, 255, 255, 0.3)',
+            topInactive: 'rgba(0, 0, 50, 0.8)',
+            topActive: 'rgba(255, 200, 0, 0.9)', // Neon Orange/Yellow
+            sideLeft: 'rgba(0, 50, 50, 0.5)',
+            sideRight: 'rgba(0, 20, 20, 0.5)',
+            player: '#ff7700',
+            shadow: 'rgba(0,0,0,0.5)'
+        }
+    };
 
     class QbertGame {
         constructor() {
             this.canvas = canvas;
-            this.ctx = this.canvas.getContext('2d');
-            
-            this.scoreEl = document.getElementById('score');
-            this.livesEl = document.getElementById('lives');
-            this.startScreen = document.getElementById('start-screen');
-            
-            this.cubeW = 40;
-            this.cubeH = 40; 
+            this.ctx = ctx;
             
             this.rows = 7;
-            this.cubes = []; 
+            this.cubes = [];
             
-            this.qbert = { r: 0, c: 0, x: 0, y: 0, targetX: 0, targetY: 0, jumping: false, jumpTime: 0 };
+            this.qbert = { r: 0, c: 0, x: 0, y: 0, targetX: 0, targetY: 0, hopping: false, hopTime: 0 };
             
             this.score = 0;
-            this.lives = 3;
             this.level = 1;
+            this.isGameOver = false;
+            this.isPaused = false;
+            this.animationId = null;
             
-            this.isRunning = false;
-            
-            this.boundInput = this.input.bind(this);
-            this.boundStart = this.start.bind(this);
-            
+            this.mouseLocked = false;
+
+            this.handleInput = this.handleInput.bind(this);
             this.init();
         }
         
         init() {
-            window.addEventListener('keydown', this.boundInput);
+            document.addEventListener('keydown', this.handleInput);
             
-            if (this.startScreen) {
-                this.startScreen.addEventListener('click', this.boundStart);
+             if (window.GameUI) {
+                window.GameUI.init(this.canvas, {
+                    onStart: () => this.start(),
+                    onPause: () => this.togglePause(),
+                    onRestart: () => this.start()
+                });
+                window.GameUI.showStartScreen();
+            } else {
+                this.start();
             }
-            this.canvas.addEventListener('click', () => {
-                if (!this.isRunning) this.start();
-            });
-
-            this.initLevel();
-            this.draw();
         }
         
-        cleanup() {
-            window.removeEventListener('keydown', this.boundInput);
-            if (this.startScreen) {
-                this.startScreen.removeEventListener('click', this.boundStart);
+        start() {
+            this.isGameOver = false;
+            this.isPaused = false;
+            this.score = 0;
+            this.initLevel();
+            
+            if (window.GameUI) {
+                window.GameUI.updateScore(0);
+                window.GameUI.hideStartScreen();
+                window.GameUI.hideGameOverScreen();
+                window.GameUI.hidePauseScreen();
             }
-            this.isRunning = false;
+            
+            if (this.animationId) cancelAnimationFrame(this.animationId);
+            this.loop();
+        }
+        
+        togglePause() {
+            if (this.isGameOver) return;
+            this.isPaused = !this.isPaused;
+            if (this.isPaused) {
+                if (window.GameUI) window.GameUI.showPauseScreen();
+            } else {
+                if (window.GameUI) window.GameUI.hidePauseScreen();
+                this.loop();
+            }
         }
 
         initLevel() {
             this.cubes = [];
+            // Pyramid construction
+            // Center top at canvas center
             const startX = this.canvas.width / 2;
-            const startY = 80;
+            const startY = 100;
+            const size = CONFIG.cubeSize * 1.5; // Visual spacing
+            
+            // h = size * 0.866 (roughly isometric ratio if we were doing true iso)
+            // But let's stick to the grid logic from before which was working:
+            // x = startX + (c * W) - (r * W/2)
+            // y = startY + (r * H)
+            
+            const W = 40;
+            const H = 30; 
             
             for(let r=0; r<this.rows; r++) {
                 for(let c=0; c<=r; c++) {
-                    const x = startX + (c * this.cubeW) - (r * this.cubeW / 2);
-                    const y = startY + (r * 30); 
+                    const x = startX + (c * W) - (r * W / 2);
+                    const y = startY + (r * H); 
                     
                     this.cubes.push({
                         r: r, 
                         c: c,
                         x: x, 
                         y: y, 
-                        color: 0
+                        color: 0, // 0 = Inactive, 1 = Active
+                        activeAnim: 0 // Flash effect
                     });
                 }
             }
@@ -79,193 +133,247 @@
         resetQbert() {
             this.qbert.r = 0;
             this.qbert.c = 0;
-            this.updateQbertPos();
-        }
-        
-        updateQbertPos() {
-            const cube = this.getCube(this.qbert.r, this.qbert.c);
-            if(cube) {
-                this.qbert.x = cube.x;
-                this.qbert.y = cube.y - 15; // Stand on top
-            } else {
-                // Fall off
-                this.lives--;
-                if(this.livesEl) this.livesEl.innerText = this.lives;
-                if (this.lives > 0) {
-                     this.resetQbert();
-                } else {
-                    this.isRunning = false;
-                    alert("Game Over! Score: " + this.score);
-                    this.score = 0;
-                    this.lives = 3;
-                    this.livesEl.innerText = 3;
-                    this.scoreEl.innerText = 0;
-                    this.initLevel();
-                    if(this.startScreen) this.startScreen.style.display = 'flex';
-                }
-            }
+            this.qbert.hopping = false;
+            const cube = this.getCube(0, 0);
+            this.qbert.x = cube.x;
+            this.qbert.y = cube.y - 20;
         }
         
         getCube(r, c) {
             return this.cubes.find(cb => cb.r === r && cb.c === c);
         }
         
-        start() {
-            if(this.isRunning) return;
-            this.isRunning = true;
-            if (this.startScreen) this.startScreen.style.display = 'none';
-            this.loop();
-        }
-        
-        input(e) {
-            if (!this.isRunning) {
-                if(e.code === 'Space') this.start();
+        handleInput(e) {
+            if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space","KeyI","KeyJ","KeyL","KeyK"].includes(e.code)) {
+                e.preventDefault();
+            }
+            
+            if (this.isGameOver) {
+                if (e.code === 'Space') this.start();
+                return;
+            }
+            if (this.isPaused) {
+                if (e.code === 'Space') this.togglePause();
                 return;
             }
             
+            if (this.qbert.hopping) return; // Wait for hop
+
             let dr = 0, dc = 0;
             
-            if (e.code === 'ArrowUp' || e.code === 'KeyI') { dr = -1; dc = -1; }
-            else if (e.code === 'ArrowRight' || e.code === 'KeyL') { dr = -1; dc = 0; }
-            else if (e.code === 'ArrowLeft' || e.code === 'KeyJ') { dr = 1; dc = 0; }
-            else if (e.code === 'ArrowDown' || e.code === 'KeyK') { dr = 1; dc = 1; }
+            // Mapping:
+            // Up/Right (Diagonal) -> r-1, c
+            // Up/Left -> r-1, c-1
+            // Down/Right -> r+1, c+1
+            // Down/Left -> r+1, c
             
-            else if (e.code === 'KeyQ') { dr = -1; dc = -1; }
-            else if (e.code === 'KeyW') { dr = -1; dc = 0; }
-            else if (e.code === 'KeyA') { dr = 1; dc = 0; }
-            else if (e.code === 'KeyS') { dr = 1; dc = 1; }
+            if (e.code === 'ArrowUp' || e.code === 'KeyI' || e.code === 'KeyW') { dr = -1; dc = -1; } // Up-Left visually
+            else if (e.code === 'ArrowRight' || e.code === 'KeyL' || e.code === 'KeyD') { dr = -1; dc = 0; } // Up-Right visually
+            else if (e.code === 'ArrowLeft' || e.code === 'KeyJ' || e.code === 'KeyA') { dr = 1; dc = 0; } // Down-Left visually
+            else if (e.code === 'ArrowDown' || e.code === 'KeyK' || e.code === 'KeyS') { dr = 1; dc = 1; } // Down-Right visually
+            else if (e.code === 'Space') { this.togglePause(); return; }
             
             if (dr !== 0 || dc !== 0) {
-                e.preventDefault();
-                this.jump(dr, dc);
-                this.draw(); // Redraw on move
+                this.hop(dr, dc);
             }
         }
         
-        jump(dr, dc) {
+        hop(dr, dc) {
             this.qbert.r += dr;
             this.qbert.c += dc;
+            this.qbert.hopping = true;
+            this.qbert.hopTime = 10; // Frames to animate
             
+            // Check landing immediately for logic, animate visual
             const cube = this.getCube(this.qbert.r, this.qbert.c);
+            
             if (cube) {
+                // Landed on cube
+                this.qbert.targetX = cube.x;
+                this.qbert.targetY = cube.y - 20;
+                
                 if (cube.color === 0) {
                     cube.color = 1;
+                    cube.activeAnim = 10;
                     this.score += 25;
-                    if(this.scoreEl) this.scoreEl.innerText = this.score;
+                    this.checkWin();
+                }
+            } else {
+                // Landed in void (Fall off)
+                // Use projected coords
+                // We'll just animate off screen and die
+                this.qbert.targetX = this.qbert.x + (dc * 40); // Rough guess
+                this.qbert.targetY = this.qbert.y + (dr * 30);
+                // Mark for death
+                this.qbert.isFalling = true;
+            }
+            
+            if (window.GameUI) window.GameUI.updateScore(this.score);
+        }
+        
+        checkWin() {
+            // Check if all cubes are color 1
+            if (this.cubes.every(c => c.color === 1)) {
+                 this.score += 1000;
+                 // Reset board but keep score? 
+                 // For now, Game Over Win state
+                 setTimeout(() => this.die(true), 500);
+            }
+        }
+        
+        die(win = false) {
+            this.isGameOver = true;
+             // Save score
+             const saved = localStorage.getItem('qbertHighScore') || 0;
+             if (this.score > saved) localStorage.setItem('qbertHighScore', this.score);
+             
+             if (window.GameUI) window.GameUI.showGameOverScreen(this.score, Math.max(this.score, saved));
+        }
+
+        update() {
+            // Hop Animation
+            if (this.qbert.hopping) {
+                // Lerp
+                this.qbert.x += (this.qbert.targetX - this.qbert.x) * 0.3;
+                this.qbert.y += (this.qbert.targetY - this.qbert.y) * 0.3;
+                
+                // Hop height (parabola)
+                // Simple version: just slide for now to be safe with 2D logic
+                
+                if (Math.abs(this.qbert.x - this.qbert.targetX) < 2 && Math.abs(this.qbert.y - this.qbert.targetY) < 2) {
+                    this.qbert.hopping = false;
+                    this.qbert.x = this.qbert.targetX;
+                    this.qbert.y = this.qbert.targetY;
+                    
+                    if (this.qbert.isFalling) {
+                        this.die();
+                    }
                 }
             }
             
-            this.updateQbertPos();
+            // Update cube animations
+            this.cubes.forEach(c => {
+                if(c.activeAnim > 0) c.activeAnim--;
+            });
         }
-        
-        draw() {
-            // Check canvas context
-            if (!this.ctx) return;
 
-            this.ctx.fillStyle = '#111';
+        draw() {
+            // Background
+            this.ctx.fillStyle = CONFIG.colors.bg;
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
             
+            // Draw Cubes
+            // Draw in order of rows? Z-indexing naturally happens by draw order
+            // Actually iterating row 0 to 6 works for painting painters algorithm
+            
             this.cubes.forEach(c => {
-                this.drawCube(c.x, c.y, c.color);
+                this.drawCube(c.x, c.y, c.color, c.activeAnim);
             });
             
-            if (this.isRunning || this.lives > 0) {
-                this.drawQbert(this.qbert.x, this.qbert.y);
+            // Draw Qbert
+            if (!this.qbert.isFalling || this.isGameOver) {
+                 this.drawQbert(this.qbert.x, this.qbert.y);
             }
         }
         
-        drawCube(x, y, colorState) {
+        drawCube(x, y, state, anim) {
             const size = 20; 
             const h = 25; 
             
-            let topColor = '#888';
-            if (colorState === 0) topColor = '#55a'; // Blueish
-            else if (colorState === 1) topColor = '#fd0'; // Yellow
-            else if (colorState === 2) topColor = '#0f0'; // Green
-    
-            const leftColor = '#555'; 
-            const rightColor = '#333'; 
+            let topColor = CONFIG.colors.topInactive;
+            if (state === 1) topColor = CONFIG.colors.topActive;
+            if (anim > 0) topColor = '#fff'; // Flash white
+            
+            // Wireframe / Neon Style
+            this.ctx.lineWidth = 2;
+            this.ctx.strokeStyle = CONFIG.colors.cubeLines;
             
             // Top Face 
+            this.ctx.fillStyle = topColor;
             this.ctx.beginPath();
             this.ctx.moveTo(x, y - size); 
             this.ctx.lineTo(x + size, y); 
             this.ctx.lineTo(x, y + size); 
             this.ctx.lineTo(x - size, y); 
             this.ctx.closePath();
-            this.ctx.fillStyle = topColor;
             this.ctx.fill();
             this.ctx.stroke(); 
             
-            // Left Face
+            // Left Face (Darker)
+            this.ctx.fillStyle = CONFIG.colors.sideLeft;
             this.ctx.beginPath();
             this.ctx.moveTo(x - size, y);
             this.ctx.lineTo(x, y + size);
             this.ctx.lineTo(x, y + size + h);
             this.ctx.lineTo(x - size, y + h);
             this.ctx.closePath();
-            this.ctx.fillStyle = leftColor;
             this.ctx.fill();
             this.ctx.stroke();
     
-            // Right Face
+            // Right Face (Darkest)
+            this.ctx.fillStyle = CONFIG.colors.sideRight;
             this.ctx.beginPath();
             this.ctx.moveTo(x + size, y);
             this.ctx.lineTo(x, y + size);
             this.ctx.lineTo(x, y + size + h);
             this.ctx.lineTo(x + size, y + h);
             this.ctx.closePath();
-            this.ctx.fillStyle = rightColor;
             this.ctx.fill();
             this.ctx.stroke();
         }
         
         drawQbert(x, y) {
-            // Q*bert Sprite
-            this.ctx.fillStyle = '#ff7b00'; 
-            
+            // Shadow
+            this.ctx.fillStyle = CONFIG.colors.shadow;
             this.ctx.beginPath();
-            this.ctx.arc(x, y, 12, 0, Math.PI*2);
+            this.ctx.ellipse(x, y + 15, 12, 6, 0, 0, Math.PI*2);
             this.ctx.fill();
             
-            // Snoot
+            // Glowing Sphere
+            this.ctx.shadowBlur = 15;
+            this.ctx.shadowColor = CONFIG.colors.player;
+            this.ctx.fillStyle = CONFIG.colors.player;
+            
+            // Hop offset
+            let hopY = 0;
+            if (this.qbert.hopping) hopY = -15 * Math.sin(Math.PI * ((10 - this.qbert.hopTime)/10)); // Just simple fake arc
+            
             this.ctx.beginPath();
-            this.ctx.moveTo(x + 5, y + 5);
-            this.ctx.lineTo(x + 15, y + 15);
-            this.ctx.lineWidth = 6;
-            this.ctx.strokeStyle = '#ff7b00';
+            this.ctx.arc(x, y + hopY, 12, 0, Math.PI*2);
+            this.ctx.fill();
+            this.ctx.shadowBlur = 0;
+            
+            // Face Details (Nose)
+            this.ctx.strokeStyle = '#fff';
+            this.ctx.lineWidth = 2;
+            this.ctx.beginPath();
+            this.ctx.moveTo(x+5, y + hopY + 5);
+            this.ctx.lineTo(x+15, y + hopY + 15);
             this.ctx.stroke();
-            this.ctx.lineWidth = 1;
             
             // Eyes
             this.ctx.fillStyle = '#fff';
             this.ctx.beginPath();
-            this.ctx.arc(x - 4, y - 4, 4, 0, Math.PI*2); 
+            this.ctx.arc(x - 5, y + hopY - 5, 4, 0, Math.PI*2);
+            this.ctx.arc(x + 5, y + hopY - 5, 4, 0, Math.PI*2);
             this.ctx.fill();
             
-            this.ctx.beginPath();
-            this.ctx.arc(x + 6, y - 4, 4, 0, Math.PI*2); 
-            this.ctx.fill();
-            
-            // Pupils
             this.ctx.fillStyle = '#000';
             this.ctx.beginPath();
-            this.ctx.arc(x - 4, y - 4, 1.5, 0, Math.PI*2);
-            this.ctx.arc(x + 6, y - 4, 1.5, 0, Math.PI*2);
+            this.ctx.arc(x - 5, y + hopY - 5, 1, 0, Math.PI*2);
+            this.ctx.arc(x + 5, y + hopY - 5, 1, 0, Math.PI*2);
             this.ctx.fill();
         }
         
         loop() {
-            if(!this.isRunning) return;
-            if (!document.getElementById('gameCanvas')) {
-                this.cleanup();
-                return;
-            }
-            // this.draw(); // Draw is called on input and start, animation loop for idle animation?
-            // Qbert doesn't have continuous movement in this version, it's step based.
-            // But let's keep loop for future animation or blinking.
+            if (this.isPaused) return;
             
-            requestAnimationFrame(() => this.loop());
+            if (!this.isGameOver) {
+                this.update();
+            }
+            this.draw();
+            
+            this.animationId = requestAnimationFrame(() => this.loop());
         }
     }
     

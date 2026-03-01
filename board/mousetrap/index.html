@@ -2,75 +2,52 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>Cyber Trap</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mouse Trap - Ludus Games</title>
-    <link rel="stylesheet" href="../../style.css">
     <link rel="stylesheet" href="../../themes.css">
     <link rel="stylesheet" href="mousetrap.css">
 </head>
 <body>
-    <div class="game-container">
-        <header>
-            <a href="../index.html" class="back-link">← Back to Board Games</a>
-            <h1>Mouse Trap (Abstract)</h1>
-            <div class="theme-switch-wrapper">
-                <label class="theme-switch" for="checkbox">
-                    <input type="checkbox" id="checkbox" />
-                    <div class="slider round"></div>
-                </label>
-                <em>Enable Dark Mode!</em>
-            </div>
-        </header>
-
-        <main>
-            <div class="game-layout">
-                <div class="sidebar">
-                    <div class="players-list">
-                        <!-- Player scorecards go here -->
-                        <div class="player-card active" id="p1-card">
-                            <h3>Player 1 (Red)</h3>
-                            <div class="stats">
-                                <span>🧀 Cheese: <b id="p1-cheese">0</b></span>
-                            </div>
-                        </div>
-                        <div class="player-card" id="p2-card">
-                            <h3>Player 2 (Blue)</h3>
-                            <div class="stats">
-                                <span>🧀 Cheese: <b id="p2-cheese">0</b></span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="trap-status">
-                        <h3>Trap Construction</h3>
-                        <div class="trap-parts">
-                            <div class="part" id="part-gear">⚙️ Gears</div>
-                            <div class="part" id="part-crank">🔄 Crank</div>
-                            <div class="part" id="part-bucket">🪣 Bucket</div>
-                            <div class="part" id="part-cage">🕸️ Cage</div>
-                        </div>
-                        <p id="trap-msg">Build parts to trap opponents!</p>
-                    </div>
-
-                    <div class="controls">
-                        <div class="dice-display" id="dice-val">🎲</div>
-                        <button id="roll-btn">Roll Die</button>
-                        <p id="game-log">Game Start! P1's Turn.</p>
-                    </div>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        
+        <div id="ui-overlay">
+            <h1 class="neon-title">CYBER_TRAP.exe</h1>
+            
+            <div id="player-panels">
+                <div class="p-panel p0 active">
+                    <div class="p-name">SYS_ADMIN</div>
+                    <div class="p-data">DATA: 0</div>
+                    <div class="p-trap">TRAP: [ ] [ ] [ ]</div>
                 </div>
-
-                <div class="board-container">
-                    <div class="board" id="game-board">
-                        <!-- Generate spaces via JS -->
-                    </div>
-                    <!-- Absolute positioned pieces -->
-                    <div class="piece p1" id="p1-piece" style="display:none">🐭</div>
-                    <div class="piece p2" id="p2-piece" style="display:none">🐭</div>
+                <div class="p-panel p1">
+                    <div class="p-name">GUEST_USER</div>
+                    <div class="p-data">DATA: 0</div>
+                    <div class="p-trap">TRAP: [ ] [ ] [ ]</div>
+                </div>
+                <div class="p-panel p2">
+                    <div class="p-name">BOT_01</div>
+                    <div class="p-data">DATA: 0</div>
+                    <div class="p-trap">TRAP: [ ] [ ] [ ]</div>
+                </div>
+                <div class="p-panel p3">
+                    <div class="p-name">BOT_02</div>
+                    <div class="p-data">DATA: 0</div>
+                    <div class="p-trap">TRAP: [ ] [ ] [ ]</div>
                 </div>
             </div>
-        </main>
+            
+            <div id="game-controls">
+                <div id="dice-display">READY</div>
+                <div class="btn-group">
+                    <button id="btn-roll" class="cyber-btn">EXECUTE ROLL</button>
+                    <button id="btn-trap" class="cyber-btn" disabled>ACTIVATE TRAP</button>
+                </div>
+                <div id="status-log">INITIALIZING...</div>
+            </div>
+        </div>
     </div>
-    <script src="../../effects.js"></script>
+
     <script src="../../ui.js"></script>
     <script src="mousetrap.js"></script>
 </body>
