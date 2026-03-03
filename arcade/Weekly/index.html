@@ -1,45 +1,36 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Remembrance: God Simulator</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- FontAwesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
-<body>
-    <div id="ui-layer">
-        <div id="top-panel">
-            <div id="game-info">
-                <h1>REMEMBRANCE</h1>
-                <div id="game-stats">
-                    <span class="stat-box" id="year-display">Year 1</span>
-                    <span class="stat-box" id="pop-display">0 Beings</span>
-                    <span class="stat-box" id="vil-display">0 Villages</span>
-                </div>
-            </div>
-            <div id="controls-hint" style="color:#8b949e; font-size: 0.8rem; text-align: right;">
-                WASD to Move Camera<br>
-                Scroll to Zoom<br>
-                Left Click to Use Tool
-            </div>
+The following files were successfully edited:
+c:\Users\brodr\OneDrive\Documents\LudusGames\arcade\Weekly\index.html
         </div>
 
         <div id="toast-container"></div>
         
+        <!-- IMPROVED INSPECTOR -->
         <div id="inspector">
             <div id="inspector-header">
                 <span id="inspector-title">Entity</span>
-                <i class="fa-solid fa-xmark" onclick="document.getElementById('inspector').style.display='none'" style="cursor:pointer;"></i>
+                <i class="fa-solid fa-xmark" id="inspector-close" style="cursor:pointer;"></i>
             </div>
-            <div id="inspector-content"></div>
+            
+            <div class="inspector-tabs">
+                <button class="tab-btn active" data-tab="info">Info</button>
+                <button class="tab-btn" data-tab="traits">Traits</button>
+                <button class="tab-btn" data-tab="thoughts">Mind</button>
+            </div>
+
+            <div id="inspector-content">
+                <!-- Dynamic Content -->
+            </div>
         </div>
 
         <div id="bottom-toolbar">
-            <!-- Terraforming -->
+            <!-- Navigation/System -->
             <div class="tool-category">
                 <button class="tool-btn active" data-tool="cursor" title="Inspect/Select"><i class="fa-solid fa-arrow-pointer"></i><span class="tool-tooltip">Cursor</span></button>
+                <button class="tool-btn" data-tool="info" title="World History"><i class="fa-solid fa-book-open"></i><span class="tool-tooltip">History</span></button>
+            </div>
+
+            <!-- Terraforming -->
+            <div class="tool-category">
                 <button class="tool-btn" data-tool="mountains" title="Create Mountains"><i class="fa-solid fa-mountain"></i><span class="tool-tooltip">Mountains</span></button>
                 <button class="tool-btn" data-tool="forest" title="Plant Forest"><i class="fa-solid fa-tree"></i><span class="tool-tooltip">Forest</span></button>
                 <button class="tool-btn" data-tool="water" title="Create Water"><i class="fa-solid fa-water"></i><span class="tool-tooltip">Water</span></button>
@@ -56,13 +47,14 @@
             <!-- Civilization -->
             <div class="tool-category">
                 <button class="tool-btn" data-tool="village" title="Found Village" style="color: gold;"><i class="fa-solid fa-crown"></i><span class="tool-tooltip">Start Kingdom</span></button>
+                <button class="tool-btn" data-tool="war" title="Inspire War" style="color: #ff4444;"><i class="fa-solid fa-swords"></i><span class="tool-tooltip">Inspire War</span></button>
             </div>
 
             <!-- Destruction -->
             <div class="tool-category">
                 <button class="tool-btn" data-tool="fire" title="Fire" style="color: orange;"><i class="fa-solid fa-fire"></i><span class="tool-tooltip">Fire</span></button>
                 <button class="tool-btn" data-tool="tnt" title="Explosion" style="color: red;"><i class="fa-solid fa-bomb"></i><span class="tool-tooltip">TNT</span></button>
-                <button class="tool-btn" data-tool="lightning" title="Lightning" style="color: yellow;"><i class="fa-solid fa-bolt"></i><span class="tool-tooltip">Smite</span></button>
+                <button class="tool-btn" data-tool="plague" title="Plague" style="color: purple;"><i class="fa-solid fa-biohazard"></i><span class="tool-tooltip">Plague</span></button>
             </div>
         </div>
     </div>

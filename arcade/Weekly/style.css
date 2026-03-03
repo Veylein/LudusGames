@@ -1,80 +1,94 @@
-body, html {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background-color: #0b1015;
-    font-family: 'Segoe UI', 'Roboto', sans-serif;
-    color: #e6edf3;
-    user-select: none;
-}
+The following files were successfully edited:
+c:\Users\brodr\OneDrive\Documents\LudusGames\arcade\Weekly\style.css
 
-#game-canvas {
-    display: block;
-    image-rendering: pixelated; 
-    width: 100%;
-    height: 100%;
-}
-
-#ui-layer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-/* --- TOP PANEL --- */
-#top-panel {
-    background: linear-gradient(180deg, rgba(13,17,23,0.95) 0%, rgba(13,17,23,0) 100%);
-    padding: 15px 25px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
     pointer-events: auto;
-    text-shadow: 1px 1px 2px black;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    display: none;
+    flex-direction: column;
+    max-height: 70%;
 }
 
-#game-info h1 {
-    margin: 0;
-    font-size: 1.4rem;
-    color: #58a6ff;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-}
-
-#game-stats {
-    font-family: 'Consolas', monospace;
-    font-size: 0.9rem;
-    color: #8b949e;
-    margin-top: 5px;
+#inspector-header {
+    padding: 12px;
+    background: #21262d;
+    border-radius: 8px 8px 0 0;
     display: flex;
-    gap: 15px;
-}
-
-.stat-box {
-    background: rgba(255,255,255,0.1);
-    padding: 2px 6px;
-    border-radius: 4px;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
     color: #e6edf3;
 }
 
-/* --- BOTTOM TOOLBAR (GOD TOOLS) --- */
+.inspector-tabs {
+    display: flex;
+    background: #161b22;
+    border-bottom: 1px solid #30363d;
+}
+
+.tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 10px;
+    color: #8b949e;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+}
+.tab-btn.active {
+    color: #58a6ff;
+    border-bottom-color: #58a6ff;
+}
+
+#inspector-content {
+    padding: 15px;
+    overflow-y: auto;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 13px;
+    color: #c9d1d9;
+}
+
+.trait-badge {
+    display: inline-block;
+    background: #30363d;
+    color: #58a6ff;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin: 2px;
+    font-size: 11px;
+    border: 1px solid #1f6feb;
+}
+
+.thought-bubble {
+    background: rgba(255,255,255,0.05);
+    padding: 8px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    border-left: 3px solid #79c0ff;
+    font-style: italic;
+}
+
+.memory-log {
+    border-left: 1px solid #30363d;
+    margin-left: 5px;
+    padding-left: 10px;
+}
+.memory-item {
+    margin-bottom: 5px;
+    font-size: 0.85em;
+    color: #8b949e;
+}
+.memory-time { font-weight: bold; color: #58a6ff; margin-right: 5px; }
+
+/* BOTTOM TOOLBAR */
 #bottom-toolbar {
     pointer-events: auto;
-    background: rgba(22, 27, 34, 0.9);
+    background: rgba(22, 27, 34, 0.95);
     border-top: 2px solid #30363d;
     padding: 10px;
     display: flex;
     justify-content: center;
     gap: 10px;
     backdrop-filter: blur(8px);
-    transition: transform 0.2s;
 }
 
 .tool-category {
@@ -83,38 +97,28 @@ body, html {
     padding: 0 10px;
     border-right: 1px solid #30363d;
 }
-
-.tool-category:last-child {
-    border-right: none;
-}
+.tool-category:last-child { border: none; }
 
 .tool-btn {
-    width: 48px;
-    height: 48px;
+    width: 48px; height: 48px;
     background: #21262d;
     border: 1px solid #30363d;
     border-radius: 8px;
     color: #c9d1d9;
     font-size: 20px;
     cursor: pointer;
-    transition: all 0.1s;
+    position: relative;
+    transition: 0.1s;
     display: flex;
     justify-content: center;
     align-items: center;
-    position: relative;
 }
 
-.tool-btn:hover {
-    background: #30363d;
-    transform: translateY(-2px);
-    border-color: #8b949e;
-}
-
+.tool-btn:hover { background: #30363d; transform: translateY(-2px); }
 .tool-btn.active {
     background: #1f6feb;
     border-color: #58a6ff;
     color: white;
-    transform: translateY(-2px);
     box-shadow: 0 0 10px rgba(31, 111, 235, 0.5);
 }
 
@@ -125,7 +129,7 @@ body, html {
     transform: translateX(-50%);
     background: #000;
     color: #fff;
-    padding: 5px 8px;
+    padding: 4px 8px;
     border-radius: 4px;
     font-size: 12px;
     white-space: nowrap;
@@ -134,73 +138,21 @@ body, html {
     transition: opacity 0.2s;
     z-index: 1000;
 }
+.tool-btn:hover .tool-tooltip { opacity: 1; }
 
-.tool-btn:hover .tool-tooltip {
-    opacity: 1;
-}
+.radio-group { display: flex; gap: 10px; }
+.radio-btn { cursor: pointer; color: #8b949e; }
+.radio-btn input { margin-right: 5px; }
 
-/* --- INSPECTOR --- */
-#inspector {
-    position: absolute;
-    right: 20px;
-    top: 80px;
-    width: 300px;
-    background: rgba(22, 27, 34, 0.95);
-    border: 1px solid #30363d;
-    border-radius: 8px;
-    pointer-events: auto;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-    display: none;
-    flex-direction: column;
-    max-height: 80%;
-}
-
-#inspector-header {
-    padding: 12px;
-    background: #21262d;
-    border-radius: 8px 8px 0 0;
-    border-bottom: 1px solid #30363d;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-weight: bold;
-}
-
-#inspector-content {
-    padding: 15px;
-    overflow-y: auto;
-    font-family: 'Consolas', monospace;
-    font-size: 12px;
-    color: #a5d6ff;
-}
-
-/* JSON Formatting */
-.json-key { color: #79c0ff; }
-.json-string { color: #a5d6ff; }
-.json-number { color: #d2a8ff; }
-.json-boolean { color: #ff7b72; }
-
-/* --- NOTIFICATIONS / LOG --- */
-#toast-container {
-    position: absolute;
-    top: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    pointer-events: none;
-    align-items: center;
-}
-
+/* Notification */
 .toast {
-    background: rgba(0,0,0,0.7);
+    background: rgba(0,0,0,0.8);
     color: white;
     padding: 8px 16px;
     border-radius: 20px;
-    font-size: 14px;
+    margin-top: 10px;
+    border: 1px solid rgba(255,255,255,0.2);
     animation: fadeInOut 3s forwards;
-    border: 1px solid rgba(255,255,255,0.1);
 }
 
 @keyframes fadeInOut {
