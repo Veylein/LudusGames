@@ -3,22 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Remembrance</title>
+    <title>Remembrance: God Simulator</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="ui-layer">
-        <div id="debug-info">
-            <h1>Remembrance</h1>
-            <p>Mode: <span id="mode-display">Survival</span></p>
-            <p>Time: <span id="time-display">Year 1</span></p>
-            <div id="interaction-log"></div>
+        <div id="top-panel">
+            <div id="game-title">Remembrance</div>
+            <div id="stats-display">
+                <span id="mode-display">Mode: Survival</span>
+                <span id="time-display">Year 1</span>
+                <span id="pop-display">Pop: 0</span>
+            </div>
         </div>
-        <div id="inspector" style="display:none;">
-            <h3>Entity Inspector</h3>
-            <pre id="inspector-content"></pre>
+        
+        <div id="inspector">
+            <div id="inspector-header">
+                <span>Entity Mind</span>
+                <button onclick="document.getElementById('inspector').style.display='none'" style="background:none; border:none; color:#8b949e; cursor:pointer;">×</button>
+            </div>
+            <div id="inspector-content">Select an entity...</div>
         </div>
+
+        <div id="interaction-log"></div>
     </div>
+    
+    <div id="cursor-tooltip"></div>
     <canvas id="game-canvas"></canvas>
     <script type="module" src="game.js"></script>
 </body>
