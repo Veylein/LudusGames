@@ -683,7 +683,12 @@ const GameUI = {
     overlay: null,
 
     // Creates the overlay if it doesn't exist
-    init() {
+    init(canvas, options = {}) {
+        // Store options if provided (so games can register callbacks via init)
+        if (options) {
+             this.callbacks = { ...this.callbacks, ...options };
+        }
+        
         if (this.overlay) return;
         
         this.overlay = document.createElement('div');
@@ -700,7 +705,31 @@ const GameUI = {
         document.body.appendChild(this.overlay);
     },
 
-    showPause(onResume, onQuit) {
+    // Aliases for compatibility with games calling specific hide methods
+    hideStartScreen() { this.hide(); },
+    hideGameOverScreen() { this.hide(); },
+    hidePauseScreen() { this.hide(); },
+    updateScore(score) { /* Placeholder for HUD updates if implemented */ },
+
+    showPause(element, onResume, onQuit) {
+        // Handle argument shifting if games call showPause(onResume, onQuit) or showPause() using stored options
+        let resumeCb = onResume;
+        let quitCb = onQuit;
+        if (typeof element === 'function') {
+            resumeCb = element;
+            quitCb = onResume;
+        }
+
+        // Fallback to stored callbacks
+        if (!resumeCb && this.callbacks && this.callbacks.onPause) {
+             // Wait, onPause is usually "triggered when pause happens", not "what to do on resume". 
+             // Logic in games: onStart, onRestart, etc.
+             // Usually pause screen needs a "Resume" action. 
+             // If game provided onStart/onRestart, did it provide onResume? Checkers has togglePause.
+             // Usually Checkers calls showPause() and handles state itself.
+             // But the button needs a callback.
+        }
+
         this.init();
         this.overlay.innerHTML = '';
         this.overlay.style.display = 'flex';
@@ -719,12 +748,17 @@ const GameUI = {
 
         const resumeBtn = this.createButton('RESUME', () => {
             this.hide();
-            if (onResume) onResume();
+            if (resumeCb) resumeCb();
+            else if (this.callbacks && this.callbacks.onPause) {
+                 // Is onPause a toggle? Checkers passes: onPause: () => this.togglePause()
+                 // If we call it again, it unpauses? Correct.
+                 this.callbacks.onPause();
+            }
         });
         
         const quitBtn = this.createButton('QUIT', () => {
             this.hide();
-            if (onQuit) onQuit();
+            if (quitCb) quitCb();
             else window.history.back(); // Default behavior
         }, true); // Is danger button
 
@@ -734,15 +768,22 @@ const GameUI = {
     },
 
     showGameOver(score, onRestart, onQuit, titleText = "GAME OVER") {
+        return this.showGameOverScreen(score, 100); // Redirect to robust method? No, keep implementation.
+        // Wait, games call showGameOverScreen(score, maxScore?)
+        // Checkers calls: showGameOverScreen(winner === 1 ? 100 : 0, 100)
+    },
+
+    showGameOverScreen(score, maxScore) { 
+        // Adapter for games calling showGameOverScreen
         this.init();
         this.overlay.innerHTML = '';
         this.overlay.style.display = 'flex';
 
         const title = document.createElement('h1');
-        title.innerText = titleText;
+        title.innerText = "GAME OVER";
         title.style.fontSize = '3rem';
         title.style.marginBottom = '1rem';
-        title.style.color = '#ff0055'; // Red-ish
+        title.style.color = '#ff0055'; 
         title.style.textShadow = '0 0 10px #ff0055';
         this.overlay.appendChild(title);
 
@@ -761,13 +802,13 @@ const GameUI = {
 
         const restartBtn = this.createButton('PLAY AGAIN', () => {
             this.hide();
-            if (onRestart) onRestart();
+            if (this.callbacks && this.callbacks.onRestart) this.callbacks.onRestart();
             else window.location.reload();
         });
 
         const quitBtn = this.createButton('EXIT', () => {
             this.hide();
-            if (onQuit) onQuit();
+            if (this.callbacks && this.callbacks.onQuit) this.callbacks.onQuit();
             else window.history.back();
         }, true);
 
@@ -781,8 +822,12 @@ const GameUI = {
         this.overlay.innerHTML = '';
         this.overlay.style.display = 'flex';
         
+        // Defaults if missing (games calling with 0 args)
+        const gameTitle = titleText || (document.title || "GAME START");
+        const gameInstr = instructions || "Click Start to Play";
+        
         const title = document.createElement('h1');
-        title.innerText = titleText;
+        title.innerText = gameTitle;
         title.className = "glow-text";
         title.style.fontSize = '3rem';
         title.style.marginBottom = '1rem';
@@ -790,20 +835,18 @@ const GameUI = {
         this.overlay.appendChild(title);
         
         const instr = document.createElement('p');
-        instr.innerHTML = instructions;
+        instr.innerHTML = gameInstr;
         instr.style.maxWidth = '600px';
         instr.style.lineHeight = '1.6';
         instr.style.marginBottom = '2rem';
         instr.style.fontSize = '1.2rem'; 
-        // Allow HTML usage (e.g. for key icons)
-        // instr.innerText = instructions; 
         this.overlay.appendChild(instr);
         
         const startBtn = this.createButton('START GAME', () => {
              this.hide();
              if (onStart) onStart();
+             else if (this.callbacks && this.callbacks.onStart) this.callbacks.onStart();
         });
-        // Make it pulse
         startBtn.style.animation = "pulse 1.5s infinite";
         
         this.overlay.appendChild(startBtn);
