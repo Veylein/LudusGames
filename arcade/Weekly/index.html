@@ -3,126 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dungeon Crawler</title>
+    <title>Remembrance</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Import Three.js and addons -->
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
-            }
-        }
-    </script>
 </head>
 <body>
-    <div id="game-container"></div>
-    
-    <!-- UI Overlay -->
     <div id="ui-layer">
-        
-        <!-- Instructions Overlay -->
-        <div id="instructions" style="position: absolute; top: 10px; right: 10px; text-align: right; color: #fff; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px; pointer-events: none;">
-            <h3>CONTROLS</h3>
-            <p><b>WASD</b> - Move</p>
-            <p><b>CLICK</b> or <b>SPACE</b> - Attack</p>
-            <p><b>1, 2, 3, 4</b> - Abilities</p>
+        <div id="debug-info">
+            <h1>Remembrance</h1>
+            <p>Mode: <span id="mode-display">Survival</span></p>
+            <p>Time: <span id="time-display">Year 1</span></p>
+            <div id="interaction-log"></div>
         </div>
-
-        <div id="hud-top" style="display: none;">
-            <div id="score">SCORE: 0</div>
-            <div id="health-container">
-                <div id="health-bar"></div>
-            </div>
-            <!-- Hotbar inside HUD Top logic or separate? Putting below for layout -->
+        <div id="inspector" style="display:none;">
+            <h3>Entity Inspector</h3>
+            <pre id="inspector-content"></pre>
         </div>
-
-        <!-- Hotbar (Also hidden initially) -->
-        <div id="hotbar-container" style="display: none;">
-            <!-- Slots 1-4 -->
-            <div class="hotbar-slot" id="slot-1" data-key="1">
-                <span class="key-hint">1</span>
-                <span class="icon" id="icon-1">⚔️</span>
-            </div>
-            <div class="hotbar-slot" id="slot-2" data-key="2">
-                <span class="key-hint">2</span>
-                <span class="icon" id="icon-2">✨</span>
-            </div>
-            <div class="hotbar-slot" id="slot-3" data-key="3">
-                <span class="key-hint">3</span>
-                <span class="icon" id="icon-3">🛡️</span>
-            </div>
-            <div class="hotbar-slot" id="slot-4" data-key="4">
-                <span class="key-hint">4</span>
-                <span class="icon" id="icon-4">⚡</span>
-            </div>
-        </div>
-
-        <!-- On-Screen Controls (Visible on start) -->
-        <div id="mobile-controls">
-            <div class="control-group dpad-grid">
-                <div class="control-btn" id="btn-w">▲</div>
-                <div class="control-btn" id="btn-a">◀</div>
-                <div class="control-btn" id="btn-s">▼</div>
-                <div class="control-btn" id="btn-d">▶</div>
-            </div>
-            <div class="control-group action-grid">
-                <div class="control-btn" id="btn-1">1</div>
-                <div class="control-btn" id="btn-2">2</div>
-                <div class="control-btn" id="btn-3">3</div>
-                <div class="control-btn" id="btn-4">4</div>
-                <div class="control-btn big-btn" id="btn-attack">⚔️</div>
-            </div>
-        </div>
-        
-        <div id="character-select">
-            <h1>CHAMPION SELECT</h1>
-            <p>Choose your Legend</p>
-            <div id="class-grid">
-                <!-- Populated by JS -->
-            </div>
-            <button id="start-btn" disabled>ENTER ARENA</button>
-        </div>
-
-        <div id="game-over-screen" style="display: none;">
-            <h1>YOU DIED</h1>
-            <div id="game-over-stats">Score: 0</div>
-            <button id="restart-btn">RESPAWN</button>
-        </div>
-        
-        <!-- Reload Helper (Hidden unless error) -->
-        <button id="emergency-reload" style="display: none; position: absolute; top: 10px; left: 10px; z-index: 1000; padding: 10px; background: red; color: white; border: none; border-radius: 5px; cursor: pointer;">
-            ⚠️ RELOAD (Game Error)
-        </button>
     </div>
-
-    <script>
-        // Emergency Error Handler & Fallback
-        window.GAME_LOADED = false; // Default false
-        
-        window.onerror = function(msg, url, line) {
-            console.error("Critical Error:", msg, url, line);
-            const btn = document.getElementById('emergency-reload');
-            if(btn) {
-                btn.style.display = 'block';
-                // Show actual error for debugging
-                btn.innerText = `⚠️ ERROR: ${msg}`; 
-                btn.onclick = () => location.reload();
-            }
-        };
-        
-        // If buttons are clicked before game loads (or if it fails), reload
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.control-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    if (!window.GAME_LOADED) {
-                        // Prevent accidental reloads on valid clicks if logic is good
-                        // But here, if GAME_LOADED is false, we assume game.js didn't run.
-                    }
-                });
-            });
-        });
-    </script>
+    <canvas id="game-canvas"></canvas>
     <script type="module" src="game.js"></script>
 </body>
 </html>
