@@ -1,161 +1,138 @@
 
-// --- CONSTANTS & CONFIG ---
+// --- CONSTANTS ---
+const CHUNK_SIZE = 16;
+const MAP_WIDTH = 200; // Larger map
+const MAP_HEIGHT = 200;
 const TILE_SIZE = 32;
-const MAP_WIDTH = 100; // Original request was around this size
-const MAP_HEIGHT = 100;
 
-// Expanded Palette (WorldBox styled)
+// Colors
 const PALETTE = {
+    // Water
     DEEP_OCEAN: '#1e3c54',
     OCEAN: '#255883',
-    SHALLOW_WATER: '#3792cb',
+    SHALLOW: '#3792cb',
+    FOAM: '#a8d9f0',
+    // Land
     SAND: '#e3c66f',
     GRASS_LIGHT: '#8ec042',
-    GRASS_MID: '#6da628',
-    GRASS_DARK: '#42740e',
-    FOREST: '#2a5116',
+    GRASS: '#6da628',
+    FOREST: '#447a1e',
     MOUNTAIN_BASE: '#706456',
-    MOUNTAIN_PEAK: '#b0a79d',
+    MOUNTAIN: '#91867e',
     SNOW: '#f0f5f9',
     
-    // Entity Colors
-    SKIN_TONES: ['#f5d0b0', '#e0ac69', '#8d5524', '#c68642', '#ffdbac'],
-    CLOTHES: ['#a52929', '#2966a5', '#388c2e', '#cfad23', '#6b23cf'],
-    HAIR: ['#000000', '#4a3000', '#b08d00', '#9c3400', '#dcd0ba'],
-    PLAYER: '#ffffff', // Fallback
-    
-    // Objects
-    WOOD_TRUNK: '#58402a',
-    LEAVES: '#387818',
-    STONE: '#888888',
-    HOUSE_ROOF: '#963c29',
-    HOUSE_WALL: '#cfb997'
+    // UI/Highlights
+    SELECT: 'rgba(255, 255, 0, 0.5)',
+    HOVER: 'rgba(255, 255, 255, 0.2)'
 };
 
-const SEASONS = ['Spring', 'Summer', 'Autumn', 'Winter'];
-
-// --- STATE MANAGER ---
+// --- GAME STATE ---
 const gameState = {
-    mode: 'survival', // 'survival', 'god'
-    time: 0, 
-    year: 1,
-    season: 0,
-    camera: { x: 0, y: 0, zoom: 1 },
     map: [],
+    chunks: {},
     entities: [],
-    particles: [], // For juice
-    player: null,
-    selectedEntity: null,
-    hoveredTile: null,
+    particles: [],
+    villages: [],
+    
+    camera: { x: 0, y: 0, zoom: 0.5, targetZoom: 0.5 },
+    currentTool: 'cursor',
+    
+    time: 0,
+    speed: 1,
+    paused: false,
+    
+    hover: { x: 0, y: 0, tile: null },
+    selection: null,
     dragStart: null,
     keys: {}
 };
 
-// --- SOPHISTICATED GENERATION ---
+// --- WORLD GENERATION: NOISE ---
+// Simple implementation of 2D noise
+const PERLIN_YWRAPB = 4;
+const PERLIN_YWRAP = 1 << PERLIN_YWRAPB;
+const PERLIN_ZWRAPB = 8;
+const PERLIN_ZWRAP = 1 << PERLIN_ZWRAPB;
+const PERLIN_SIZE = 4095;
+let perlin_octaves = 4; // default to medium smooth
+let perlin_amp_falloff = 0.5; // 50% reduction/octave
+const perlin = new Float32Array(PERLIN_SIZE + 1).map(() => Math.random());
 
-// Simple Pseudo-Random Number Generator for deterministic seeds (optional, using Math.random for now)
-function noise(x, y) {
-    const s = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453123;
-    return s - Math.floor(s);
+function noise(x, y = 0, z = 0) {
+    let xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z);
+    let xf = x - xi, yf = y - yi, zf = z - zi;
+    let rxf, ryf;
+    let r = 0, ampl = 0.5, n1, n2, n3;
+    for (let o = 0; o < perlin_octaves; o++) {
+        let of = xi + (yi << PERLIN_YWRAPB) + (zi << PERLIN_ZWRAPB);
+        rxf = 0.5 * (1.0 - Math.cos(xf * Math.PI));
+        ryf = 0.5 * (1.0 - Math.cos(yf * Math.PI));
+        n1 = perlin[of & PERLIN_SIZE];
+        n1 += rxf * (perlin[(of + 1) & PERLIN_SIZE] - n1);
+        n2 = perlin[(of + PERLIN_YWRAP) & PERLIN_SIZE];
+        n2 += rxf * (perlin[(of + PERLIN_YWRAP + 1) & PERLIN_SIZE] - n2);
+        n1 += ryf * (n2 - n1);
+        of += PERLIN_ZWRAP;
+        n2 = perlin[of & PERLIN_SIZE];
+        n2 += rxf * (perlin[(of + 1) & PERLIN_SIZE] - n2);
+        n3 = perlin[(of + PERLIN_YWRAP) & PERLIN_SIZE];
+        n3 += rxf * (perlin[(of + PERLIN_YWRAP + 1) & PERLIN_SIZE] - n3);
+        n2 += ryf * (n3 - n2);
+        r += n1 * ampl;
+        ampl *= perlin_amp_falloff;
+        xi <<= 1; xf *= 2; yi <<= 1; yf *= 2; zi <<= 1; zf *= 2;
+        if (xf >= 1.0) { xi++; xf--; }
+        if (yf >= 1.0) { yi++; yf--; }
+        if (zf >= 1.0) { zi++; zf--; } // fix z wrap
+    }
+    return r;
 }
 
-function smoothNoise(x, y) {
-    // Bilinear interpolation would be better, but let's do simple value noise smoothing
-    const corners = (noise(x-1, y-1)+noise(x+1, y-1)+noise(x-1, y+1)+noise(x+1, y+1)) / 16;
-    const sides   = (noise(x-1, y)  +noise(x+1, y)  +noise(x, y-1)  +noise(x, y+1)) / 8;
-    const center  =  noise(x, y) / 4;
-    return corners + sides + center;
-}
-
-function getTerrainHeight(x, y) {
-    // Layered noise (Octaves)
-    let e = 1 * smoothNoise(x/8, y/8) 
-          + 0.5 * smoothNoise(x/4, y/4) 
-          + 0.25 * smoothNoise(x/2, y/2);
-    // Normalize roughly 0-2 (since smoothNoise is 0-1ish but stacked)
-    // We want output 0-1 (approx)
-    return Math.min(1, Math.max(0, e / 1.75));
-}
-
-function generateMap() {
+function generateWorld() {
     const map = [];
-    console.time("Generate Map");
+    const seed = Math.random() * 100;
     
     for (let y = 0; y < MAP_HEIGHT; y++) {
         const row = [];
         for (let x = 0; x < MAP_WIDTH; x++) {
-            // Generate Height
-            let height = getTerrainHeight(x, y);
+            // Mask for island shape
+            const cx = MAP_WIDTH / 2;
+            const cy = MAP_HEIGHT / 2;
+            const dist = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2) / (MAP_WIDTH / 2);
+            const mask = Math.max(0, 1 - Math.pow(dist, 3));
             
-            // Island Mask (Distance from center)
-            const cx = MAP_WIDTH/2;
-            const cy = MAP_HEIGHT/2;
-            const dist = Math.sqrt((x-cx)*(x-cx) + (y-cy)*(y-cy)) / (MAP_WIDTH/2);
-            height = height * (1.2 - Math.pow(dist, 1.5)); // Falloff edges
-
-            let type = 'ocean';
-            let color = PALETTE.DEEP_OCEAN;
+            // Noise
+            let h = noise(x * 0.05 + seed, y * 0.05 + seed);
+            h = h * mask; // Apply mask
+            
+            let type = 'deep_ocean';
+            
+            if (h < 0.2) type = 'deep_ocean';
+            else if (h < 0.3) type = 'ocean';
+            else if (h < 0.35) type = 'shallow';
+            else if (h < 0.4) type = 'sand';
+            else if (h < 0.7) type = 'grass';
+            else if (h < 0.85) type = 'forest'; 
+            else type = 'mountain';
+            
+            // Objects/Resources
             let object = null;
-            let variation = Math.random(); // For visual texture
-
-            if (height < 0.2) {
-                type = 'deep_ocean';
-                color = PALETTE.DEEP_OCEAN;
-            } else if (height < 0.35) {
-                type = 'ocean';
-                color = PALETTE.OCEAN;
-            } else if (height < 0.4) {
-                type = 'shallow_water';
-                color = PALETTE.SHALLOW_WATER;
-            } else if (height < 0.45) {
-                type = 'sand';
-                color = PALETTE.SAND;
-                if (Math.random() < 0.01) object = { type: 'cactus' };
-            } else if (height < 0.7) {
-                type = 'grass';
-                // Variation logic
-                if (variation < 0.3) color = PALETTE.GRASS_LIGHT;
-                else if (variation < 0.7) color = PALETTE.GRASS_MID;
-                else color = PALETTE.GRASS_DARK;
-                
-                // Trees
-                if (noise(x*5, y*5) > 0.6) {
-                    object = { type: 'tree', age: Math.floor(Math.random()*5) };
-                }
-                // Berry Bushes
-                else if (Math.random() < 0.02) {
-                    object = { type: 'bush' };
-                }
-            } else if (height < 0.85) {
-                type = 'mountain_base';
-                color = PALETTE.MOUNTAIN_BASE;
-                if (Math.random() < 0.05) object = { type: 'ore' };
-            } else {
-                type = 'mountain_peak';
-                color = PALETTE.MOUNTAIN_PEAK;
+            if (type === 'forest' || (type === 'grass' && Math.random() < 0.2)) {
+                object = { type: 'tree', hp: 5, variant: Math.floor(Math.random() * 3) };
+            } else if (type === 'mountain' && Math.random() < 0.1) {
+                object = { type: 'stone', hp: 10 };
+            } else if (type === 'grass' && Math.random() < 0.05) {
+                object = { type: 'berry_bush', amount: 5 };
             }
 
-            row.push({ x, y, type, height, color, baseColor: color, object, variation });
+            row.push({ x, y, h, type, object, fire: 0 });
         }
         map.push(row);
     }
-    console.timeEnd("Generate Map");
     return map;
 }
 
-// --- ENTITY SYSTEM ---
-
-class Brain {
-    constructor(name) {
-        this.name = name;
-        this.thoughts = [];
-        this.memories = [];
-        this.relations = {}; // { otherEntityId: { trust: 0-1, known: bool } }
-        this.state = 'idle';
-        this.target = null;
-        this.home = null;
-    }
-}
+// --- ENTITIES ---
 
 class Entity {
     constructor(type, x, y) {
@@ -165,455 +142,558 @@ class Entity {
         this.y = y;
         this.vx = 0;
         this.vy = 0;
+        this.age = 0;
+        this.state = 'idle';
+        this.target = null;
+        this.actionTimer = 0;
+        this.hp = 100;
+        this.maxHp = 100;
+    }
+    
+    update(dt) {
+        this.age += dt * 0.001;
+        this.x += this.vx * dt;
+        this.y += this.vy * dt;
+        
+        // Friction
+        this.vx *= 0.9;
+        this.vy *= 0.9;
+    }
+}
+
+class Unit extends Entity {
+    constructor(type, x, y) {
+        super(type, x, y);
+        this.village = null;
+        this.job = 'idle';
+        this.inventory = {};
         
         // Appearance
-        this.skinColor = PALETTE.SKIN_TONES[Math.floor(Math.random() * PALETTE.SKIN_TONES.length)];
-        this.clothesColor = PALETTE.CLOTHES[Math.floor(Math.random() * PALETTE.CLOTHES.length)];
-        this.hairColor = PALETTE.HAIR[Math.floor(Math.random() * PALETTE.HAIR.length)];
-        this.scale = 1;
-
-        if (type === 'player') {
-             this.skinColor = '#ffe0bd';
-             this.clothesColor = '#3366cc';
-             this.hairColor = '#4a3000';
-             this.brain = new Brain("Player");
-             this.inventory = { wood: 0, stone: 0, food: 0 };
-        }
-        
-        // Stats
-        this.age = 18 + Math.floor(Math.random() * 40);
-        this.hp = 100;
-        
-        if (type === 'human') {
-            const names = ["Adan", "Bela", "Cael", "Dara", "Elian", "Fae", "Gora", "Hila", "Iven", "Joro", "Kael", "Lina"];
-            this.brain = new Brain(names[Math.floor(Math.random() * names.length)]);
-            this.inventory = { wood: 0, stone: 0, food: 0 };
-        }
-        
-        // Animation
-        this.animFrame = 0;
-        this.facing = 1; // 1 right, -1 left
-        this.speed = 1.5;
+        this.color = `hsl(${Math.random()*40 + 10}, 70%, 60%)`; 
+        this.hair = `hsl(${Math.random()*50}, ${Math.random()*50 + 20}%, 30%)`;
     }
-
+    
     update(dt) {
-        // AI Logic
-        if (this.type === 'human') this.updateHumanAI(dt);
-        if (this.type === 'player') {
-            // Player input handled in main loop mostly, but apply physics here
+        super.update(dt);
+        this.actionTimer -= dt;
+        
+        if (this.actionTimer <= 0) {
+            this.think();
+            this.actionTimer = 500 + Math.random() * 1000;
         }
         
-        // Physics
-        let nextX = this.x + this.vx;
-        let nextY = this.y + this.vy;
-
         // Collision with map bounds
-        if (nextX < 0) nextX = 0;
-        if (nextX > MAP_WIDTH * TILE_SIZE) nextX = MAP_WIDTH * TILE_SIZE;
-        if (nextY < 0) nextY = 0;
-        if (nextY > MAP_HEIGHT * TILE_SIZE) nextY = MAP_HEIGHT * TILE_SIZE;
-
-        this.x = nextX;
-        this.y = nextY;
-
-        // Facing direction
-        if (this.vx > 0) this.facing = 1;
-        if (this.vx < 0) this.facing = -1;
-
-        // Animation bob
-        if (Math.abs(this.vx) > 0 || Math.abs(this.vy) > 0) {
-            this.animFrame += dt * 0.01;
-        } else {
-            this.animFrame = 0;
+        if (this.x < 0) this.x = 0;
+        if (this.y < 0) this.y = 0;
+        if (this.x > MAP_WIDTH) this.x = MAP_WIDTH;
+        if (this.y > MAP_HEIGHT) this.y = MAP_HEIGHT;
+    }
+    
+    think() {
+        if (this.state === 'idle') {
+            // Wander
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 0.002; 
+            this.vx = Math.cos(angle) * speed;
+            this.vy = Math.sin(angle) * speed;
         }
     }
+}
 
-    updateHumanAI(dt) {
-        // Simple State Machine
-        if (this.brain.state === 'idle') {
-            const r = Math.random();
-            if (r < 0.01) {
-                this.brain.state = 'wander';
-                const angle = Math.random() * Math.PI * 2;
-                this.vx = Math.cos(angle) * 0.5;
-                this.vy = Math.sin(angle) * 0.5;
-                setTimeout(() => { 
-                    this.brain.state = 'idle';
-                    this.vx = 0; 
-                    this.vy = 0; 
-                }, 2000 + Math.random() * 2000);
+class Animal extends Entity {
+    constructor(type, x, y) {
+        super(type, x, y);
+        this.hp = 20;
+    }
+    update(dt) {
+        super.update(dt);
+        if (Math.random() < 0.02) {
+            const angle = Math.random() * Math.PI * 2;
+            this.vx = Math.cos(angle) * 0.003;
+            this.vy = Math.sin(angle) * 0.003;
+        }
+    }
+}
+
+// --- VILLAGE SYSTEM ---
+class Village {
+    constructor(x, y) {
+        this.id = Math.random().toString(36).substr(2, 5);
+        this.x = x; // Center
+        this.y = y;
+        this.color = `hsl(${Math.random()*360}, 70%, 50%)`;
+        this.name = this.generateName();
+        this.population = 0;
+        this.wood = 0;
+        this.stone = 0;
+        this.buildings = []; // {x, y, type}
+        this.tiles = []; // Claimed tiles
+        
+        this.addBuilding(x, y, 'hall');
+    }
+    
+    generateName() {
+        const pre = ['Oka', 'Poly', 'Hana', 'Cru', 'Ston', 'River', 'High'];
+        const suf = ['grad', 'heim', 'ia', 'land', 'ford', 'den', 'rock'];
+        return pre[Math.floor(Math.random()*pre.length)] + suf[Math.floor(Math.random()*suf.length)];
+    }
+    
+    addBuilding(x, y, type) {
+        this.buildings.push({x, y, type});
+        // Claim area around
+        for(let dy=-2; dy<=2; dy++) {
+            for(let dx=-2; dx<=2; dx++) {
+                const tx = Math.floor(x + dx);
+                const ty = Math.floor(y + dy);
+                if (tx >= 0 && tx < MAP_WIDTH && ty >= 0 && ty < MAP_HEIGHT) {
+                    this.tiles.push({x: tx, y: ty}); 
+                }
             }
         }
     }
 }
 
-// --- RENDERER (The Graphics Upgrade) ---
+// --- ENGINE & RENDERER ---
 
 const canvas = document.getElementById('game-canvas');
-const ctx = canvas.getContext('2d');
-
-function initRenderer() {
-    window.addEventListener('resize', resize);
-    resize();
-}
+const ctx = canvas.getContext('2d', { alpha: false }); // Optimize
+let lastTime = 0;
 
 function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    ctx.imageSmoothingEnabled = false; // Pixel art look
+    ctx.imageSmoothingEnabled = false;
 }
+window.addEventListener('resize', resize);
+resize();
 
-// Low-level drawing helpers
-function drawPixelRect(x, y, w, h, color) {
-    ctx.fillStyle = color;
-    ctx.fillRect(Math.floor(x), Math.floor(y), Math.floor(w), Math.floor(h));
-}
-
-function drawCircle(x, y, r, color) {
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI*2);
-    ctx.fill();
-}
-
-function drawHuman(entity, screenX, screenY) {
-    const s = 32; // Base size reference (not TILE_SIZE necessarily, but player size)
-    const bob = Math.sin(entity.animFrame) * 2; // Walking bounce
-    
-    // Shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.beginPath();
-    ctx.ellipse(screenX + s/2, screenY + s - 2, 6, 3, 0, 0, Math.PI*2);
-    ctx.fill();
-
-    const cx = screenX + s/2;
-    const cy = screenY + s/2 + bob;
-
-    // Body/Clothes
-    ctx.fillStyle = entity.clothesColor;
-    ctx.fillRect(cx - 4, cy - 2, 8, 10);
-    
-    // Head
-    ctx.fillStyle = entity.skinColor;
-    ctx.fillRect(cx - 4, cy - 10, 8, 8);
-    
-    // Hair
-    ctx.fillStyle = entity.hairColor;
-    ctx.fillRect(cx - 5, cy - 11, 10, 4); // Top
-    if (entity.facing === 1) {
-        ctx.fillRect(cx - 5, cy - 11, 2, 8); // Back of head hair
-    } else {
-        ctx.fillRect(cx + 3, cy - 11, 2, 8);
+function spawnParticles(x, y, count, type) {
+    for(let i=0; i<count; i++) {
+        gameState.particles.push({
+            x: x, 
+            y: y,
+            vx: (Math.random()-0.5) * 5,
+            vy: (Math.random()-0.5) * 5,
+            life: 30 + Math.random() * 30,
+            color: type === 'blood' ? '#ff0000' : type === 'fire' ? '#ffaa00' : '#ffffff'
+        });
     }
-
-    // Legs
-    ctx.fillStyle = '#333'; // Pants
-    // Simple leg animation
-    const lLeg = Math.sin(entity.animFrame) * 3;
-    const rLeg = Math.sin(entity.animFrame + Math.PI) * 3;
-    
-    ctx.fillRect(cx - 3, cy + 8, 2, 6 + lLeg); // Left
-    ctx.fillRect(cx + 1, cy + 8, 2, 6 + rLeg); // Right
-
-    // Arms
-    ctx.fillStyle = entity.skinColor;
-    ctx.fillRect(cx - 6, cy - 1, 2, 6 - lLeg);
-    ctx.fillRect(cx + 4, cy - 1, 2, 6 - rLeg);
 }
 
-function drawTree(tx, ty, scale=1) {
-    const x = tx * TILE_SIZE;
-    const y = ty * TILE_SIZE;
+function init() {
+    gameState.map = generateWorld();
     
-    // Sway
-    const sway = Math.sin(gameState.time * 0.002 + x) * 2;
+    // Initial camera center
+    gameState.camera.x = (MAP_WIDTH * TILE_SIZE)/2;
+    gameState.camera.y = (MAP_HEIGHT * TILE_SIZE)/2;
 
-    // Shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.2)';
-    ctx.beginPath();
-    ctx.ellipse(x + 16, y + 28, 10, 5, 0, 0, Math.PI*2);
-    ctx.fill();
-
-    // Trunk
-    ctx.fillStyle = PALETTE.WOOD_TRUNK;
-    ctx.fillRect(x + 13, y + 16, 6, 12);
-
-    // Leaves (Circle clusters)
-    ctx.fillStyle = PALETTE.LEAVES;
-    drawCircle(x + 16 + sway, y + 10, 10 * scale, PALETTE.LEAVES);
-    drawCircle(x + 10 + sway, y + 14, 8 * scale, PALETTE.LEAVES);
-    drawCircle(x + 22 + sway, y + 14, 8 * scale, PALETTE.LEAVES);
-    
-    // Highlight
-    ctx.fillStyle = 'rgba(255,255,255,0.1)';
-    ctx.beginPath();
-    ctx.arc(x + 16 + sway - 2, y + 8, 4, 0, Math.PI*2);
-    ctx.fill();
+    requestAnimationFrame(loop);
 }
 
-function drawGrid() {
-    // Determine Visible Range (Culling)
-    const camera = gameState.camera;
-    const startX = Math.floor(camera.x / TILE_SIZE) - 1;
-    const startY = Math.floor(camera.y / TILE_SIZE) - 1;
-    const endX = startX + Math.ceil(canvas.width / TILE_SIZE) + 2;
-    const endY = startY + Math.ceil(canvas.height / TILE_SIZE) + 2;
+// --- INPUT ---
+const mouse = { x: 0, y: 0, down: false, rightDown: false };
 
-    ctx.save();
-    ctx.translate(-Math.floor(camera.x), -Math.floor(camera.y));
+canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    const zoomSpeed = 0.05;
+    gameState.camera.targetZoom -= Math.sign(e.deltaY) * zoomSpeed;
+    gameState.camera.targetZoom = Math.max(0.2, Math.min(3.0, gameState.camera.targetZoom));
+});
 
-    for (let y = startY; y < endY; y++) {
-        for (let x = startX; x < endX; x++) {
-            if (y >= 0 && y < MAP_HEIGHT && x >= 0 && x < MAP_WIDTH) {
-                const tile = gameState.map[y][x];
-                
-                // Draw Base Tile
-                let color = tile.baseColor;
-                
-                // Seasonal tint
-                if (gameState.season === 3) { // Winter
-                     if (tile.type === 'grass' || tile.type === 'mountain_base') {
-                         color = PALETTE.SNOW;
-                     }
-                }
+canvas.addEventListener('mousedown', e => {
+    if (e.button === 0) mouse.down = true;
+    if (e.button === 2) mouse.rightDown = true; // Drag camera
+    gameState.dragStart = { x: e.clientX, y: e.clientY, camX: gameState.camera.x, camY: gameState.camera.y };
+});
 
-                ctx.fillStyle = color;
-                ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+canvas.addEventListener('mousemove', e => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+    
+    if (mouse.rightDown && gameState.dragStart) {
+        // Panning (Inverse zoom scale)
+        const dx = e.clientX - gameState.dragStart.x;
+        const dy = e.clientY - gameState.dragStart.y;
+        gameState.camera.x = gameState.dragStart.camX - dx / gameState.camera.zoom;
+        gameState.camera.y = gameState.dragStart.camY - dy / gameState.camera.zoom;
+    }
+});
 
-                // Water Edge Effect (Foam) - Simplified
-                if (tile.type === 'sand') {
-                    // Could check neighbors here
-                }
-                
-                // Water Sparkle
-                if (tile.type.includes('ocean')) {
-                    if (Math.random() < 0.0005) {
-                        gameState.particles.push({
-                            x: x * TILE_SIZE + Math.random()*TILE_SIZE,
-                            y: y * TILE_SIZE + Math.random()*TILE_SIZE,
-                            life: 20,
-                            type: 'sparkle'
-                        });
-                    }
-                }
+canvas.addEventListener('mouseup', e => {
+    if (e.button === 0) mouse.down = false;
+    if (e.button === 2) mouse.rightDown = false;
+});
 
-                // Draw Object
-                if (tile.object) {
-                    if (tile.object.type === 'tree') drawTree(x, y);
-                    else if (tile.object.type === 'cactus') {
-                        // Draw Cactus
-                        ctx.fillStyle = '#2e7d32';
-                        ctx.fillRect(x * TILE_SIZE + 14, y * TILE_SIZE + 10, 4, 18);
-                        ctx.fillRect(x * TILE_SIZE + 10, y * TILE_SIZE + 16, 12, 4);
-                        ctx.fillRect(x * TILE_SIZE + 10, y * TILE_SIZE + 12, 4, 4);
-                        ctx.fillRect(x * TILE_SIZE + 18, y * TILE_SIZE + 12, 4, 4);
-                    }
-                    else if (tile.object.type === 'ore') {
-                        ctx.fillStyle = '#444';
-                        drawCircle(x * TILE_SIZE + 16, y * TILE_SIZE + 16, 6, '#444');
-                        ctx.fillStyle = '#ddd'; // Sparkle ore
-                        drawCircle(x * TILE_SIZE + 15, y * TILE_SIZE + 15, 2, '#ddd');
-                    }
-                }
+canvas.addEventListener('contextmenu', e => e.preventDefault()); // Stop right click menu
 
-                // Hover Highlight
-                if (gameState.hoveredTile && gameState.hoveredTile.x === x && gameState.hoveredTile.y === y) {
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-                    ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-                    ctx.strokeStyle = 'white';
-                    ctx.strokeRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+// Tool Selection
+document.querySelectorAll('.tool-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        gameState.currentTool = btn.dataset.tool;
+        showToast(`Tool: ${btn.dataset.tool.toUpperCase()}`);
+    });
+});
+
+// WASD Keys
+window.addEventListener('keydown', e => gameState.keys[e.key.toLowerCase()] = true);
+window.addEventListener('keyup', e => gameState.keys[e.key.toLowerCase()] = false);
+
+function showToast(msg) {
+    const c = document.getElementById('toast-container');
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.innerText = msg;
+    c.appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+}
+
+// --- LOGIC LOOP ---
+
+function applyTool(tx, ty) {
+    if (tx < 0 || tx >= MAP_WIDTH || ty < 0 || ty >= MAP_HEIGHT) return;
+    const tile = gameState.map[ty][tx];
+    const tool = gameState.currentTool;
+
+    if (tool === 'mountains') tile.type = 'mountain';
+    else if (tool === 'forest') { tile.type = 'forest'; tile.object = { type: 'tree' }; }
+    else if (tool === 'water') { tile.type = 'ocean'; tile.object = null; }
+    else if (tool === 'sand') { tile.type = 'sand'; tile.object = null; }
+    else if (tool === 'fire') { 
+        tile.fire = 100; 
+        spawnParticles(tx*TILE_SIZE+16, ty*TILE_SIZE+16, 2, 'fire');
+    }
+    else if (tool === 'human') {
+        const h = new Unit('human', tx, ty);
+        gameState.entities.push(h);
+        spawnParticles(tx*TILE_SIZE, ty*TILE_SIZE, 5, 'white');
+        gameState.currentTool = 'cursor'; // Reset after single spawn? Or keep? Keep for spamming.
+    }
+    else if (tool === 'animal' || tool === 'chicken') {
+        const type = tool === 'chicken' ? 'rabbit' : (Math.random()<0.5 ? 'wolf' : 'rabbit'); // chicken placeholder
+        const a = new Animal(type, tx, ty);
+        gameState.entities.push(a);
+    }
+    else if (tool === 'village') {
+        if (tile.type !== 'ocean' && tile.type !== 'mountain') {
+            const v = new Village(tx, ty);
+            gameState.villages.push(v);
+            gameState.currentTool = 'cursor';
+            showToast(`Founded ${v.name}`);
+        }
+    }
+    else if (tool === 'tnt') {
+        // Boom
+        for (let ry = -2; ry <= 2; ry++) {
+            for (let rx = -2; rx <= 2; rx++) {
+                if (gameState.map[ty+ry] && gameState.map[ty+ry][tx+rx]) {
+                    gameState.map[ty+ry][tx+rx].type = 'sand';
+                    gameState.map[ty+ry][tx+rx].object = null;
                 }
             }
         }
+        spawnParticles(tx*TILE_SIZE, ty*TILE_SIZE, 20, 'fire');
+    }
+    else if (tool === 'cursor') {
+        // Inspect
+        const ent = gameState.entities.find(e => Math.abs(e.x - tx) < 1 && Math.abs(e.y - ty) < 1);
+        if (ent) {
+            gameState.selection = ent;
+            updateInspector();
+        } else if (gameState.selection && !mouse.rightDown) { // Avoid deselect on pan
+            gameState.selection = null;
+            document.getElementById('inspector').style.display = 'none';
+        }
+    }
+}
+
+function updateInspector() {
+    const div = document.getElementById('inspector');
+    const content = document.getElementById('inspector-content');
+    const title = document.getElementById('inspector-title');
+    
+    if (gameState.selection) {
+        div.style.display = 'flex';
+        const s = gameState.selection;
+        title.innerText = s.type.toUpperCase();
+        
+        let html = `
+            <div><span class="json-key">Health:</span> <span class="json-number">${Math.floor(s.hp)}</span></div>
+            <div><span class="json-key">State:</span> <span class="json-string">"${s.state}"</span></div>
+        `;
+        
+        if (s instanceof Unit) {
+            html += `<div><span class="json-key">Job:</span> <span class="json-string">"${s.job}"</span></div>`;
+        }
+        
+        content.innerHTML = html;
+    } else {
+        div.style.display = 'none';
+    }
+}
+
+function loop(timestamp) {
+    const dt = timestamp - lastTime || 16;
+    lastTime = timestamp;
+
+    // Smooth Zoom
+    gameState.camera.zoom += (gameState.camera.targetZoom - gameState.camera.zoom) * 0.1;
+
+    // Movement (WASD)
+    const moveSpeed = 10 / gameState.camera.zoom;
+    if (gameState.keys['w']) gameState.camera.y -= moveSpeed;
+    if (gameState.keys['s']) gameState.camera.y += moveSpeed;
+    if (gameState.keys['a']) gameState.camera.x -= moveSpeed;
+    if (gameState.keys['d']) gameState.camera.x += moveSpeed;
+
+    // Calc Mouse World Pos (Reversed Text logic)
+    // screenX = (worldX - camX) * zoom + center
+    // (screenX - center) / zoom + camX = worldX
+    const worldMouseX = (mouse.x - canvas.width/2) / gameState.camera.zoom + gameState.camera.x;
+    const worldMouseY = (mouse.y - canvas.height/2) / gameState.camera.zoom + gameState.camera.y;
+    
+    const tx = Math.floor(worldMouseX / TILE_SIZE);
+    const ty = Math.floor(worldMouseY / TILE_SIZE);
+    
+    gameState.hover.tile = (tx >= 0 && tx < MAP_WIDTH && ty >= 0 && ty < MAP_HEIGHT) ? gameState.map[ty][tx] : null;
+
+    // Tool usage
+    if (mouse.down && gameState.hover.tile && !mouse.rightDown) {
+        applyTool(tx, ty);
     }
 
-    // Draw Entities (Sorted by Y for depth)
-    const visibleEntities = gameState.entities.filter(e => 
-        e.x > camera.x - 50 && e.x < camera.x + canvas.width + 50 &&
-        e.y > camera.y - 50 && e.y < camera.y + canvas.height + 50
-    ).sort((a,b) => a.y - b.y);
+    // --- UPDATES ---
+    gameState.entities.forEach(e => e.update(dt));
+    
+    // Update Stats
+    if (timestamp % 30 < 1) { // Throttle UI updates
+        document.getElementById('pop-display').innerText = `${gameState.entities.length} Beings`;
+        document.getElementById('vil-display').innerText = `${gameState.villages.length} Villages`;
+    }
 
-    visibleEntities.forEach(ent => {
-        if (ent.type === 'human' || ent.type === 'player') drawHuman(ent, ent.x, ent.y);
-        
-        // Selection Ring
-        if (gameState.selectedEntity === ent) {
-            ctx.strokeStyle = '#ffff00';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.arc(ent.x + TILE_SIZE/2, ent.y + TILE_SIZE/2, 12, 0, Math.PI*2);
-            ctx.stroke();
+    if (gameState.selection) updateInspector();
+
+    draw();
+    requestAnimationFrame(loop);
+}
+
+function draw() {
+    // Clear
+    ctx.fillStyle = '#111';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.save();
+    
+    // Apply Camera Transform
+    ctx.translate(canvas.width/2, canvas.height/2);
+    ctx.scale(gameState.camera.zoom, gameState.camera.zoom);
+    ctx.translate(-gameState.camera.x, -gameState.camera.y);
+
+    // Visibility Calc
+    const viewW = canvas.width / gameState.camera.zoom;
+    const viewH = canvas.height / gameState.camera.zoom;
+    const startX = Math.floor((gameState.camera.x - viewW/2) / TILE_SIZE);
+    const startY = Math.floor((gameState.camera.y - viewH/2) / TILE_SIZE);
+    const endX = startX + Math.ceil(viewW / TILE_SIZE) + 2;
+    const endY = startY + Math.ceil(viewH / TILE_SIZE) + 2;
+
+    // Draw Map
+    for (let y = Math.max(0, startY); y < Math.min(MAP_HEIGHT, endY); y++) {
+        for (let x = Math.max(0, startX); x < Math.min(MAP_WIDTH, endX); x++) {
+            const tile = gameState.map[y][x];
+            
+            // Draw tile
+            let color = PALETTE.DEEP_OCEAN;
+            switch(tile.type) {
+                case 'ocean': color = PALETTE.OCEAN; break;
+                case 'shallow': color = PALETTE.SHALLOW; break;
+                case 'sand': color = PALETTE.SAND; break;
+                case 'grass': color = PALETTE.GRASS; break;
+                case 'forest': color = PALETTE.FOREST; break;
+                case 'mountain': color = PALETTE.MOUNTAIN; break;
+            }
+            
+            // Render directly
+            drawRect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE+0.5, TILE_SIZE+0.5, color);
+
+            // Water edge foam
+            if (tile.type === 'shallow') {
+                drawRect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, 4, PALETTE.FOAM);
+            }
+
+            // Object
+            if (tile.object) {
+                if (tile.object.type === 'tree') drawTree(x*TILE_SIZE, y*TILE_SIZE);
+                else if (tile.object.type === 'stone') drawStone(x*TILE_SIZE, y*TILE_SIZE);
+                else if (tile.object.type === 'berry_bush') drawBush(x*TILE_SIZE, y*TILE_SIZE);
+            }
+
+            // Fire
+            if (tile.fire > 0) {
+                drawRect(x*TILE_SIZE, y*TILE_SIZE, TILE_SIZE, TILE_SIZE, `rgba(255, 100, 0, ${tile.fire/100})`);
+                tile.fire -= 0.5;
+                if (tile.fire <= 0 && tile.object) tile.object = null; // Burn obj
+            }
         }
+    }
+    
+    // Draw Villages (Centers)
+    gameState.villages.forEach(v => {
+        // Town Hall
+        drawBuilding(v.x * TILE_SIZE, v.y * TILE_SIZE, v.color);
+        // Name
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 14px Consolas'; 
+        ctx.textAlign = 'center';
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 3;
+        ctx.strokeText(v.name, v.x * TILE_SIZE + 16, v.y * TILE_SIZE - 20);
+        ctx.fillText(v.name, v.x * TILE_SIZE + 16, v.y * TILE_SIZE - 20);
     });
 
-    // Draw Particles
+    // Draw Entities
+    gameState.entities.forEach(e => {
+         // Culling
+         if (e.x*TILE_SIZE < (gameState.camera.x - viewW/2 - 100) || 
+             e.x*TILE_SIZE > (gameState.camera.x + viewW/2 + 100)) return;
+
+         const screenX = e.x * TILE_SIZE;
+         const screenY = e.y * TILE_SIZE;
+         
+         // Shadow
+         ctx.fillStyle = 'rgba(0,0,0,0.3)';
+         ctx.beginPath();
+         ctx.ellipse(screenX + 16, screenY + 28, 6, 3, 0, 0, Math.PI*2);
+         ctx.fill();
+
+         if (e.type === 'human') drawHuman(e, screenX, screenY);
+         else if (e.type === 'wolf') drawAnimal(e, screenX, screenY, '#555');
+         else if (e.type === 'rabbit') drawAnimal(e, screenX, screenY, '#fff');
+
+         // Selection
+         if (gameState.selection === e) {
+             ctx.strokeStyle = 'yellow';
+             ctx.lineWidth = 1;
+             ctx.beginPath();
+             ctx.arc(screenX + 16, screenY + 16, 16, 0, Math.PI*2);
+             ctx.stroke();
+         }
+    });
+
+    // Particles
     gameState.particles.forEach((p, i) => {
-        if (p.type === 'sparkle') {
-            ctx.fillStyle = 'white';
-            ctx.fillRect(p.x, p.y, 2, 2);
-        }
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, 3, 3);
+        p.x += p.vx;
+        p.y += p.vy;
         p.life--;
         if (p.life <= 0) gameState.particles.splice(i, 1);
     });
 
+    // Hover Selection
+    if (gameState.hover.tile) {
+        const hx = Math.floor(gameState.hover.tile.x) * TILE_SIZE;
+        const hy = Math.floor(gameState.hover.tile.y) * TILE_SIZE;
+        ctx.fillStyle = 'rgba(255,255,255,0.1)'; 
+        ctx.fillRect(hx, hy, TILE_SIZE, TILE_SIZE);
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(hx, hy, TILE_SIZE, TILE_SIZE);
+        
+        // Tool Preview
+        if (gameState.currentTool !== 'cursor') {
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            ctx.fillRect(hx, hy, TILE_SIZE, TILE_SIZE);
+        }
+    }
+
     ctx.restore();
 }
 
-// --- INPUT & INTERACTION ---
+// Drawing Primitives helpers (batching optimization usually better but raw canvas calls fine for this scale)
+function drawRect(x, y, w, h, c) { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); }
 
-function handleMouse(e) {
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left + gameState.camera.x;
-    const my = e.clientY - rect.top + gameState.camera.y;
+function drawTree(x, y) {
+    const sway = Math.sin(Date.now()*0.002 + x)*2;
+    ctx.fillStyle = '#5d4037';
+    ctx.fillRect(x+12, y+16, 8, 16); // Trunk
     
-    // UI Tooltip update
-    const toolTip = document.getElementById('cursor-tooltip');
+    ctx.fillStyle = PALETTE.FOREST;
+    // Layered leaves
+    ctx.beginPath();
+    ctx.arc(x+16+sway, y+12, 12, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = '#558b2f'; // Highlight
+    ctx.beginPath();
+    ctx.arc(x+14+sway, y+10, 8, 0, Math.PI*2);
+    ctx.fill();
+}
+
+function drawStone(x, y) {
+    ctx.fillStyle = '#757575';
+    ctx.beginPath();
+    ctx.arc(x+16, y+20, 10, 0, Math.PI*2);
+    ctx.fill();
+}
+
+function drawBush(x, y) {
+    ctx.fillStyle = '#33691e';
+    ctx.beginPath();
+    ctx.arc(x+16, y+22, 8, 0, Math.PI*2);
+    ctx.fill();
+    // Berries
+    ctx.fillStyle = '#ad1457';
+    ctx.fillRect(x+14, y+18, 2, 2);
+    ctx.fillRect(x+18, y+20, 2, 2);
+    ctx.fillRect(x+12, y+22, 2, 2);
+}
+
+function drawBuilding(x, y, color) {
+    // Basic hut
+    ctx.fillStyle = '#5d4037';
+    ctx.fillRect(x+4, y+10, 24, 22); // Walls
+    ctx.fillStyle = color; // Roof color based on village
+    ctx.beginPath();
+    ctx.moveTo(x+2, y+10);
+    ctx.lineTo(x+16, y-4);
+    ctx.lineTo(x+30, y+10);
+    ctx.fill(); // Roof
     
-    // Tile Coords
-    const tx = Math.floor(mx / TILE_SIZE);
-    const ty = Math.floor(my / TILE_SIZE);
+    // Door
+    ctx.fillStyle = '#3e2723';
+    ctx.fillRect(x+12, y+20, 8, 12);
+}
 
-    if (ty >= 0 && ty < MAP_HEIGHT && tx >= 0 && tx < MAP_WIDTH) {
-        gameState.hoveredTile = gameState.map[ty][tx];
-        toolTip.style.display = 'block';
-        toolTip.style.left = (e.clientX + 15) + 'px';
-        toolTip.style.top = (e.clientY + 15) + 'px';
-        toolTip.innerText = `${gameState.hoveredTile.type}\nHeight: ${gameState.hoveredTile.height.toFixed(2)}`;
-    } else {
-        gameState.hoveredTile = null;
-        toolTip.style.display = 'none';
-    }
-
-    if (e.type === 'mousedown') {
-        let clickedEnt = null;
-
-        // Check for entity click (simple distance check)
-        // Check player
-        const pdx = (gameState.player.x + 16) - mx;
-        const pdy = (gameState.player.y + 16) - my;
-        if (Math.sqrt(pdx*pdx + pdy*pdy) < 20) {
-            clickedEnt = gameState.player;
-        }
-
-        if (!clickedEnt) {
-            clickedEnt = gameState.entities.find(ent => {
-                 const dx = (ent.x + 16) - mx;
-                 const dy = (ent.y + 16) - my;
-                 return Math.sqrt(dx*dx + dy*dy) < 20;
-            });
-        }
-
-        if (clickedEnt) {
-            gameState.selectedEntity = clickedEnt;
-            const insp = document.getElementById('inspector');
-            insp.style.display = 'block';
-            document.getElementById('inspector-content').innerText = JSON.stringify(clickedEnt.brain || {}, null, 2);
-        } else {
-            // If dragging map in God Mode? Or interacting
-            if (gameState.mode === 'god') {
-               // God powers
-            }
-        }
+function drawHuman(e, x, y) {
+    const bounce = Math.abs(Math.sin(e.age * 5)) * 2;
+    
+    // Body
+    ctx.fillStyle = e.color; 
+    ctx.fillRect(x+10, y+12+bounce, 12, 14);
+    
+    // Head
+    ctx.fillStyle = '#ffcc80'; // Skin
+    ctx.fillRect(x+10, y+2+bounce, 12, 10);
+    
+    // Eyes
+    ctx.fillStyle = 'black';
+    if (e.vx > 0) { // Right
+        ctx.fillRect(x+18, y+5+bounce, 2, 2);
+    } else { // Left
+        ctx.fillRect(x+12, y+5+bounce, 2, 2);
     }
 }
 
-// --- INITIALIZATION ---
-
-function init() {
-    initRenderer();
-    gameState.map = generateMap();
-    
-    // Create Player
-    // Find safe spawn
-    let spawnX = 0, spawnY = 0;
-    for(let i=0; i<100; i++) {
-        let ty = Math.floor(MAP_HEIGHT/2) + Math.floor((Math.random()-0.5)*20);
-        let tx = Math.floor(MAP_WIDTH/2) + Math.floor((Math.random()-0.5)*20);
-        if (gameState.map[ty][tx].type === 'grass') {
-            spawnX = tx * TILE_SIZE;
-            spawnY = ty * TILE_SIZE;
-            break;
-        }
-    }
-
-    gameState.player = new Entity('player', spawnX, spawnY);
-    gameState.entities.push(gameState.player);
-
-    // Create Civilization
-    for (let i = 0; i < 20; i++) {
-        let valid = false;
-        let attempt = 0;
-        while(!valid && attempt < 100) {
-            const rx = Math.floor(Math.random() * MAP_WIDTH);
-            const ry = Math.floor(Math.random() * MAP_HEIGHT);
-            if (gameState.map[ry][rx].type === 'grass') {
-                gameState.entities.push(new Entity('human', rx * TILE_SIZE, ry * TILE_SIZE));
-                valid = true;
-            }
-            attempt++;
-        }
-    }
-
-    // Input Listeners
-    canvas.addEventListener('mousemove', handleMouse);
-    canvas.addEventListener('mousedown', handleMouse);
-    
-    // WASD Camera Move
-    window.addEventListener('keydown', e => {
-        gameState.keys[e.key.toLowerCase()] = true;
-        // Toggle camera mode?
-        if (e.key === 'm') {
-            gameState.mode = gameState.mode === 'survival' ? 'god' : 'survival';
-        }
-    });
-    window.addEventListener('keyup', e => gameState.keys[e.key.toLowerCase()] = false);
-    
-    // Loop
-    let lastTime = 0;
-    function loop(timestamp) {
-        const dt = timestamp - lastTime || 16;
-        lastTime = timestamp;
-
-        // Player Movement
-        if (gameState.mode === 'survival') {
-            gameState.player.vx = 0; 
-            gameState.player.vy = 0;
-            const s = gameState.player.speed || 3;
-            if (gameState.keys['w']) gameState.player.vy = -s;
-            if (gameState.keys['s']) gameState.player.vy = s;
-            if (gameState.keys['a']) gameState.player.vx = -s;
-            if (gameState.keys['d']) gameState.player.vx = s;
-            
-            // Camera follows player
-            const targetX = gameState.player.x - canvas.width/2;
-            const targetY = gameState.player.y - canvas.height/2;
-            // Smooth Camera
-            gameState.camera.x += (targetX - gameState.camera.x) * 0.1;
-            gameState.camera.y += (targetY - gameState.camera.y) * 0.1;
-        } else {
-            // God Mode Free Camera
-            const s = 10;
-            if (gameState.keys['w']) gameState.camera.y -= s;
-            if (gameState.keys['s']) gameState.camera.y += s;
-            if (gameState.keys['a']) gameState.camera.x -= s;
-            if (gameState.keys['d']) gameState.camera.x += s;
-        }
-
-        gameState.time += dt;
-        
-        // Game Logic
-        gameState.entities.forEach(e => e.update(dt));
-
-        // Update UI
-        document.getElementById('pop-display').innerText = `Pop: ${gameState.entities.length}`;
-        document.getElementById('mode-display').innerText = `Mode: ${gameState.mode} (Press M)`;
-        document.getElementById('stats-display').style.width = '300px'; 
-
-        drawGrid();
-
-        requestAnimationFrame(loop);
-    }
-    requestAnimationFrame(loop);
+function drawAnimal(e, x, y, color) {
+    const bounce = Math.abs(Math.sin(e.age * 8)) * 2;
+    ctx.fillStyle = color;
+    // Quadruped simplified
+    ctx.fillRect(x+8, y+16+bounce, 16, 10); // Body
+    ctx.fillRect(x+6, y+10+bounce, 8, 8); // Head
+    // Legs
+    ctx.fillRect(x+8, y+26+bounce, 3, 4);
+    ctx.fillRect(x+20, y+26+bounce, 3, 4);
 }
 
 init();
