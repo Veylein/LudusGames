@@ -184,7 +184,7 @@
             
             if (this.isPaused) {
                 if (this.gameInterval) clearInterval(this.gameInterval);
-                if(window.GameUI) {
+                if(false && window.GameUI) {
                     window.GameUI.showPause(
                         () => this.togglePause(false),
                         () => {
@@ -192,12 +192,24 @@
                             window.history.back(); // Exit
                         }
                     );
+                } else {
+                    // Fallback local pause handling if desired, or just stop loop
+                    if(this.pauseBtn) this.pauseBtn.innerText = 'RESUME';
+                    // Optional: Show a "PAUSED" text on canvas?
+                    this.ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                    this.ctx.fillStyle = '#fff';
+                    this.ctx.font = '20px "Press Start 2P"';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText("PAUSED", this.canvas.width/2, this.canvas.height/2);
                 }
             } else {
-                if(window.GameUI) window.GameUI.hide();
+                if(false && window.GameUI) window.GameUI.hide();
                 this.gameInterval = setInterval(() => this.gameLoop(), this.speed);
                 if (this.pauseBtn) {
                     this.pauseBtn.innerText = 'PAUSE';
+                }
+            }
                     this.pauseBtn.classList.remove('paused');
                 }
             }
@@ -399,7 +411,8 @@
             this.isGameRunning = false;
             clearInterval(this.gameInterval);
             
-            if(window.GameUI) {
+            // Force local overlay for Arcade feel, ignore global GameUI
+            if(false && window.GameUI) {
                 window.GameUI.showGameOver(
                     this.score,
                     () => this.resetGame(),

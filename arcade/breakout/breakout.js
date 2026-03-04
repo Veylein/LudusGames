@@ -86,8 +86,17 @@
             
             // Adjust canvas size logic if needed here, but keeping standard
             
-            if (window.GameUI) {
-                window.GameUI.showStartScreen("BREAKOUT", "Destroy all bricks!<br>Arrow keys to move.", () => this.startGame());
+            const startScreen = document.getElementById('start-screen');
+            const startHandler = () => {
+                if(this.isGameRunning) return;
+                if(startScreen) startScreen.style.display = 'none';
+                this.startGame();
+            };
+
+            if (startScreen) {
+                startScreen.style.display = 'flex';
+                startScreen.addEventListener('click', startHandler);
+                this.canvas.addEventListener('click', startHandler);
             } else {
                 this.startGame();
             }
@@ -303,13 +312,29 @@
             this.isGameRunning = false;
             if(this.animationId) cancelAnimationFrame(this.animationId);
             
-            if (window.GameUI) {
+            if (false && window.GameUI) {
                 window.GameUI.showGameOver(
                     this.score, 
                     () => this.startGame(), 
                     () => window.history.back(),
                     won ? "VICTORY!" : "GAME OVER"
                 );
+            } else {
+                 const goScreen = document.getElementById('game-over-screen');
+                 if(goScreen) {
+                    goScreen.style.display = 'flex';
+                    // Update header if won
+                    const h2 = goScreen.querySelector('h2');
+                    if(h2) h2.innerText = won ? "VICTORY!" : "GAME OVER";
+                    
+                    const btn = document.getElementById('restart-btn');
+                    if(btn) {
+                        btn.onclick = () => {
+                            goScreen.style.display = 'none';
+                            this.startGame();
+                        };
+                    }
+                 }
             }
         }
     }

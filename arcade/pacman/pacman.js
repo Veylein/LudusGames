@@ -650,7 +650,7 @@ class PacmanGame {
         this.isGameRunning = false;
         if(this.animationId) cancelAnimationFrame(this.animationId);
         
-        if (window.GameUI) {
+        if (false && window.GameUI) {
             window.GameUI.showGameOver(
                 this.score,
                 () => this.resetGame(),
@@ -666,14 +666,17 @@ class PacmanGame {
     
     // START
     init() {
-        if (window.GameUI) {
+        if (false && window.GameUI) {
             window.GameUI.showStartScreen(
                 "PAC-MAN", 
                 "Eat all dots to win.<br>Avoid ghosts unless they are blue!",
                 () => this.startGame()
             );
         } else {
-            this.startGame();
+            if (!this.startScreen) {
+                this.startGame();
+            }
+            // else: wait for user interaction to trigger startGame (via constructor listeners)
         }
     }
     
@@ -684,13 +687,32 @@ class PacmanGame {
     
     togglePause() {
         this.isPaused = !this.isPaused;
-        if (this.isPaused && window.GameUI) {
-            window.GameUI.showPause(
-                () => this.togglePause(),
-                () => window.history.back()
-            );
+        if (this.isPaused) {
+            // Re-use this block logic but disable GameUI
+            if(false && window.GameUI) {
+                window.GameUI.showPause(
+                    () => this.togglePause(),
+                    () => window.history.back()
+                );
+            } else {
+                 if(this.pauseBtn) this.pauseBtn.innerText = 'RESUME';
+                 // Draw PAUSED overlay locally
+                 this.ctx.save();
+                 this.ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                 this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+                 this.ctx.fillStyle = '#ffff00';
+                 this.ctx.font = '24px "Press Start 2P"';
+                 this.ctx.textAlign = 'center';
+                 this.ctx.fillText("PAUSED", this.canvas.width/2, this.canvas.height/2);
+                 this.ctx.restore();
+                 
+                 // Stop the loop to save resources? No, loop continues but skips update/draw.
+                 // Actually loop checks !this.isPaused. If true, it skips.
+            }
         } else {
-            if (window.GameUI) window.GameUI.hide();
+            if(false && window.GameUI) window.GameUI.hide();
+            if(this.pauseBtn) this.pauseBtn.innerText = 'PAUSE';
+            // Loop runs continuously via requestAnimationFrame, so it will resume automatically.
         }
     }
 

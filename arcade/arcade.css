@@ -1,5 +1,23 @@
-﻿
+/* ==========================================================================
+   ARCADE STYLE SHEET
+   ========================================================================== 
+   Structure:
+   1. Variables & Configuration
+   2. Animations
+   3. Base Setup & Resets
+   4. Global Effects (Scanlines)
+   5. Layout: Lobby Page
+   6. Component: Arcade Cabinet
+   7. Component: Screen & Canvas
+   8. Component: Controls (Joystick & Buttons)
+   9. Component: Game Links (Menu)
+   10. Component: In-Game UI (HUD, Overlay)
+   11. Mobile Controls
+   ========================================================================== */
+
+/* --- 1. Variables & Configuration --- */
 :root {
+    /* -- Palette: Neon Arcade -- */
     --pacman-yellow: #ffff00;
     --ghost-red: #ff0000;
     --ghost-pink: #ffb8ff;
@@ -7,52 +25,148 @@
     --ghost-orange: #ffb852;
     --arcade-blue: #1919a6;
     --neon-green: #39ff14;
+    
+    /* -- Structural Colors -- */
     --bg-dark: #050510;
     --cabinet-color: #2c2c54;
     --cabinet-border: #474787;
+    
+    /* -- Control Colors -- */
     --joystick-red: #e74c3c;
     --button-blue: #3498db;
     --button-yellow: #f1c40f;
+    
+    /* -- UI Colors -- */
+    --text-color: #fff;
+    --primary-color: #dd0000;
+    --secondary-color: #f1c40f;
+    --accent-color: #39ff14;
 }
 
-body.arcade-lobby-page {
-    background-color: var(--bg-dark);
-    color: #fff;
+/* --- 2. Animations --- */
+@keyframes bgScroll {
+    from { background-position: 0 0, 0 0; }
+    to { background-position: 0 0, 150px 150px; }
+}
+
+@keyframes shine {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* --- 3. Base Setup & Resets --- */
+/* Global Resets for Arcade Context */
+h1, h2, h3 {
+    text-shadow: 4px 4px 0px #000;
+    letter-spacing: 2px;
+}
+
+/* Base Button Style (Retro) */
+button {
     font-family: 'Press Start 2P', cursive, monospace;
-    margin: 0;
-    height: 100vh; /* Fixed height */
-    width: 100vw;
-    overflow: hidden; /* NO SCROLLING */
+    background: var(--primary-color);
+    color: white;
+    border: 4px solid #fff;
+    padding: 15px 30px;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 6px 0 #990000;
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+button:active {
+    transform: translateY(6px);
+    box-shadow: 0 0 0 #990000;
+}
+
+/* --- 4. Global Effects --- */
+/* Scanline Overlay - adds CRT feel to the whole page */
+.scanlines {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        to bottom,
+        rgba(255,255,255,0),
+        rgba(255,255,255,0) 50%,
+        rgba(0,0,0,0.2) 50%,
+        rgba(0,0,0,0.2)
+    );
+    background-size: 100% 4px;
+    pointer-events: none;
+    z-index: 999;
+}
+
+/* --- 5. Layout: Lobby Page --- */
+/* Main wrapper for the arcade selection screen */
+body.arcade-lobby-page {
+    /* Layout */
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    background-image: url('../Arcade_wallpaper.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+    margin: 0;
+    width: 100vw;
+    height: 100vh; /* Fixed height */
+    overflow: hidden; /* NO SCROLLING */
+    
+    /* Typography */
+    color: #fff;
+    font-family: 'Press Start 2P', cursive, monospace;
+    
+    /* Background: Authentic Arcade Pattern (SVG + Gradient) */
+    background-color: var(--bg-dark);
+    background-image: 
+        linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath d='M20,50 L40,40 A15,15 0 1,0 40,60 Z' fill='%23ffff00' opacity='0.1'/%3E%3Cpath d='M70,70 Q70,60 80,60 Q90,60 90,70 L90,85 L85,80 L80,85 L75,80 L70,85 Z' fill='%23ff0000' opacity='0.1'/%3E%3Crect x='10' y='10' width='4' height='4' fill='%2339ff14' opacity='0.1'/%3E%3Crect x='18' y='10' width='4' height='4' fill='%2339ff14' opacity='0.1'/%3E%3Crect x='12' y='14' width='8' height='4' fill='%2339ff14' opacity='0.1'/%3E%3Ccircle cx='80' cy='20' r='3' fill='%23ff0000' opacity='0.1'/%3E%3C/svg%3E");
+    background-size: 150px 150px;
+    background-attachment: fixed;
+    animation: bgScroll 60s linear infinite;
+    
+    /* Interaction */
     touch-action: none; /* Prevent touch scrolling */
 }
 
-/* --- ARCADE CABINET CONTAINER --- */
+/* Fallback/Legacy wallpaper option (Commented out)
+   background-image: url('../Arcade_wallpaper.png');
+   background-size: cover;
+   background-position: center;
+*/
+
+/* Character Sprites Placeholder (Simulated via CSS) */
+body::before, body::after {
+    display: none; /* Replaced by SVG background */
+}
+
+/* --- 6. Component: Arcade Cabinet --- */
+/* The main container for a single game view */
 .arcade-cabinet {
     position: relative;
     width: 90vw;
     max-width: 800px;
     height: auto;
     max-height: 95vh; /* Ensure it fits on screen */
+    
+    /* Box Styling */
     background: var(--cabinet-color);
     border: 15px solid #1a1a2e;
     border-radius: 20px 20px 4px 4px;
+    box-sizing: border-box;
+    padding: 10px;
+    margin: 0; /* Centered via flex parent */
+    
+    /* Effects */
     box-shadow: 
         inset 0 0 20px rgba(0,0,0,0.8),
         0 0 50px rgba(0, 255, 255, 0.2),
         10px 10px 0 rgba(0,0,0,0.5); /* 3D depth */
+    
+    /* Children Layout */
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 10px; /* Reduced padding */
-    margin: 0; /* Removing margin to center perfectly */
-    box-sizing: border-box;
 }
 
 /* Cabinet Header / Marquee */
@@ -78,6 +192,7 @@ body.arcade-lobby-page {
     letter-spacing: 4px;
     z-index: 2;
     position: relative;
+    margin: 0;
 }
 
 /* Decorative Characters on Top */
@@ -95,44 +210,83 @@ body.arcade-lobby-page {
     font-size: 12px;
 }
 
-/* Screen Bezel */
+/* --- 7. Component: Screen & Canvas --- */
+/* Outer Bezel (Plastic wrapper around screen) */
 .crt-bezel {
     background: #111;
     padding: 20px;
     border-radius: 10px;
-    box-shadow: inset 0 0 20px #000;
     margin-bottom: 20px;
     position: relative;
     width: 100%;
+    
+    /* Bezel Look */
+    box-shadow: 0 0 0 10px #222, inset 0 0 20px #000;
+    
+    /* Layout */
     display: flex;
-    justify-content: center; /* Center the canvas */
+    justify-content: center;
+    align-items: center;
 }
 
-/* The Game Canvas styling (within bezel) */
+/* Game Logic Wrappers */
+.game-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.canvas-wrapper {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* The Game Canvas Styling (Unified) */
 canvas {
-    border: 2px solid #333;
-    box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+    /* Reset & Display */
+    display: block;
     max-width: 100%;
-    background: #000;
-    /* CRT Curve effect could go here */
+    margin: 0 auto; /* Removed large vertical margin to fit in cabinet */
+    
+    /* Visuals */
+    background-color: #000;
+    border: 4px solid var(--arcade-blue); /* Default border color */
+    border-radius: 4px;
+    box-shadow: 0 0 20px var(--arcade-blue), inset 0 0 20px rgba(0,0,0,0.5);
+    
+    /* Sharp Pixels */
+    image-rendering: pixelated; 
 }
 
-/* Control Panel (Joystick area) */
+/* --- 8. Component: Controls (Joystick & Buttons) --- */
+/* The physical control panel deck */
 .control-panel {
-    background: #34343f; /* Lighter plastic texture */
+    background: #34343f;
     width: 110%; /* Slightly wider than cabinet */
-    margin-left: -5%;
     padding: 20px;
     border-top: 5px solid #111;
-    border-radius: 0 0 10px 10px;
+    border-radius: 4px 4px 10px 10px;
+    
+    /* Texture & Depth */
+    box-shadow: 
+        inset 0 5px 10px rgba(255,255,255,0.05),
+        0 10px 20px rgba(0,0,0,0.5); /* Deep shadow below */
+    background-image: 
+        linear-gradient(45deg, #3a3a4a 25%, transparent 25%, transparent 75%, #3a3a4a 75%, #3a3a4a), 
+        linear-gradient(45deg, #3a3a4a 25%, transparent 25%, transparent 75%, #3a3a4a 75%, #3a3a4a);
+    background-size: 4px 4px;
+    background-position: 0 0, 2px 2px;
+    
+    /* Layout */
     display: flex;
     justify-content: space-around;
     align-items: center;
-    box-shadow: inset 0 5px 10px rgba(255,255,255,0.05);
-    background-image: linear-gradient(45deg, #3a3a4a 25%, transparent 25%, transparent 75%, #3a3a4a 75%, #3a3a4a), 
-                      linear-gradient(45deg, #3a3a4a 25%, transparent 25%, transparent 75%, #3a3a4a 75%, #3a3a4a);
-    background-size: 4px 4px;
-    background-position: 0 0, 2px 2px;
 }
 
 /* Visual Joystick */
@@ -148,9 +302,7 @@ canvas {
     background: #111;
     border-radius: 50%;
     position: relative;
-    box-shadow: 
-        inset 0 0 10px rgba(0,0,0,0.8),
-        0 5px 0 #222;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.8), 0 5px 0 #222;
 }
 
 .joystick-stick {
@@ -191,7 +343,7 @@ canvas {
     border: 4px solid #111;
     position: relative;
     box-shadow: 0 5px 0 #000;
-    cursor: pointer; /* Even if visual only, feels nice */
+    cursor: pointer;
 }
 
 .arcade-button::after {
@@ -215,91 +367,44 @@ canvas {
     border-bottom: none;
 }
 
-.arcade-lobby-page {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-    overflow-x: hidden;
-    
-    /* Authentic Arcade Pattern Background */
-    background-image: 
-        linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)),
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath d='M20,50 L40,40 A15,15 0 1,0 40,60 Z' fill='%23ffff00' opacity='0.1'/%3E%3Cpath d='M70,70 Q70,60 80,60 Q90,60 90,70 L90,85 L85,80 L80,85 L75,80 L70,85 Z' fill='%23ff0000' opacity='0.1'/%3E%3Crect x='10' y='10' width='4' height='4' fill='%2339ff14' opacity='0.1'/%3E%3Crect x='18' y='10' width='4' height='4' fill='%2339ff14' opacity='0.1'/%3E%3Crect x='12' y='14' width='8' height='4' fill='%2339ff14' opacity='0.1'/%3E%3Ccircle cx='80' cy='20' r='3' fill='%23ff0000' opacity='0.1'/%3E%3C/svg%3E");
-    background-size: 150px 150px;
-    background-attachment: fixed;
-    animation: bgScroll 60s linear infinite;
-}
-
-@keyframes bgScroll {
-    from { background-position: 0 0, 0 0; }
-    to { background-position: 0 0, 150px 150px; }
-}
-
-/* Character Sprites (Simulated via CSS) */
-body::before, body::after {
-    display: none; /* Replaced by SVG background */
-}
-
-/* Shared Arcade Styles */
-canvas {
-    border: 4px solid var(--arcade-blue);
-    box-shadow: 0 0 20px var(--arcade-blue), inset 0 0 20px rgba(0,0,0,0.5);
-    background-color: #000;
-    border-radius: 4px;
-    image-rendering: pixelated;
-}
-
-h1, h2, h3 {
-    text-shadow: 4px 4px 0px #000;
-    letter-spacing: 2px;
-}
-
-button {
-    font-family: 'Press Start 2P', cursive;
-    background: #dd0000;
-    color: white;
-    border: 4px solid #fff;
-    padding: 15px 30px;
-    font-size: 16px;
-    cursor: pointer;
-    box-shadow: 0 6px 0 #990000;
-    transition: transform 0.1s, box-shadow 0.1s;
-}
-
-button:active {
-    transform: translateY(6px);
-    box-shadow: 0 0 0 #990000;
-}
-
-
-/* Enhanced Game Links - Retro Button Style */
+/* --- 9. Component: Game Links (Menu) --- */
 .game-link {
+    /* Layout */
     display: flex;
     justify-content: center;
     align-items: center;
-    text-decoration: none;
-    background: #000;
-    border: 4px solid #fff;
-    color: #fff; /* White base text */
-    padding: 20px;
+    position: relative;
+    overflow: hidden;
     margin: 10px;
+    padding: 20px;
+    min-width: 180px;
+    min-height: 80px;
+    
+    /* Typography */
     font-family: 'Press Start 2P', cursive;
     font-size: 14px;
     text-transform: uppercase;
-    position: relative;
-    overflow: hidden;
-    transition: transform 0.1s, box-shadow 0.1s, background 0.2s;
-    box-shadow: 6px 6px 0 rgba(0,0,0,0.5), 6px 6px 0 2px #fff;
+    text-decoration: none;
     text-align: center;
-    min-width: 180px; /* Wider buttons */
-    min-height: 80px; /* Taller buttons */
+    
+    /* Visuals (Base) */
+    background: #000;
+    border: 4px solid #fff;
+    color: #fff; 
+    box-shadow: 6px 6px 0 rgba(0,0,0,0.5), 6px 6px 0 2px #fff;
+    transition: transform 0.1s, box-shadow 0.1s, background 0.2s;
+}
+
+.game-link span {
+    position: relative;
+    z-index: 2;
+    text-shadow: 2px 2px 0 #000;
 }
 
 .game-link:hover {
     transform: translate(-3px, -3px);
-    background: #333; /* Dark gray hover */
-    border-color: #0f0; /* Green highlight on hover */
+    background: #333;
+    border-color: #0f0;
     color: #0f0;
     box-shadow: 10px 10px 0 rgba(0,0,0,0.5), 10px 10px 0 2px #0f0;
     z-index: 10;
@@ -310,72 +415,66 @@ button:active {
     box-shadow: 2px 2px 0 rgba(0,0,0,0.5), 2px 2px 0 2px #fff;
 }
 
+/* Scanline Glint Effect for Links */
 .game-link::before {
-    content: ""; /* Scanline glint */
+    content: "";
     position: absolute;
     top: 0; left: -100%;
     width: 200%; height: 100%;
     background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%);
     transition: none;
 }
-
 .game-link:hover::before {
     animation: shine 0.5s ease-in-out;
 }
 
-@keyframes shine {
-    0% { left: -100%; }
-    100% { left: 100%; }
+/* Game Specific Themes (Colors) */
+.game-link[href*="pacman"] {
+    border-color: #ffff00; color: #ffff00; 
+    box-shadow: 6px 6px 0 rgba(0,0,0,0.5), 6px 6px 0 2px #ffff00; 
+}
+.game-link[href*="pacman"]:hover { 
+    background: #ffff00; color: #000;
+    box-shadow: 10px 10px 0 rgba(0,0,0,0.5), 10px 10px 0 2px #ffff00; 
 }
 
-.game-link span {
-    position: relative;
-    z-index: 2;
-    text-shadow: 2px 2px 0 #000;
+.game-link[href*="mario"], .game-link[href*="kong"] {
+    border-color: #ff0000; color: #ff0000;
+    box-shadow: 6px 6px 0 rgba(0,0,0,0.5), 6px 6px 0 2px #ff0000;
+}
+.game-link[href*="mario"]:hover, .game-link[href*="kong"]:hover {
+    background: #ff0000; color: #fff;
+    box-shadow: 10px 10px 0 rgba(0,0,0,0.5), 10px 10px 0 2px #ff0000;
 }
 
-/* Unique Colors per Game (ARCADE SPECIFIC) */
-.game-link[href*="pacman"] { border-color: #ffff00; color: #ffff00; box-shadow: 6px 6px 0 rgba(0,0,0,0.5), 6px 6px 0 2px #ffff00; }
-.game-link[href*="pacman"]:hover { background: #ffff00; color: #000; box-shadow: 10px 10px 0 rgba(0,0,0,0.5), 10px 10px 0 2px #ffff00; }
-
-.game-link[href*="mario"], .game-link[href*="kong"] { border-color: #ff0000; color: #ff0000; box-shadow: 6px 6px 0 rgba(0,0,0,0.5), 6px 6px 0 2px #ff0000; }
-.game-link[href*="mario"]:hover, .game-link[href*="kong"]:hover { background: #ff0000; color: #fff; box-shadow: 10px 10px 0 rgba(0,0,0,0.5), 10px 10px 0 2px #ff0000; }
-
-.game-link[href*="tetris"] { border-color: #00ffff; color: #00ffff; box-shadow: 6px 6px 0 rgba(0,0,0,0.5), 6px 6px 0 2px #00ffff; }
-.game-link[href*="tetris"]:hover { background: #00ffff; color: #000; box-shadow: 10px 10px 0 rgba(0,0,0,0.5), 10px 10px 0 2px #00ffff; }
-
-.game-link[href*="invaders"] { border-color: #00ff00; color: #00ff00; box-shadow: 6px 6px 0 rgba(0,0,0,0.5), 6px 6px 0 2px #00ff00; }
-.game-link[href*="invaders"]:hover { background: #00ff00; color: #000; box-shadow: 10px 10px 0 rgba(0,0,0,0.5), 10px 10px 0 2px #00ff00; }
-
-.game-link[href*="fighting"] { border-color: #ff8800; color: #ff8800; box-shadow: 6px 6px 0 rgba(0,0,0,0.5), 6px 6px 0 2px #ff8800; }
-.game-link[href*="fighting"]:hover { background: #ff8800; color: #000; box-shadow: 10px 10px 0 rgba(0,0,0,0.5), 10px 10px 0 2px #ff8800; }
-
-/* Scanline Effect */
-.scanlines {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-        to bottom,
-        rgba(255,255,255,0),
-        rgba(255,255,255,0) 50%,
-        rgba(0,0,0,0.2) 50%,
-        rgba(0,0,0,0.2)
-    );
-    background-size: 100% 4px;
-    pointer-events: none;
-    z-index: 999;
+.game-link[href*="tetris"] {
+    border-color: #00ffff; color: #00ffff;
+    box-shadow: 6px 6px 0 rgba(0,0,0,0.5), 6px 6px 0 2px #00ffff;
+}
+.game-link[href*="tetris"]:hover {
+    background: #00ffff; color: #000;
+    box-shadow: 10px 10px 0 rgba(0,0,0,0.5), 10px 10px 0 2px #00ffff;
 }
 
-canvas {
-    background: #000;
-    margin: 20px auto;
-    display: block;
-    image-rendering: pixelated;
+.game-link[href*="invaders"] {
+    border-color: #00ff00; color: #00ff00;
+    box-shadow: 6px 6px 0 rgba(0,0,0,0.5), 6px 6px 0 2px #00ff00;
+}
+.game-link[href*="invaders"]:hover {
+    background: #00ff00; color: #000;
+    box-shadow: 10px 10px 0 rgba(0,0,0,0.5), 10px 10px 0 2px #00ff00;
 }
 
+.game-link[href*="fighting"] {
+    border-color: #ff8800; color: #ff8800;
+    box-shadow: 6px 6px 0 rgba(0,0,0,0.5), 6px 6px 0 2px #ff8800;
+}
+.game-link[href*="fighting"]:hover {
+    background: #ff8800; color: #000;
+    box-shadow: 10px 10px 0 rgba(0,0,0,0.5), 10px 10px 0 2px #ff8800;
+}
+
+/* --- 10. Component: In-Game UI --- */
 .game-container {
     display: flex;
     flex-direction: column;
@@ -427,15 +526,14 @@ canvas {
     cursor: pointer;
     margin-top: 20px;
 }
-
 .restart-btn:hover {
     background: var(--accent-color);
 }
 
-/* --- UNIVERSAL MOBILE CONTROLS (D-PAD) --- */
+/* --- 11. Mobile Controls --- */
 /* Enable on-screen controls for all arcade games */
 .mobile-controls {
-    display: grid !important; /* FORCE DISPLAY overrides inline style="display:none" */
+    display: grid !important; /* Forces display overriding any inline none */
     grid-template-areas: 
         ". up ."
         "left . right"
@@ -465,126 +563,17 @@ canvas {
     color: rgba(255, 255, 255, 0.8);
     font-size: 24px;
     cursor: pointer;
-    touch-action: manipulation; /* Prevent zoom on double tap */
+    touch-action: manipulation;
+    padding: 0; /* Reset padding from global button style */
     display: flex;
     justify-content: center;
     align-items: center;
     transition: all 0.1s;
+    box-shadow: none; /* Reset shadow from global button style */
 }
 
 .mobile-controls button:active {
     background: rgba(255, 255, 255, 0.4);
     transform: scale(0.95);
-}
-
-/* Map buttons to grid areas */
-#up-btn     { grid-area: up; }
-#down-btn   { grid-area: down; }
-#left-btn   { grid-area: left; }
-#right-btn  { grid-area: right; }
-
-/* Responsive adjustments */
-@media (max-width: 600px) {
-    .mobile-controls {
-        bottom: 10px; /* Lower on mobile */
-        right: 10px;
-        transform: scale(0.8); /* Slightly smaller */
-        transform-origin: bottom right;
-    }
-}
-
-/* --- ARCADE LOBBY --- */
-.arcade-lobby-page .hero {
-    display: none !important;
-}
-
-.arcade-wrapper {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 10;
-    background-color: var(--bg-dark);
-    background-image: url('../Arcade_wallpaper.png');
-    background-size: 100% 100% !important;
-    background-position: center;
-    background-repeat: no-repeat;
-}
-
-.arcade-wrapper .map-zone {
-    position: absolute;
-    z-index: 20;
-    display: block;
-    
-    /* Make the game machine slots visible even when not hovered */
-    background: rgba(0, 0, 0, 0.4); /* Dark glass */
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 
-        inset 0 0 20px rgba(0,0,0,0.8),
-        0 10px 20px rgba(0,0,0,0.5); /* Depth */
-    border-radius: 4px; /* Slight cabinet curve */
-    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s, border-color 0.3s;
-}
-
-.arcade-wrapper .map-zone:hover {
-    transform: scale(1.05) translateY(-5px);
-    border-color: var(--neon-green);
-    box-shadow: 
-        0 0 15px var(--neon-green),
-        inset 0 0 20px rgba(57, 255, 20, 0.2);
-    z-index: 30;
-    background: rgba(0, 0, 0, 0.7);
-}
-
-.arcade-wrapper .zone-hover {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    opacity: 1; /* Always show label, but dim */
-}
-
-.arcade-wrapper .zone-label {
-    color: rgba(255, 255, 255, 0.3); /* Dim by default */
-    font-family: 'Press Start 2P', cursive;
-    font-size: 0.7rem; /* Fit in small boxes */
-    text-shadow: none;
-    text-align: center;
-    transition: all 0.3s;
-    transform: rotate(-5deg); /* Jaunty angle */
-}
-
-.arcade-wrapper .map-zone:hover .zone-label {
-    color: var(--neon-green);
-    text-shadow: 0 0 10px var(--neon-green);
-    transform: scale(1.2) rotate(0deg); /* Pop up */
-    font-size: 1rem;
-}
-
-/* --- ARCADE LOBBY OVERRIDES --- */
-.arcade-lobby-page {
-    /* We override the flex display from body to allow absolute positioning of nav */
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: flex-start !important;
-    align-items: center !important;
-    overflow: hidden;
-}
-
-.arcade-lobby-page .nav {
-    position: relative !important;
-    width: 100% !important;
-    z-index: 100 !important;
-    margin: 0 !important;
-    top: 0 !important;
-    left: 0 !important;
-    background: rgba(0,0,0, 0.8);
-}
-
-
-@media (max-width: 768px) {
-    .zone-hover { opacity: 1 !important; background: rgba(0,0,0,0.5); }
+    box-shadow: none;
 }

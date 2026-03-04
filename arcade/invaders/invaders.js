@@ -68,12 +68,12 @@ class InvadersGame {
     }
     
     init() {
-        if (window.GameUI) {
-            window.GameUI.showStartScreen(
-                "INVADERS", 
-                "Defend Earth!<br>Arrows to move, Space to shoot.", 
-                () => this.startGame()
-            );
+        const startScreen = document.getElementById('start-screen');
+        if (startScreen) {
+            startScreen.onclick = () => {
+                startScreen.style.display = 'none';
+                this.startGame();
+            };
         } else {
             this.startGame();
         }
@@ -334,13 +334,22 @@ class InvadersGame {
 
     gameOver(win) {
         this.isGameRunning = false;
-        if (window.GameUI) {
-            window.GameUI.showGameOver(
-                this.score, 
-                () => this.startGame(), 
-                () => window.history.back(),
-                win ? "WAVE CLEARED!" : "INVASION SUCCESSFUL"
-            );
+        const go = document.getElementById('gameOver');
+        if (go) {
+            go.style.display = 'flex';
+            const fs = document.getElementById('final-score');
+            if(fs) fs.innerText = this.score;
+            
+            const h2 = go.querySelector('h2');
+            if(h2) h2.innerText = win ? "VICTORY!" : "GAME OVER";
+            
+            const btn = go.querySelector('button');
+            if(btn) {
+                btn.onclick = () => {
+                    go.style.display = 'none';
+                    this.startGame();
+                };
+            }
         }
     }
 }
