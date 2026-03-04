@@ -595,8 +595,50 @@ function ensureMobileControls() {
     if (!container) {
         container = document.createElement('div');
         container.className = 'mobile-controls';
+        container.innerHTML = `
+            <button id="up-btn">▲</button>
+            <button id="left-btn">◀</button>
+            <button id="down-btn">▼</button>
+            <button id="right-btn">▶</button>
+        `;
         document.body.appendChild(container);
     }
+}
+
+
+/* INITIALIZATION ON LOAD */
+function initGlobalUI() {
+    if (PageCleanupManager) PageCleanupManager.init();
+    
+    // Init themes and styles
+    if (typeof initTheme === 'function') initTheme();
+    if (typeof initStyle === 'function') initStyle();
+    if (typeof initFontTheme === 'function') initFontTheme();
+    if (typeof initDifficulty === 'function') initDifficulty();
+    
+    // Init game systems
+    if (typeof initPoints === 'function') initPoints();
+    if (typeof ensureBackButton === 'function') ensureBackButton();
+    if (typeof ensureMobileControls === 'function') ensureMobileControls();
+
+    // Sound Effects
+    const buttons = document.querySelectorAll("button, a, .game-link, .map-zone");
+    buttons.forEach(btn => {
+        btn.addEventListener("mouseenter", () => {
+            // Optional: Hover sound
+        });
+        btn.addEventListener("click", () => {
+             // Optional: Click sound
+        });
+    });
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initGlobalUI);
+} else {
+    initGlobalUI();
+}
+
     
     // If container is empty (or we just created it), populate standard D-Pad
     if (!container.querySelector('button')) {

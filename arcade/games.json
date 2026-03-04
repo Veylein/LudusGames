@@ -1,0 +1,16 @@
+[
+    { "id": "snake", "name": "Snake", "url": "snake/index.html", "x": 1, "y": 7, "color": "#00ff00" },
+    { "id": "dino", "name": "Dino Run", "url": "dino/index.html", "x": 15.3, "y": 7, "color": "#ff00ff" },
+    { "id": "flappy", "name": "Flappy Bird", "url": "flappy/index.html", "x": 29.6, "y": 7, "color": "#ffff00" },
+    { "id": "pacman", "name": "Pacman", "url": "pacman/index.html", "x": 43.9, "y": 7, "color": "#ffff00" },
+    { "id": "invaders", "name": "Space Invaders", "url": "invaders/index.html", "x": 58.2, "y": 7, "color": "#00ffff" },
+    { "id": "kong", "name": "Donkey Kong", "url": "kong/index.html", "x": 72.5, "y": 7, "color": "#ff0000" },
+    { "id": "centipede", "name": "Centipede", "url": "centipede/index.html", "x": 86.8, "y": 7, "color": "#00ff00" },
+    { "id": "galaga", "name": "Galaga", "url": "galaga/index.html", "x": 1, "y": 53, "color": "#ffffff" },
+    { "id": "tetris", "name": "Tetris", "url": "tetris/index.html", "x": 15.3, "y": 53, "color": "#ff00ff" },
+    { "id": "pong", "name": "Pong", "url": "pong/index.html", "x": 29.6, "y": 53, "color": "#ffffff" },
+    { "id": "breakout", "name": "Breakout", "url": "breakout/index.html", "x": 43.9, "y": 53, "color": "#00ffff" },
+    { "id": "asteroids", "name": "Asteroids", "url": "asteroids/index.html", "x": 58.2, "y": 53, "color": "#ffffff" },
+    { "id": "qbert", "name": "Q*bert", "url": "qbert/index.html", "x": 72.5, "y": 53, "color": "#ff5500" },
+    { "id": "weekly", "name": "Dungeon Crawler", "url": "Weekly/index.html", "x": 86.8, "y": 53, "color": "#ff00ff" }
+]
