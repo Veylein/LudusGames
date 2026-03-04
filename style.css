@@ -73,9 +73,12 @@ body {
     image-rendering: auto;
     position: relative;
     text-shadow: 2px 2px 0px #000;
+    
+    /* CRT Flicker Animation */
+    animation: turnOn 4s linear;
 }
 
-/* CRT SCANLINE OVERLAY - ALWAYS ON FOR RETRO FEEL */
+/* CRT SCANLINE OVERLAY - ENHANCED */
 body::before {
     content: " ";
     display: block;
@@ -84,11 +87,35 @@ body::before {
     left: 0;
     bottom: 0;
     right: 0;
-    background: linear-gradient(var(--crt-scanline)), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
     z-index: 9999;
-    background-size: 100% 3px, 3px 100%;
+    background-size: 100% 2px, 3px 100%;
     pointer-events: none;
-    opacity: 0.6;
+    opacity: 0.8;
+    animation: scanline 10s linear infinite;
+}
+
+/* Vignette for old monitor screen feel */
+body::after {
+    content: " ";
+    display: block;
+    position: fixed;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: radial-gradient(circle, rgba(0,0,0,0) 60%, rgba(0,0,0,0.6) 100%);
+    z-index: 9998;
+    pointer-events: none;
+}
+
+@keyframes turnOn {
+    0% { transform: scale(1,0.01) translate3d(0,0,0); filter: brightness(30); opacity: 1; }
+    5% { transform: scale(1,0.01) translate3d(0,0,0); filter: brightness(10); }
+    15% { transform: scale(1,1) translate3d(0,0,0); filter: brightness(1); }
+    100% { transform: scale(1,1) translate3d(0,0,0); filter: brightness(1); }
+}
+
+@keyframes scanline {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 100%; }
 }
 
 @keyframes gridScroll {
@@ -378,10 +405,11 @@ button:active, .retro-btn:active {
 }
 
 .hub-card:hover {
-    transform: translate(-5px, -5px);
+    transform: translate(-5px, -5px) scale(1.02);
     box-shadow: 
         inset 0 0 20px rgba(0,0,0,0.8),
-        13px 13px 0 rgba(0,0,0,0.5);
+        13px 13px 0 rgba(0,0,0,0.5),
+        0 0 15px var(--accent-color);
     border-color: var(--highlight-color, yellow);
     z-index: 10;
 }
@@ -390,6 +418,11 @@ button:active, .retro-btn:active {
     font-size: 64px;
     margin-bottom: 20px;
     filter: drop-shadow(0 0 10px rgba(255,255,255,0.5));
+    transition: transform 0.3s;
+}
+
+.hub-card:hover .hub-icon {
+    transform: scale(1.1) rotate(5deg);
 }
 
 .hub-title {
@@ -502,12 +535,24 @@ button:active, .retro-btn:active {
 .map-zone {
     position: absolute;
     display: block;
-    /* DEBUG LAYOUT: borders removed */
-    /* border: 3px solid #ff00ff; */
-    /* background: rgba(255, 0, 255, 0.1); */
     cursor: pointer;
     z-index: 10;
     text-decoration: none;
+    
+    /* SUBTLE GLOWING BORDER SO USERS KNOW WHERE TO CLICK */
+    border: 1px solid rgba(255, 255, 255, 0.2); 
+    border-radius: 4px; /* Optional slight rounding */
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1), inset 0 0 20px rgba(255,255,255,0.05);
+    transition: all 0.3s ease;
+}
+
+.map-zone:hover {
+    border: 2px solid var(--secondary-color);
+    box-shadow: 
+        0 0 20px var(--secondary-color), 
+        inset 0 0 30px rgba(0, 255, 255, 0.3);
+    background: rgba(0, 255, 255, 0.1); 
+    transform: scale(1.02); 
 }
 
 .zone-hover {
@@ -517,36 +562,47 @@ button:active, .retro-btn:active {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    /* background: rgba(0, 0, 0, 0.4);  Removed to clearly show image unless hovered */
     opacity: 0;
-    transition: opacity 0.2s, background 0.2s;
-    border: 2px solid transparent;
+    transition: opacity 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .map-zone:hover .zone-hover {
     opacity: 1;
-    background: rgba(0, 0, 0, 0.6); /* Dark overlay on hover */
-    border-color: var(--accent-color);
-    box-shadow: 0 0 15px var(--accent-color);
 }
 
 .zone-label {
-    color: var(--accent-color);
-    font-size: 1.5rem; /* Large font */
-    font-weight: bold;
+    color: var(--secondary-color);
+    font-size: 2rem; 
+    font-weight: 900;
     text-transform: uppercase;
-    text-shadow: 2px 2px 0 #000;
+    text-shadow: 
+        0 0 10px var(--accent-color),
+        0 0 20px var(--secondary-color),
+        2px 2px 0 #000;
     margin-bottom: 5px;
     font-family: 'Press Start 2P', cursive;
     text-align: center;
+    letter-spacing: 2px;
+    
+    animation: textFlicker 2s infinite alternate;
+}
+
+@keyframes textFlicker {
+    0% { opacity: 1; text-shadow: 0 0 10px var(--accent-color); }
+    50% { opacity: 0.8; text-shadow: 0 0 20px var(--accent-color); }
+    100% { opacity: 1; text-shadow: 0 0 10px var(--accent-color); }
 }
 
 .zone-sub {
     color: #fff;
-    font-size: 0.8rem;
+    font-size: 1rem;
     font-family: 'Quicksand', sans-serif;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 4px;
+    background: #000;
+    padding: 2px 8px;
+    border-radius: 4px;
+    box-shadow: 0 0 5px #000;
 }
 
 /* Ensure nav is above map */
@@ -571,3 +627,10 @@ button:active, .retro-btn:active {
 /* Page Transition */
 body { animation: fadeIn 0.5s ease-in-out; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+body { cursor: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22><path fill=%22%2300ff00%22 d=%22M0,0 L0,18 L4,14 L8,24 L12,22 L8,12 L16,12 L0,0 Z%22 stroke=%22black%22 stroke-width=%221%22/></svg>'), auto; }
+
+a, button { cursor: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22><path fill=%22%23ff00ff%22 d=%22M10,0 L14,0 L14,10 L24,10 L24,14 L14,14 L14,24 L10,24 L10,14 L0,14 L0,10 L10,10 Z%22 stroke=%22white%22 stroke-width=%221%22/></svg>') 12 12, pointer; }
+
+.map-zone .zone-icon { font-size: 3rem; margin-bottom: 10px; filter: drop-shadow(0 0 5px currentColor); transition: transform 0.2s; }
+.map-zone:hover .zone-icon { transform: scale(1.2); }
