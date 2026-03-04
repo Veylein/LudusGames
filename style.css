@@ -491,7 +491,7 @@ button:active, .retro-btn:active {
     width: 100vw !important;
     height: 100vh !important;
     background-color: #2a0a3b; 
-    background-image: url("https://media.discordapp.net/attachments/1476010804473237616/1476010805207109711/image.png?ex=69a8236e&is=69a6d1ee&hm=af38c87d7ff620948fb9f1a84ad2394295a224b628171c1dba989df311ae28b4&=&format=webp&quality=lossless&width=1019&height=679");
+    background-image: url:("https://media.discordapp.net/attachments/1476010804473237616/1476010805207109711/image.png?ex=69a974ee&is=69a8236e&hm=8c336932ceef930d9c35a4975f224e530aae4f72f29396d7244e69a4af41c9bc&=&format=webp&quality=lossless&width=1019&height=679");
     background-size: 100% 100% !important; /* Forces stretch */
     background-position: center;
     background-repeat: no-repeat;
