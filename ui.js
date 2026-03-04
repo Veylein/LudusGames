@@ -147,7 +147,50 @@ document.addEventListener("DOMContentLoaded", () => {
     initDifficulty();
     initPoints();
     ensureBackButton();
+    
+    // Global Click Effect
+    document.addEventListener('click', (e) => {
+        createClickSparks(e.clientX, e.clientY);
+    });
 });
+
+/* CLICK SPARKS EFFECT */
+function createClickSparks(x, y) {
+    const colors = ['#ff00ff', '#00ffff', '#ffff00', '#ff0000', '#00ff00'];
+    const count = 10;
+    
+    for (let i = 0; i < count; i++) {
+        const spark = document.createElement('div');
+        spark.style.position = 'fixed';
+        spark.style.left = x + 'px';
+        spark.style.top = y + 'px';
+        spark.style.width = '4px';
+        spark.style.height = '4px';
+        spark.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        spark.style.pointerEvents = 'none';
+        spark.style.borderRadius = '50%';
+        spark.style.zIndex = '10000';
+        
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 50 + 20; // Explosion speed
+        const velocityX = Math.cos(angle) * speed;
+        const velocityY = Math.sin(angle) * speed;
+        
+        document.body.appendChild(spark);
+        
+        let opacity = 1;
+        
+        const anim = spark.animate([
+            { transform: `translate(0, 0)`, opacity: 1 },
+            { transform: `translate(${velocityX}px, ${velocityY}px)`, opacity: 0 }
+        ], {
+            duration: 400 + Math.random() * 300,
+            easing: 'ease-out'
+        });
+        
+        anim.onfinish = () => spark.remove();
+    }
+}
 
 /* THEME SYSTEM (Colors) */
 function initTheme() {

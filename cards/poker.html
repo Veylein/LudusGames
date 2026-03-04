@@ -10,14 +10,15 @@
   <link rel="stylesheet" href="cards.css">
 </head>
 <body>
-  <div class="game-wrapper">
-    <div class="top-bar">
-      <a href="index.html" class="back-btn" style="text-decoration: none; color: #fff; border: 2px solid white; padding: 5px;">&lt;</a>
-      <h1>♠️ Poker</h1>
-      <div id="poker-scoreboard" class="scoreboard">Texas Hold'em</div>
-    </div>
-    <div class="table">
-      <!-- BOT AREA (Top) -->
+  <div class="crt-frame">
+    <div class="game-wrapper">
+      <div class="top-bar">
+        <a href="index.html" class="back-btn" style="text-decoration: none; color: #fff; border: 2px solid white; padding: 5px;">&lt;</a>
+        <h1 class="glitch-text" data-text="♠️ Poker">♠️ Poker</h1>
+        <div id="poker-scoreboard" class="scoreboard">Texas Hold'em</div>
+      </div>
+      <div class="table">
+        <!-- BOT AREA (Top) -->
       <div class="bot-area">
         <div class="player-hand-container">
             <div class="player-info">
@@ -52,8 +53,10 @@
       </div>
     </div>
   </div>
+  </div> <!-- End crt-frame -->
   <script src="poker.js"></script>
   <script src="../ui.js"></script>
+  <script src="../effects.js"></script>
 
 </body>
 </html>
