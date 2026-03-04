@@ -57,6 +57,36 @@ const PALETTE = {
     HOVER: 'rgba(255, 255, 255, 0.2)'
 };
 
+// --- CLOUD SYSTEM ---
+const CLOUDS = [];
+function updateClouds(dt) {
+    // Spawn
+    if (Math.random() < 0.005) {
+        CLOUDS.push({
+            x: -200, 
+            y: Math.random() * (MAP_HEIGHT * TILE_SIZE), 
+            scale: 2 + Math.random() * 3,
+            speed: 10 + Math.random() * 20
+        });
+    }
+    // Move
+    for (let i = CLOUDS.length - 1; i >= 0; i--) {
+        const c = CLOUDS[i];
+        c.x += c.speed * dt * 0.01;
+        if (c.x > MAP_WIDTH * TILE_SIZE + 200) CLOUDS.splice(i, 1);
+    }
+}
+function drawClouds(ctx) {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+    CLOUDS.forEach(c => {
+         ctx.beginPath();
+         ctx.arc(c.x, c.y, 30*c.scale, 0, Math.PI*2);
+         ctx.arc(c.x + 40*c.scale, c.y - 10*c.scale, 35*c.scale, 0, Math.PI*2);
+         ctx.arc(c.x + 70*c.scale, c.y + 5*c.scale, 30*c.scale, 0, Math.PI*2);
+         ctx.fill();
+    });
+}
+
 // --- DATA: TRAITS & THOUGHTS ---
 const TRAITS = {
     'Strong': { boost: 'hp', val: 20, desc: 'Healthy and tough.' },
@@ -219,6 +249,7 @@ class Unit extends Entity {
         this.currentThought = "I have been born.";
         this.actionTimer = 0;
         this.target = null; // {x, y, type}
+        this.sex = Math.random() > 0.5 ? 'm' : 'f';
         
         // Randomize traits
         const possible = Object.keys(TRAITS);
@@ -264,6 +295,35 @@ class Unit extends Entity {
         }
 
         // Behavior State Machine
+        
+        // 0. WAR LOGIC
+        if (this.villageId) {
+            const myVillage = gameState.villages.find(v => v.id === this.villageId);
+            if (myVillage && myVillage.atWarWith.length > 0) {
+                 // Look for enemy units
+                 const enemy = gameState.entities.find(e => 
+                     !e.dead && 
+                     e instanceof Unit && 
+                     e.villageId && 
+                     myVillage.atWarWith.includes(e.villageId) &&
+                     Math.hypot(e.x - this.x, e.y - this.y) < 15
+                 );
+                 if (enemy) {
+                     this.target = { x: enemy.x, y: enemy.y, type: 'enemy', uid: enemy };
+                     this.currentThought = "Die enemy!";
+                     return;
+                 }
+                 // Look for enemy buildings
+                 if (!this.target) {
+                     const enemyVillage = gameState.villages.find(v => myVillage.atWarWith.includes(v.id));
+                     if (enemyVillage) {
+                         this.target = { x: enemyVillage.x, y: enemyVillage.y, type: 'raid' };
+                         this.currentThought = "To battle!";
+                         return;
+                     }
+                 }
+            }
+        }
         
         // 1. Join Village?
         if (!this.villageId) {
@@ -319,6 +379,42 @@ class Unit extends Entity {
 
     interactWithTarget() {
         if (!this.target) return;
+
+        // COMBAT
+        if (this.target.type === 'enemy') {
+            const enemy = this.target.uid;
+            // Check if enemy is still valid target (alive and nearby)
+            if (enemy && !enemy.dead && Math.hypot(enemy.x - this.x, enemy.y - this.y) < 2.0) {
+                 enemy.hp -= 5;
+                 spawnParticles(enemy.x*TILE_SIZE, enemy.y*TILE_SIZE, 3, 'red');
+                 enemy.vx = (enemy.x - this.x)*5;
+                 enemy.vy = (enemy.y - this.y)*5;
+                 addFloatingText("Hit!", enemy.x*TILE_SIZE, enemy.y*TILE_SIZE, 'red');
+
+                 // Enemy retaliates
+                 if (!enemy.target || enemy.target.type !== 'enemy') {
+                    enemy.target = { type: 'enemy', uid: this, x: this.x, y: this.y };
+                 }
+            } else {
+                 this.target = null; // Enemy dead or fled
+            }
+            return;
+        } else if (this.target.type === 'raid') {
+             // Raid village center
+             const v = gameState.villages.find(vil => Math.abs(vil.x - this.target.x) < 2 && Math.abs(vil.y - this.target.y) < 2);
+             if (v) {
+                 if (v.wood > 0) {
+                     v.wood--;
+                     this.inventory.wood++;
+                     addFloatingText("Stolen!", this.x*TILE_SIZE, this.y*TILE_SIZE, 'orange');
+                 }
+                 spawnParticles(this.target.x*TILE_SIZE, this.target.y*TILE_SIZE, 1, 'black');
+             }
+             // Go home after raid
+             const home = gameState.villages.find(z => z.id === this.villageId);
+             if(home) this.target = { x: home.x, y: home.y, type: 'village_dropoff' };
+             return;
+        }
 
         if (this.target.type === 'resource') {
              // Harvest
@@ -383,6 +479,7 @@ class Village {
         this.pop = 0;
         this.wood = 0;
         this.food = 0;
+        this.atWarWith = []; // Array of village IDs
         this.buildings = [{x, y, type: 'hall'}];
     }
     
@@ -392,21 +489,41 @@ class Village {
     }
 
     update() {
-        // Expand?
+        // Expand (Houses)
         if (this.wood >= 20) {
             this.wood -= 20;
             // Build randomness
-            const rx = this.x + Math.floor(Math.random()*10)-5;
-            const ry = this.y + Math.floor(Math.random()*10)-5;
+            const rx = this.x + Math.floor(Math.random()*16)-8;
+            const ry = this.y + Math.floor(Math.random()*16)-8;
             
             // Check valid spot
             if (rx > 0 && rx < MAP_WIDTH && ry > 0 && ry < MAP_HEIGHT) {
-                if (gameState.map[ry][rx].type !== 'ocean' && gameState.map[ry][rx].type !== 'mountain') {
-                    this.buildings.push({ x: rx, y: ry, type: 'house' });
-                    spawnParticles(rx*TILE_SIZE, ry*TILE_SIZE, 20, 'white');
-                    addFloatingText("Expand!", rx*TILE_SIZE, ry*TILE_SIZE);
+                const t = gameState.map[ry][rx];
+                if (t.type !== 'ocean' && t.type !== 'deep_ocean' && t.type !== 'mountain') {
+                    // Check overlap
+                    if (!this.buildings.some(b => b.x===rx && b.y===ry)) {
+                        this.buildings.push({ x: rx, y: ry, type: 'house' });
+                        spawnParticles(rx*TILE_SIZE, ry*TILE_SIZE, 20, 'white');
+                        addFloatingText("Expand!", rx*TILE_SIZE, ry*TILE_SIZE);
+                    }
                 }
             }
+        }
+        
+        // Reproduction (Needs House space + Food)
+        const capacity = this.buildings.length * 4; // 4 per house
+        if (this.pop < capacity && this.food >= 10) {
+            this.food -= 10;
+            // Spawn new Unit
+            const baby = new Unit('human', this.x, this.y);
+            baby.villageId = this.id;
+            baby.job = Math.random() > 0.3 ? (Math.random()>0.5?'Lumberjack':'Forager') : 'Guard';
+            baby.age = 0;
+            baby.addMemory(`I was born in ${this.name}.`);
+            gameState.entities.push(baby);
+            this.pop++;
+            spawnParticles(this.x*TILE_SIZE, this.y*TILE_SIZE, 10, 'pink');
+            addFloatingText("Baby!", this.x*TILE_SIZE, this.y*TILE_SIZE, 'pink');
         }
     }
 }
@@ -623,6 +740,27 @@ function applyTool(tx, ty) {
         addFloatingText("Kingdom!", tx*TILE_SIZE, ty*TILE_SIZE, 'gold');
     }
     
+    else if (tool === 'war') {
+        // Find nearest village
+        const v1 = gameState.villages.find(v => Math.hypot(v.x - tx, v.y - ty) < 10);
+        if (v1) {
+            // Find another nearby village
+            const v2 = gameState.villages.find(v => v !== v1 && Math.hypot(v.x - v1.x, v.y - v1.y) < 50);
+            if (v2) {
+                if (!v1.atWarWith.includes(v2.id)) v1.atWarWith.push(v2.id);
+                if (!v2.atWarWith.includes(v1.id)) v2.atWarWith.push(v1.id);
+                
+                showToast(`${v1.name} declares WAR on ${v2.name}!`);
+                gameState.shake = 10;
+                addFloatingText("WAR!", v1.x*TILE_SIZE, v1.y*TILE_SIZE, 'red');
+                addFloatingText("WAR!", v2.x*TILE_SIZE, v2.y*TILE_SIZE, 'red');
+                spawnParticles(v1.x*TILE_SIZE, v1.y*TILE_SIZE, 30, 'red');
+            } else {
+                showToast("No nearby kingdom to fight!");
+            }
+        }
+    }
+    
     else if (tool === 'fire') {
         if (tile.type !== 'ocean' && tile.type !== 'deep_ocean') {
             tile.fire = 100;
@@ -683,7 +821,7 @@ function updateInspector(tab = 'info') {
         if (activeBtn) tab = activeBtn.dataset.tab;
     }
 
-    document.getElementById('inspector-title').innerText = e.type.toUpperCase();
+    document.getElementById('inspector-title').innerText = e.type.toUpperCase() + (e.sex?` (${e.sex})`:'');
 
     let html = '';
     
@@ -737,10 +875,22 @@ function loop(timestamp) {
         // Update entities
         gameState.entities.forEach(e => e.update(dt));
         
+
         // Update Villages
         if (Math.random() < 0.05 * gameState.speed) {
-            gameState.villages.forEach(v => v.update());
+            gameState.villages.forEach(v => {
+                v.update();
+                // Decay war
+                if (Math.random() < 0.001) {
+                    if(v.atWarWith.length > 0) {
+                        v.atWarWith.pop();
+                        addFloatingText("Peace!", v.x*TILE_SIZE, v.y*TILE_SIZE, 'white');
+                    }
+                }
+            });
         }
+        
+    updateClouds(dt * gameState.speed);
 
         // World Events (Fire spread, etc) - run occasionally
         if (Math.random() < 0.1 * gameState.speed) {
@@ -790,6 +940,15 @@ function loop(timestamp) {
         document.getElementById('year-display').innerText = `Year ${Math.floor(gameState.time / 100)}`;
         document.getElementById('pop-display').innerText = `${gameState.entities.length} Beings`;
         document.getElementById('vil-display').innerText = `${gameState.villages.length} Kingdoms`;
+        
+        // Show status of selected
+        if (gameState.selection && gameState.selection instanceof Unit) {
+            const v = gameState.villages.find(z => z.id === gameState.selection.villageId);
+            if(v && v.atWarWith.length > 0) {
+                 addFloatingText("WARMODE", gameState.selection.x*TILE_SIZE, gameState.selection.y*TILE_SIZE, 'red');
+            }
+        }
+        
         if (gameState.selection) updateInspector();
     }
 
@@ -973,6 +1132,13 @@ function draw() {
              ctx.textAlign = "center";
              ctx.fillStyle = "black";
              ctx.fillText(v.name, v.x*TILE_SIZE + 16 + 1, v.y*TILE_SIZE - 20 + 1);
+             
+             // WAR INDICATOR
+             if (v.atWarWith.length > 0) {
+                 ctx.fillStyle = "red";
+                 ctx.fillText("⚔️ WAR ⚔️", v.x*TILE_SIZE + 16, v.y*TILE_SIZE - 40);
+             }
+             
              ctx.fillStyle = "white"; 
              ctx.fillText(v.name, v.x*TILE_SIZE + 16, v.y*TILE_SIZE - 20);
              
@@ -1007,6 +1173,13 @@ function draw() {
 
             ctx.fillStyle = e.color || 'red';
             ctx.fillRect(sx+12, sy+12-bounce, 8, 14); // Body
+            
+            // Gender differentiation (subtle)
+            if (e.sex === 'f') {
+                ctx.fillStyle = 'rgba(255,100,100,0.3)';
+                ctx.fillRect(sx+12, sy+20-bounce, 8, 6); // Dress bottom
+            }
+
             ctx.fillStyle = '#ffccaa'; // Skin
             ctx.fillRect(sx+12, sy+4-bounce, 8, 8); // Head
             
@@ -1031,6 +1204,23 @@ function draw() {
         if (e.infected) {
              ctx.fillStyle = 'rgba(100, 0, 255, 0.4)';
              ctx.beginPath(); ctx.arc(sx+16, sy+16, 12, 0, Math.PI*2); ctx.fill();
+        }
+
+        // Weapon (War Mode)
+        if (e instanceof Unit && e.villageId) {
+             const myV = gameState.villages.find(v => v.id === e.villageId);
+             if (myV && myV.atWarWith.length > 0) {
+                 // Draw Sword
+                 ctx.save();
+                 ctx.translate(sx+4, sy+16);
+                 const swing = Math.sin(e.age*20)*0.5;
+                 ctx.rotate(-0.5 + swing);
+                 ctx.fillStyle = '#8899aa'; // Blade
+                 ctx.fillRect(0, -10, 2, 12);
+                 ctx.fillStyle = '#5d4037'; // Handle
+                 ctx.fillRect(-1, 0, 4, 3);
+                 ctx.restore();
+             }
         }
 
         if (gameState.selection === e) {
@@ -1087,6 +1277,8 @@ function draw() {
         ctx.fillStyle = 'rgba(0, 5, 20, 0.4)'; // Blue Night Tint
         ctx.fillRect(gameState.camera.x - viewW/2 - 100, gameState.camera.y - viewH/2 - 100, viewW+200, viewH+200);
     }
+    
+    drawClouds(ctx);
 
     ctx.restore();
 }
