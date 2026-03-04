@@ -1,5 +1,77 @@
-The following files were successfully edited:
-c:\Users\brodr\OneDrive\Documents\LudusGames\arcade\Weekly\index.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remembrance: God Simulator</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- MAIN MENU OVERLAY -->
+    <div id="main-menu">
+        <div class="menu-content">
+            <h1 class="title">REMEMBRANCE</h1>
+            <p class="subtitle">Advanced God Simulator</p>
+            
+            <div class="menu-grid">
+                <!-- LEFT: Create New -->
+                <div class="menu-panel">
+                    <h2><i class="fa-solid fa-earth-americas"></i> Create World</h2>
+                    <div class="input-group">
+                        <label>World Name</label>
+                        <input type="text" id="world-name-input" placeholder="New World" value="Genesis">
+                    </div>
+                    <div class="input-group">
+                        <label>Map Size</label>
+                        <select id="world-size-input">
+                            <option value="100">Tiny (100x100)</option>
+                            <option value="200" selected>Standard (200x200)</option>
+                            <option value="300">Large (300x300)</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Mode</label>
+                        <div class="radio-group">
+                            <label class="radio-btn active">
+                                <input type="radio" name="mode" value="creative" checked> Creative
+                            </label>
+                            <label class="radio-btn">
+                                <input type="radio" name="mode" value="survival"> Survival
+                            </label>
+                        </div>
+                    </div>
+                    <button id="btn-create-world" class="action-btn primary">Create World</button>
+                </div>
+
+                <!-- RIGHT: Load World -->
+                <div class="menu-panel">
+                    <h2><i class="fa-solid fa-floppy-disk"></i> Load World</h2>
+                    <div id="save-slot-list">
+                        <!-- Slots injected by JS -->
+                        <div class="empty-slot">No saved worlds found...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GAME UI (Hidden by default) -->
+    <div id="ui-layer" style="display: none;">
+        <div id="top-panel">
+            <div id="game-info">
+                <h1 id="world-title-display">WORLD NAME</h1>
+                <div id="game-stats">
+                    <span class="stat-box" id="year-display">Year 1</span>
+                    <span class="stat-box" id="pop-display">0 Beings</span>
+                    <span class="stat-box" id="vil-display">0 Villages</span>
+                </div>
+            </div>
+            <div class="top-buttons">
+                <button id="btn-save" class="icon-btn" title="Save & Exit"><i class="fa-solid fa-save"></i></button>
+                <button id="btn-speed" class="icon-btn" title="Toggle Speed"><i class="fa-solid fa-forward"></i></button>
+            </div>
         </div>
 
         <div id="toast-container"></div>
@@ -60,6 +132,6 @@ c:\Users\brodr\OneDrive\Documents\LudusGames\arcade\Weekly\index.html
     </div>
     
     <canvas id="game-canvas"></canvas>
-    <script type="module" src="game.js"></script>
+    <script src="game.js"></script>
 </body>
 </html>
