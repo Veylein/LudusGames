@@ -508,7 +508,7 @@ canvas {
     height: 100vh;
     z-index: 10;
     background-color: var(--bg-dark);
-    background-image: url('https://media.discordapp.net/attachments/1476451566725763093/1476451567010971771/image.png?ex=69a477ec&is=69a3266c&hm=218449de3ac5bac0e7b808e15029c581ca70d2792138f8b47e2f9e1269acc55a&=&format=webp&quality=lossless&width=1240&height=827');
+    bckground-image: url:("https://media.discordapp.net/attachments/1476451566725763093/1476451567010971771/image.png?ex=69a9bdec&is=69a86c6c&hm=3074ed6e0e5f86fc1f199850d102c911198094a2c8969ac618b5ffea0c4083b9&=&format=webp&quality=lossless&width=1240&height=827");
     background-size: 100% 100% !important;
     background-position: center;
     background-repeat: no-repeat;
