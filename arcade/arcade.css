@@ -15,7 +15,7 @@
     --button-yellow: #f1c40f;
 }
 
-body {
+body.arcade-lobby-page {
     background-color: var(--bg-dark);
     color: #fff;
     font-family: 'Press Start 2P', cursive, monospace;
@@ -26,12 +26,10 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    /* Dark arcade atmosphere background */
-    background-image: 
-        radial-gradient(circle at 50% 50%, rgba(20, 20, 40, 0.8), rgba(0, 0, 0, 0.95)),
-        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.5) 3px),
-        repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0, 0, 0, 0.5) 3px);
-    background-size: 100% 100%, 4px 4px, 4px 4px;
+    background-image: url('../Arcade_wallpaper.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     touch-action: none; /* Prevent touch scrolling */
 }
 

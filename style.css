@@ -63,17 +63,14 @@ body[data-font="terminal"] {
 body {
     min-height: 100vh;
     background-color: var(--bg-color);
-    /* Retro Grid Background - Enhanced */
-    background-image: 
-        linear-gradient(var(--bg-color) 0%, transparent 100%),
-        linear-gradient(rgba(255, 0, 255, 0.1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 0, 255, 0.1) 1px, transparent 1px);
-    background-size: 40px 40px;
-    background-position: center top;
+    background-image: url('Backdrop.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
     color: var(--text-color);
     overflow-x: hidden;
-    image-rendering: pixelated;
-    animation: gridScroll 20s linear infinite;
+    image-rendering: auto;
     position: relative;
     text-shadow: 2px 2px 0px #000;
 }

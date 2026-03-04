@@ -49,15 +49,13 @@
 
 /* 1. CLASSIC (Retro Grid - Default) */
 body[data-style="style-classic"] {
-    /* Uses default grid from style.css */
-    /* Ensure grid is visible */
-    background-image: 
-        linear-gradient(rgba(255, 0, 255, 0.1) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 0, 255, 0.1) 1px, transparent 1px);
-    background-size: 40px 40px;
-    background-position: center top;
-    animation: gridScroll 20s linear infinite;
-    background-attachment: scroll; /* Grid scrolls */
+    /* Uses default wallpaper from style.css */
+    background-image: url('Backdrop.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    animation: none;
 }
 
 /* 2. RELAXATION (Cozy, Chillaxing) */
@@ -80,7 +78,7 @@ body[data-style="style-arcade"] {
     /* Dark arcade with neon */
     background-image: 
         linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)),
-        url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=2070&auto=format&fit=crop');
+        url('Arcade_wallpaper.png');
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
