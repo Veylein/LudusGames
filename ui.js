@@ -445,141 +445,17 @@ if (window.location.pathname.includes("/cards/") || window.location.pathname.inc
 }
 
 
-/* AUTOMATIC SPA NAVIGATION HANDLER (FOR DISCORD & IFRAMES) */
+/* AUTOMATIC SPA NAVIGATION HANDLER (DISABLED) */
+/* 
 (function() {
     // Prevent multiple initializations if script re-runs
     if (window.LUDUS_SPA_ACTIVE) return;
     window.LUDUS_SPA_ACTIVE = true;
     
-    console.log("Ludus SPA Navigation Active");
-
-    document.addEventListener('click', function(e) {
-        const link = e.target.closest('a');
-        if (!link || !link.href) return;
-        
-        // Handle base-relative URLs
-        const url = new URL(link.href, window.location.href);
-        
-        // Only internal links
-        if (url.origin !== window.location.origin) return; 
-
-        // Only HTML navigations
-        if (url.pathname.endsWith('.html') || url.pathname.endsWith('/')) {
-            e.preventDefault();
-            navigateTo(url.href);
-        }
-    });
-
-    window.addEventListener('popstate', function(e) {
-        if (e.state && e.state.url) {
-            loadPageContent(e.state.url);
-        } else {
-             loadPageContent(window.location.href);
-        }
-    });
-
-    async function navigateTo(url) {
-        window.history.pushState({url: url}, '', url);
-        await loadPageContent(url);
-    }
-
-    async function loadPageContent(url) {
-        try {
-            // New Step 0: Cleanup previous page resources
-            if (PageCleanupManager) PageCleanupManager.cleanup();
-
-            const response = await fetch(url);
-            if (!response.ok) throw new Error('Network response was not ok');
-            const text = await response.text();
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(text, 'text/html');
-
-            document.title = doc.title;
-
-            const currentLinks = Array.from(document.head.querySelectorAll('link[rel="stylesheet"]'));
-            const newLinks = Array.from(doc.head.querySelectorAll('link[rel="stylesheet"]'));
-            
-            // Remove old page-specific styles
-            currentLinks.forEach(link => {
-                const isGlobal = link.href.includes('style.css') || link.href.includes('themes.css');
-                if (!isGlobal) link.remove();
-            });
-
-            // Add new page-specific styles
-            newLinks.forEach(link => {
-                const href = link.getAttribute('href');
-                if (!href) return;
-                
-                const isGlobal = href.includes('style.css') || href.includes('themes.css');
-                if (!isGlobal) {
-                    const newLink = document.createElement('link');
-                    newLink.rel = 'stylesheet';
-                    newLink.href = href; // Browser resolves relative to new current URL (set by pushState)
-                    document.head.appendChild(newLink);
-                }
-            });
-            
-            // 2. REPLACE BODY CONTENT
-            document.body.innerHTML = doc.body.innerHTML;
-            document.body.className = doc.body.className;
-
-            // 3. RE-EXECUTE SCRIPTS (CRITICAL)
-            const scripts = document.body.querySelectorAll('script');
-            const scriptPromises = [];
-
-            scripts.forEach(oldScript => {
-                const newScript = document.createElement('script');
-                const src = oldScript.getAttribute('src');
-
-                Array.from(oldScript.attributes).forEach(attr => {
-                    newScript.setAttribute(attr.name, attr.value);
-                });
-
-                if (src && src.includes('ui.js')) return;
-
-                if (src) {
-                    newScript.src = src; 
-                    scriptPromises.push(new Promise(resolve => {
-                        newScript.onload = resolve;
-                        newScript.onerror = resolve; // Continue even if error
-                    }));
-                } else {
-                    newScript.textContent = oldScript.textContent;
-                }
-                
-                oldScript.parentNode.replaceChild(newScript, oldScript);
-            });
-            
-            // Wait for scripts to load
-            Promise.all(scriptPromises).then(() => {
-                const event = document.createEvent("Event");
-                event.initEvent("DOMContentLoaded", true, true);
-                document.dispatchEvent(event);
-                
-                const loadEvent = document.createEvent("Event");
-                loadEvent.initEvent("load", true, true);
-                window.dispatchEvent(loadEvent);
-            });
-
-            // 4. RE-INIT GLOBALS
-            if (typeof initTheme === 'function') initTheme();
-            if (typeof initStyle === 'function') initStyle();
-            if (typeof initFontTheme === 'function') initFontTheme();
-            if (typeof initDifficulty === 'function') initDifficulty();
-            
-            if (typeof ensureBackButton === 'function') ensureBackButton();
-            
-            // Ensure Mobile Controls are injected/hooked up
-            if (typeof ensureMobileControls === 'function') ensureMobileControls();
-
-            window.scrollTo(0, 0);
-
-        } catch (err) {
-            console.error('SPA Navigation Error:', err);
-            window.location.href = url; // Fallback
-        }
-    }
+    // ... SPA LOGIC REMOVED FOR STABILITY ON LOCAL FILE SYSTEM ...
 })();
+*/
+
 
 
 /* --- UNIVERSAL MOBILE CONTROLS INJECTOR --- */
